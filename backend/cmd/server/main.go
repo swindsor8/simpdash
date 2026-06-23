@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"flag"
@@ -11,9 +12,11 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"simpdash/internal/api"
 	"simpdash/internal/config"
+	"simpdash/internal/proxmox"
 	"simpdash/web"
 )
 
@@ -40,15 +43,16 @@ func main() {
 		}
 	}
 
-	auth := api.NewAuthHandler(cfg, *cfgPath)
+	px := proxmox.NewClient()
+	if cfg.Proxmox != nil && cfg.Proxmox.TokenID != "" {
+		px.SetCreds(cfg.Proxmox.Host, cfg.Proxmox.TokenID, cfg.Proxmox.Secret)
+	}
+	poller := api.NewPoller(px, 3*time.Second)
+	go poller.Run(context.Background())
+
+	srv := api.NewServer(cfg, *cfgPath, px, poller)
 	mux := http.NewServeMux()
-	// ponytail: method gating lives in each handler (stdlib 1.18 mux has no
-	// method patterns) — switch to chi or Go 1.22 routing if this grows.
-	mux.HandleFunc("/api/setup/status", methodGate(http.MethodGet, auth.SetupStatus))
-	mux.HandleFunc("/api/setup/password", methodGate(http.MethodPost, auth.SetupPassword))
-	mux.HandleFunc("/api/auth/login", methodGate(http.MethodPost, auth.Login))
-	mux.HandleFunc("/api/auth/logout", methodGate(http.MethodPost, auth.Logout))
-	mux.HandleFunc("/api/auth/me", methodGate(http.MethodGet, auth.Me))
+	srv.Routes(mux)
 
 	sub, err := fs.Sub(web.DistFS, "dist")
 	if err != nil {
@@ -72,14 +76,4 @@ func main() {
 
 	log.Printf("SimpDash listening on %s", cfg.ListenAddr)
 	log.Fatal(http.ListenAndServe(cfg.ListenAddr, mux))
-}
-
-func methodGate(method string, h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != method {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		h(w, r)
-	}
 }

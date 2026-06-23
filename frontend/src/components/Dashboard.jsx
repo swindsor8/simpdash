@@ -1,5 +1,5 @@
-import { mockNodes } from '../lib/mockData'
 import { logout } from '../lib/api'
+import { useResourceStream } from '../hooks/useResourceStream'
 
 function fmtBytes(n) {
   if (n == null) return '—'
@@ -17,8 +17,21 @@ function Bar({ value, max, color = 'bg-blue-500' }) {
   const c = p > 90 ? 'bg-red-500' : p > 70 ? 'bg-yellow-500' : color
   return (
     <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-      <div className={`h-full rounded-full ${c}`} style={{ width: `${p}%` }} />
+      <div className={`h-full rounded-full ${c} transition-all duration-700`} style={{ width: `${p}%` }} />
     </div>
+  )
+}
+
+// Re-keyed by pulseKey on each update so the CSS ping animation re-fires.
+function StatusDot({ pulseKey, connected }) {
+  const color = connected ? 'bg-green-400' : 'bg-gray-600'
+  return (
+    <span className="relative inline-flex h-2.5 w-2.5">
+      {connected && (
+        <span key={pulseKey} className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping-once" />
+      )}
+      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${color}`} />
+    </span>
   )
 }
 
@@ -107,6 +120,8 @@ function NodeCard({ node }) {
 }
 
 export default function Dashboard({ onLogout }) {
+  const { nodes, connected, pulseKey } = useResourceStream()
+
   async function handleLogout() {
     await logout()
     onLogout()
@@ -116,12 +131,27 @@ export default function Dashboard({ onLogout }) {
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
         <span className="font-bold text-white">SimpDash</span>
-        <button onClick={handleLogout} className="text-xs text-gray-500 hover:text-white transition-colors">
-          Sign out
-        </button>
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-2 text-xs text-gray-500">
+            <StatusDot pulseKey={pulseKey} connected={connected} />
+            {connected ? 'live' : 'reconnecting…'}
+          </span>
+          <button onClick={handleLogout} className="text-xs text-gray-500 hover:text-white transition-colors">
+            Sign out
+          </button>
+        </div>
       </header>
       <main className="max-w-4xl mx-auto p-6 space-y-4">
-        {mockNodes.map(node => <NodeCard key={node.id} node={node} />)}
+        {nodes === null ? (
+          <p className="text-gray-600 text-sm text-center py-12">Connecting to Proxmox…</p>
+        ) : nodes.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-sm">No nodes reporting.</p>
+            <p className="text-gray-600 text-xs mt-1">Proxmox may be unavailable or monitoring is still provisioning.</p>
+          </div>
+        ) : (
+          nodes.map(node => <NodeCard key={node.id} node={node} />)
+        )}
       </main>
     </div>
   )

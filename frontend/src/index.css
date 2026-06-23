@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* One-shot ping (Tailwind's animate-ping loops forever; we want a single
+   pulse per resource update, re-fired by re-keying the element on pulseKey). */
+@keyframes ping-once {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+.animate-ping-once {
+  animation: ping-once 0.8s cubic-bezier(0, 0, 0.2, 1) 1;
+}

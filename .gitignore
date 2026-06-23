@@ -1,0 +1,22 @@
+# Local runtime config — contains session_secret, bcrypt password hash, and
+# (in main mode) the Proxmox API token. NEVER commit these.
+dev-config.yaml
+*dev-config.yaml
+config.yaml
+*.local.yaml
+
+# Compiled Go binary
+/backend/simpdash
+backend/simpdash
+
+# Go test/coverage output
+*.test
+*.out
+
+# Node
+node_modules/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
