@@ -16,7 +16,9 @@ import (
 
 	"simpdash/internal/api"
 	"simpdash/internal/config"
+	"simpdash/internal/executor"
 	"simpdash/internal/proxmox"
+	"simpdash/internal/store"
 	"simpdash/web"
 )
 
@@ -43,6 +45,11 @@ func main() {
 		}
 	}
 
+	db, err := store.Open(cfg.DBPath)
+	if err != nil {
+		log.Fatalf("open db %s: %v", cfg.DBPath, err)
+	}
+
 	px := proxmox.NewClient()
 	if cfg.Proxmox != nil && cfg.Proxmox.TokenID != "" {
 		px.SetCreds(cfg.Proxmox.Host, cfg.Proxmox.TokenID, cfg.Proxmox.Secret)
@@ -50,7 +57,8 @@ func main() {
 	poller := api.NewPoller(px, 3*time.Second)
 	go poller.Run(context.Background())
 
-	srv := api.NewServer(cfg, *cfgPath, px, poller)
+	exec := executor.New()
+	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db)
 	mux := http.NewServeMux()
 	srv.Routes(mux)
 

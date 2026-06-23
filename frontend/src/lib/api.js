@@ -30,3 +30,24 @@ export async function getMe() {
   const r = await fetch(`${BASE}/auth/me`, { credentials: 'same-origin' })
   return r.ok
 }
+
+export async function checkUpdates() {
+  const r = await fetch(`${BASE}/updates/check`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+export async function applyUpdates() {
+  const r = await fetch(`${BASE}/updates/apply`, { method: 'POST', credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export async function getJobs() {
+  const r = await fetch(`${BASE}/jobs`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}

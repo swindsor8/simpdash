@@ -8,11 +8,14 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"simpdash/internal/config"
+	"simpdash/internal/executor"
 	"simpdash/internal/proxmox"
+	"simpdash/internal/store"
 )
 
 const (
@@ -20,13 +23,14 @@ const (
 	cookieTTL  = 30 * 24 * time.Hour
 )
 
-// Server holds shared state for all HTTP handlers: the live config, the
-// Proxmox client, and the resource poller.
+// Server holds shared state for all HTTP handlers.
 type Server struct {
 	cfg     *config.Config
 	cfgPath string
 	px      *proxmox.Client
 	poller  *Poller
+	exec    *executor.Executor
+	db      *store.DB
 
 	// secretMu guards cfg.SessionSecret, read on every authenticated request
 	// (validSession) and written by logout (rotateSecret).
@@ -35,13 +39,14 @@ type Server struct {
 	loginLimiter *limiter
 }
 
-func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller) *Server {
+func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB) *Server {
 	return &Server{
-		cfg:     cfg,
-		cfgPath: cfgPath,
-		px:      px,
-		poller:  poller,
-		// 5 failed logins per IP, then a 1-minute lockout for that IP.
+		cfg:          cfg,
+		cfgPath:      cfgPath,
+		px:           px,
+		poller:       poller,
+		exec:         exec,
+		db:           db,
 		loginLimiter: newLimiter(5, time.Minute),
 	}
 }
@@ -54,8 +59,39 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/auth/logout", methodGate(http.MethodPost, s.Logout))
 	mux.HandleFunc("/api/auth/me", methodGate(http.MethodGet, s.Me))
 	mux.HandleFunc("/api/resources", methodGate(http.MethodGet, s.requireAuth(s.Resources)))
-	// WS upgrade is a GET; auth is checked inside the handler (browser sends the cookie).
 	mux.HandleFunc("/api/resources/stream", s.ResourcesStream)
+	mux.HandleFunc("/api/updates/check", methodGate(http.MethodGet, s.requireAuth(s.UpdatesCheck)))
+	mux.HandleFunc("/api/updates/apply", methodGate(http.MethodPost, s.requireAuth(s.UpdatesApply)))
+	mux.HandleFunc("/api/jobs", methodGate(http.MethodGet, s.requireAuth(s.Jobs)))
+	// /api/jobs/ is a prefix match; the handler parses /:id and /:id/stream.
+	mux.HandleFunc("/api/jobs/", s.handleJobsPrefix)
+}
+
+// handleJobsPrefix dispatches /api/jobs/:id and /api/jobs/:id/stream.
+// stdlib 1.18 mux has no path-param support, so we parse manually.
+// ponytail: switch to chi when M5 secondary routes need params too.
+func (s *Server) handleJobsPrefix(w http.ResponseWriter, r *http.Request) {
+	tail := strings.TrimPrefix(r.URL.Path, "/api/jobs/")
+	parts := strings.SplitN(tail, "/", 2)
+	id := parts[0]
+	if id == "" {
+		http.NotFound(w, r)
+		return
+	}
+	suffix := ""
+	if len(parts) == 2 {
+		suffix = parts[1]
+	}
+	switch suffix {
+	case "stream":
+		s.JobStream(w, r, id)
+	case "":
+		methodGate(http.MethodGet, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
+			s.Job(w, r, id)
+		}))(w, r)
+	default:
+		http.NotFound(w, r)
+	}
 }
 
 // --- session helpers ---

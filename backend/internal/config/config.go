@@ -30,13 +30,14 @@ import (
 
 // Config is the top-level configuration for SimpDash.
 type Config struct {
-	Mode          string        `yaml:"mode"`
-	ListenAddr    string        `yaml:"listen_addr"`
-	Onboarded     bool          `yaml:"onboarded"`
-	PasswordHash  string        `yaml:"password_hash,omitempty"`
-	SessionSecret string        `yaml:"session_secret,omitempty"`
+	Mode          string         `yaml:"mode"`
+	ListenAddr    string         `yaml:"listen_addr"`
+	DBPath        string         `yaml:"db_path"`
+	Onboarded     bool           `yaml:"onboarded"`
+	PasswordHash  string         `yaml:"password_hash,omitempty"`
+	SessionSecret string         `yaml:"session_secret,omitempty"`
 	Proxmox       *ProxmoxConfig `yaml:"proxmox,omitempty"`
-	PairedNodes   []PairedNode  `yaml:"paired_nodes,omitempty"`
+	PairedNodes   []PairedNode   `yaml:"paired_nodes,omitempty"`
 }
 
 // ProxmoxConfig holds Proxmox VE API credentials (populated in Milestone 2).
@@ -60,6 +61,7 @@ func defaults() *Config {
 	return &Config{
 		Mode:       "main",
 		ListenAddr: ":7575",
+		DBPath:     "/etc/homelab-dash/simpdash.db",
 	}
 }
 

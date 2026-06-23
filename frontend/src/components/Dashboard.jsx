@@ -1,5 +1,6 @@
 import { logout } from '../lib/api'
 import { useResourceStream } from '../hooks/useResourceStream'
+import Updates from './Updates'
 
 function fmtBytes(n) {
   if (n == null) return '—'
@@ -152,6 +153,7 @@ export default function Dashboard({ onLogout }) {
         ) : (
           nodes.map(node => <NodeCard key={node.id} node={node} />)
         )}
+        <Updates />
       </main>
     </div>
   )
