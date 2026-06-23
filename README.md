@@ -1,4 +1,4 @@
-# homelab-dash
+# SimpDash
 
 A one-click update/install dashboard for Proxmox VE hosts, with cluster-wide
 resource monitoring (host + VM + LXC) and optional multi-node management via
