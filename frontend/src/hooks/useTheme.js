@@ -16,6 +16,11 @@ export const THEMES = [
     name: 'Super',
     description: '8-bit NES sky blue, gold blocks, pixel font.',
   },
+  {
+    id: 'win98',
+    name: 'Win98',
+    description: 'Silver bevels, teal desktop, navy title bars.',
+  },
 ]
 
 export function useTheme() {

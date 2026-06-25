@@ -43,9 +43,33 @@ function MarioSprite() {
   )
 }
 
+// A tiny Win98 dialog window (navy title bar + raised silver body + OK button)
+// rendered with inline bevels so it always shows Win98 regardless of active theme.
+function Win98Preview() {
+  const raised = 'inset -1px -1px #0a0a0a, inset 1px 1px #fff, inset -2px -2px #808080, inset 2px 2px #dfdfdf'
+  const tahoma = "'Tahoma', 'MS Sans Serif', system-ui, sans-serif"
+  return (
+    <div className="h-24 flex items-center justify-center" style={{ background: '#008080' }}>
+      <div style={{ background: '#c0c0c0', boxShadow: raised, width: 150, fontFamily: tahoma }}>
+        <div className="flex items-center justify-between px-1 py-0.5"
+          style={{ background: '#000080', color: '#fff', fontSize: 11, fontWeight: 700 }}>
+          <span>SimpDash</span>
+          <span className="px-1 leading-none"
+            style={{ background: '#c0c0c0', color: '#000', boxShadow: raised, fontSize: 10 }}>×</span>
+        </div>
+        <div className="px-2 py-2.5 flex flex-col items-center gap-2" style={{ color: '#000', fontSize: 11 }}>
+          <span>Ready.</span>
+          <button className="px-3 py-0.5" style={{ background: '#c0c0c0', boxShadow: raised, fontSize: 11 }}>OK</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ThemeCard({ t, active, onSelect }) {
   const isRetro = t.id === 'retro'
   const isMario = t.id === 'mario'
+  const isWin98 = t.id === 'win98'
   return (
     <div
       className={`bg-[#13131e] border rounded-2xl p-5 flex flex-col gap-4 transition-colors cursor-pointer ${
@@ -56,7 +80,11 @@ function ThemeCard({ t, active, onSelect }) {
       onClick={() => onSelect(t.id)}
     >
       {/* Mini preview */}
-      {isMario ? (
+      {isWin98 ? (
+        <div className="rounded-xl overflow-hidden border border-white/10">
+          <Win98Preview />
+        </div>
+      ) : isMario ? (
         <div className="rounded-xl overflow-hidden border border-white/10 bg-[#5c94fc]" title="Hover the block!">
           <MarioSprite />
         </div>
