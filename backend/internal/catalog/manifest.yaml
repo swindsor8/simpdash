@@ -2,62 +2,97 @@
 # script_url MUST be a raw URL from that repo — it is the only thing fed to the
 # shell, looked up server-side by id, never taken from the client. Keep this
 # list small and hand-vetted: every entry here is run as root on the host.
+#
+# type: ct = LXC container, vm = QEMU virtual machine
+# resources: defaults taken from each script's var_cpu/var_ram/var_disk headers
+
 - id: pihole
   name: Pi-hole
+  type: ct
   description: Network-wide ad blocking via a local DNS sinkhole.
   category: Networking
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/pihole.sh
+  resources:
+    cpu: 1
+    ram_mb: 512
+    disk_gb: 2
   warnings:
     - Creates a new LXC
-    - Requires root
 
 - id: adguard
   name: AdGuard Home
+  type: ct
   description: Network-wide ad & tracker blocking DNS server with a web UI.
   category: Networking
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/adguard.sh
+  resources:
+    cpu: 1
+    ram_mb: 512
+    disk_gb: 2
   warnings:
     - Creates a new LXC
-    - Requires root
 
 - id: nginxproxymanager
   name: Nginx Proxy Manager
+  type: ct
   description: Reverse proxy with a web UI and free Let's Encrypt certificates.
   category: Networking
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/nginxproxymanager.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 8
   warnings:
     - Creates a new LXC
-    - Requires root
 
 - id: uptimekuma
   name: Uptime Kuma
+  type: ct
   description: Self-hosted uptime monitoring with status pages and alerts.
   category: Monitoring
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/uptimekuma.sh
+  resources:
+    cpu: 1
+    ram_mb: 1024
+    disk_gb: 4
   warnings:
     - Creates a new LXC
 
 - id: jellyfin
   name: Jellyfin
+  type: ct
   description: Free software media server for streaming your own movies and shows.
   category: Media
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/jellyfin.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 16
   warnings:
     - Creates a new LXC
 
 - id: docker
   name: Docker
+  type: ct
   description: Docker Engine LXC, optionally with Portainer for container management.
   category: Management
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/docker.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 4
   warnings:
     - Creates a new LXC
 
 - id: haos
   name: Home Assistant OS
+  type: vm
   description: Full Home Assistant OS appliance for smart-home automation.
   category: Home Automation
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/haos-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 4096
+    disk_gb: 32
   warnings:
     - Creates a new VM
-    - Requires root

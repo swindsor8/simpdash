@@ -16,15 +16,24 @@ import (
 //go:embed manifest.yaml
 var manifestYAML []byte
 
+// Resources is the default resource allocation the script requests on the host.
+type Resources struct {
+	CPU    int `yaml:"cpu" json:"cpu"`
+	RAMMb  int `yaml:"ram_mb" json:"ram_mb"`
+	DiskGb int `yaml:"disk_gb" json:"disk_gb"`
+}
+
 // Script is one catalog entry. Fields map 1:1 to the manifest and the JSON the
 // frontend consumes.
 type Script struct {
-	ID          string   `yaml:"id" json:"id"`
-	Name        string   `yaml:"name" json:"name"`
-	Description string   `yaml:"description" json:"description"`
-	Category    string   `yaml:"category" json:"category"`
-	ScriptURL   string   `yaml:"script_url" json:"script_url"`
-	Warnings    []string `yaml:"warnings" json:"warnings"`
+	ID          string    `yaml:"id" json:"id"`
+	Name        string    `yaml:"name" json:"name"`
+	Type        string    `yaml:"type" json:"type"` // "ct" or "vm"
+	Description string    `yaml:"description" json:"description"`
+	Category    string    `yaml:"category" json:"category"`
+	ScriptURL   string    `yaml:"script_url" json:"script_url"`
+	Resources   Resources `yaml:"resources" json:"resources"`
+	Warnings    []string  `yaml:"warnings" json:"warnings"`
 }
 
 // Catalog is the loaded manifest plus an id index for O(1) lookup.

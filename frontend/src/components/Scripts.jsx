@@ -31,16 +31,40 @@ function WarningPill({ text }) {
   )
 }
 
+function fmtRam(mb) {
+  return mb >= 1024 ? `${mb / 1024} GB` : `${mb} MB`
+}
+
+function TypeBadge({ type }) {
+  const isVm = type === 'vm'
+  return (
+    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
+      isVm ? 'bg-purple-500/15 text-purple-300' : 'bg-blue-500/15 text-blue-300'
+    }`}>
+      {isVm ? 'VM' : 'LXC'}
+    </span>
+  )
+}
+
 function ScriptCard({ script, disabled, onRun }) {
+  const res = script.resources
   return (
     <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-5 flex flex-col">
       <div className="flex items-start justify-between mb-2 gap-3">
         <h3 className="text-sm font-semibold text-white">{script.name}</h3>
-        <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 font-medium shrink-0">
-          {script.category}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {script.type && <TypeBadge type={script.type} />}
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/8 text-gray-400 font-medium">
+            {script.category}
+          </span>
+        </div>
       </div>
-      <p className="text-xs text-gray-500 leading-relaxed mb-3 flex-1">{script.description}</p>
+      <p className="text-xs text-gray-500 leading-relaxed mb-2 flex-1">{script.description}</p>
+      {res && (res.cpu || res.ram_mb || res.disk_gb) && (
+        <p className="text-[11px] text-gray-700 mb-3 font-mono">
+          {res.cpu} CPU · {fmtRam(res.ram_mb)} RAM · {res.disk_gb} GB disk
+        </p>
+      )}
       {script.warnings?.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-4">
           {script.warnings.map(w => <WarningPill key={w} text={w} />)}
@@ -97,6 +121,11 @@ function ConfirmDialog({ script, onCancel, onConfirm }) {
           </div>
         )}
 
+        {script.resources && (script.resources.cpu || script.resources.ram_mb) && (
+          <p className="text-[11px] text-gray-600 font-mono mb-3">
+            Allocates: {script.resources.cpu} CPU · {fmtRam(script.resources.ram_mb)} RAM · {script.resources.disk_gb} GB disk
+          </p>
+        )}
         <p className="text-[11px] text-gray-600 font-mono break-all mb-5">{script.script_url}</p>
 
         <div className="flex justify-end gap-2">
