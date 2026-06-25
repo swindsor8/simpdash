@@ -38,6 +38,14 @@ type Server struct {
 	// (validSession) and written by logout (rotateSecret).
 	secretMu sync.RWMutex
 
+	// cfgMu guards the rarely-written cfg fields touched by M5: AgentToken
+	// (secondary) and PairedNodes (main). Separate from secretMu (hot read path).
+	// ponytail: single admin, pairing and logout never overlap in practice.
+	cfgMu sync.Mutex
+
+	// agent holds the secondary's single-use pairing code until it is paired.
+	agent *agentPairing
+
 	loginLimiter *limiter
 }
 
@@ -50,6 +58,7 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		exec:         exec,
 		db:           db,
 		catalog:      cat,
+		agent:        &agentPairing{},
 		loginLimiter: newLimiter(5, time.Minute),
 	}
 }
@@ -71,6 +80,10 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/catalog", methodGate(http.MethodGet, s.requireAuth(s.Catalog)))
 	// /api/catalog/ is a prefix match; the handler parses /:slug/run.
 	mux.HandleFunc("/api/catalog/", s.handleCatalogPrefix)
+	// Paired secondary nodes (M5). /api/nodes lists; /api/nodes/ handles pair,
+	// unpair, and per-node proxy (resources/updates/catalog/jobs + WS relay).
+	mux.HandleFunc("/api/nodes", methodGate(http.MethodGet, s.requireAuth(s.ListNodes)))
+	mux.HandleFunc("/api/nodes/", s.handleNodesPrefix)
 }
 
 // handleCatalogPrefix dispatches POST /api/catalog/:slug/run.

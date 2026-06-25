@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 
-// useJobStream connects to /api/jobs/:id/stream for the given job and
-// accumulates output frames. Pass a falsy jobId to stay idle.
+// useJobStream connects to a job's output stream and accumulates frames. Pass a
+// falsy jobId to stay idle. `node` (a paired node id, or null for local) selects
+// whether the stream is local or relayed through main from a secondary.
 //
 // Returns { output, state } where state is
 // 'idle' | 'running' | 'succeeded' | 'failed'. Shared by the Updates and
 // Scripts views so the live terminal behaves identically in both.
-export function useJobStream(jobId) {
+export function useJobStream(jobId, node) {
   const [output, setOutput] = useState([])
   const [state, setState] = useState('idle')
 
@@ -16,7 +17,8 @@ export function useJobStream(jobId) {
     setState('running')
 
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-    const ws = new WebSocket(`${proto}://${location.host}/api/jobs/${jobId}/stream`)
+    const base = node ? `/api/nodes/${encodeURIComponent(node)}` : '/api'
+    const ws = new WebSocket(`${proto}://${location.host}${base}/jobs/${jobId}/stream`)
 
     ws.onmessage = (e) => {
       try {
@@ -38,7 +40,7 @@ export function useJobStream(jobId) {
     }
 
     return () => ws.close()
-  }, [jobId])
+  }, [jobId, node])
 
   return { output, state }
 }

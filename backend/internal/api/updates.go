@@ -115,7 +115,12 @@ func (s *Server) JobStream(w http.ResponseWriter, r *http.Request, id string) {
 		writeErr(w, http.StatusUnauthorized, "not authenticated")
 		return
 	}
+	s.streamJob(w, r, id)
+}
 
+// streamJob is the auth-free body of the job stream, shared by the session-gated
+// /api/jobs/:id/stream (above) and the bearer-gated /agent/jobs/:id/stream.
+func (s *Server) streamJob(w http.ResponseWriter, r *http.Request, id string) {
 	history, ch, active := s.exec.Subscribe(id)
 	if !active {
 		// Job finished (or never existed) — replay from SQLite.

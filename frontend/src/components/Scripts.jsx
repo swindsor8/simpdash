@@ -118,26 +118,28 @@ function ConfirmDialog({ script, onCancel, onConfirm }) {
   )
 }
 
-export default function Scripts() {
+export default function Scripts({ node = null }) {
   const [scripts, setScripts] = useState(null)
   const [loadErr, setLoadErr] = useState(null)
   const [pending, setPending] = useState(null)   // script awaiting confirm
   const [running, setRunning] = useState(null)   // name of the running script
   const [jobId, setJobId] = useState(null)
   const [startErr, setStartErr] = useState(null)
-  const { output, state: jobState } = useJobStream(jobId)
+  const { output, state: jobState } = useJobStream(jobId, node)
   const busy = jobState === 'running'
 
   useEffect(() => {
-    getCatalog().then(setScripts).catch(e => setLoadErr(e.message))
-  }, [])
+    setScripts(null)
+    setLoadErr(null)
+    getCatalog(node).then(setScripts).catch(e => setLoadErr(e.message))
+  }, [node])
 
   async function confirmRun() {
     const script = pending
     setPending(null)
     setStartErr(null)
     try {
-      const data = await runScript(script.id)
+      const data = await runScript(node, script.id)
       setRunning(script.name)
       setJobId(data.job_id)
     } catch (e) {

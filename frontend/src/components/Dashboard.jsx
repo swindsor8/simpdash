@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { logout } from '../lib/api'
+import { useState, useEffect, useCallback } from 'react'
+import { logout, getNodes } from '../lib/api'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
 import Scripts from './Scripts'
 import Themes from './Themes'
+import Nodes from './Nodes'
 
 // --- helpers ---
 function fmtBytes(n) {
@@ -88,6 +89,15 @@ function IconCpu() {
       <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
       <line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/>
       <line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>
+    </svg>
+  )
+}
+
+function IconNetwork() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/>
+      <path d="M12 8v4M12 12H5v4M12 12h7v4"/>
     </svg>
   )
 }
@@ -231,8 +241,22 @@ function GuestRow({ item, type }) {
 
 // --- main ---
 export default function Dashboard({ onLogout, theme, setTheme }) {
-  const [view, setView] = useState('dashboard') // 'dashboard' | 'scripts' | 'themes'
-  const { nodes, connected, pulseKey } = useResourceStream()
+  const [view, setView] = useState('dashboard') // 'dashboard' | 'scripts' | 'themes' | 'nodes'
+  const [pairedNodes, setPairedNodes] = useState([])
+  const [activeNode, setActiveNode] = useState(null) // null = local host
+
+  const refreshNodes = useCallback(() => {
+    getNodes().then(setPairedNodes).catch(() => setPairedNodes([]))
+  }, [])
+  useEffect(() => { refreshNodes() }, [refreshNodes])
+
+  // If the active node was just removed, fall back to local.
+  useEffect(() => {
+    if (activeNode && !pairedNodes.some(n => n.id === activeNode)) setActiveNode(null)
+  }, [pairedNodes, activeNode])
+
+  const { nodes, connected, pulseKey, unreachable } = useResourceStream(activeNode)
+  const activeAddr = pairedNodes.find(n => n.id === activeNode)?.address
 
   const totalNodes = nodes?.length ?? 0
   const onlineNodes = nodes?.filter(n => n.status === 'online').length ?? 0
@@ -261,9 +285,26 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           </div>
         </div>
 
+        {/* Node selector — points the dashboard/scripts/updates views at the
+            local host or a paired secondary (main proxies the latter). */}
+        <div className="px-3 mb-4">
+          <label className="block text-[10px] uppercase tracking-wider text-gray-600 mb-1.5">Viewing</label>
+          <select
+            value={activeNode ?? ''}
+            onChange={e => setActiveNode(e.target.value || null)}
+            className="w-full bg-[#0c0c14] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50"
+          >
+            <option value="">This host (local)</option>
+            {pairedNodes.map(n => (
+              <option key={n.id} value={n.id}>{n.address}</option>
+            ))}
+          </select>
+        </div>
+
         <nav className="flex-1 px-2 space-y-0.5">
           <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
           <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => setView('scripts')} />
+          <NavItem icon={<IconNetwork />} label="Nodes" active={view === 'nodes'} onClick={() => setView('nodes')} />
           <NavItem icon={<IconPalette />} label="Themes" active={view === 'themes'} onClick={() => setView('themes')} />
         </nav>
 
@@ -283,13 +324,23 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           </header>
           <Themes theme={theme} setTheme={setTheme} />
         </>
+      ) : view === 'nodes' ? (
+        <>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
+            <h1 className="text-base font-semibold">Nodes</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Pair and manage secondary agents</p>
+          </header>
+          <Nodes nodes={pairedNodes} onChange={refreshNodes} />
+        </>
       ) : view === 'scripts' ? (
         <>
           <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
             <h1 className="text-base font-semibold">Script Catalog</h1>
-            <p className="text-xs text-gray-500 mt-0.5">One-click community-scripts installs</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {activeAddr ? `Running on ${activeAddr}` : 'One-click community-scripts installs'}
+            </p>
           </header>
-          <Scripts />
+          <Scripts node={activeNode} />
         </>
       ) : (
         <>
@@ -298,15 +349,29 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-base font-semibold">Node Overview</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Live Proxmox resource usage</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {activeAddr ? `Live resource usage — ${activeAddr}` : 'Live Proxmox resource usage'}
+            </p>
           </div>
           <div className="flex items-center gap-2.5">
             <StatusDot pulseKey={pulseKey} connected={connected} />
-            <span className="text-xs text-gray-500">{connected ? 'Live' : 'Reconnecting…'}</span>
+            <span className="text-xs text-gray-500">
+              {unreachable ? 'Unreachable' : connected ? 'Live' : 'Reconnecting…'}
+            </span>
           </div>
         </header>
 
         <main className="p-8 space-y-6 max-w-6xl">
+
+          {/* Unreachable secondary — degraded state (M2 "Proxmox unavailable" pattern). */}
+          {unreachable && (
+            <div className="bg-red-500/10 border border-red-500/25 rounded-2xl px-6 py-4">
+              <p className="text-sm text-red-300 font-medium">Node unreachable</p>
+              <p className="text-xs text-red-400/70 mt-0.5">
+                Can't reach {activeAddr} — the agent may be down or the network is interrupted. Retrying every 3s.
+              </p>
+            </div>
+          )}
 
           {/* Stat cards */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
@@ -353,7 +418,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           )}
 
           {/* Updates */}
-          <Updates />
+          <Updates node={activeNode} />
 
         </main>
         </>

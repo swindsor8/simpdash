@@ -38,6 +38,11 @@ type Config struct {
 	SessionSecret string         `yaml:"session_secret,omitempty"`
 	Proxmox       *ProxmoxConfig `yaml:"proxmox,omitempty"`
 	PairedNodes   []PairedNode   `yaml:"paired_nodes,omitempty"`
+
+	// AgentToken is the permanent bearer credential a secondary issues to main
+	// on pairing (Milestone 5). Empty until paired; once set, the agent is paired
+	// and stops advertising a pairing code. Secondary mode only.
+	AgentToken string `yaml:"agent_token,omitempty"`
 }
 
 // ProxmoxConfig holds Proxmox VE API credentials (populated in Milestone 2).

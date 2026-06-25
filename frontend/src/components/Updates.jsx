@@ -16,17 +16,17 @@ function IconRefresh({ spinning }) {
   )
 }
 
-export default function Updates() {
+export default function Updates({ node = null }) {
   const [checkState, setCheckState] = useState('idle') // idle | checking | done
   const [packages, setPackages] = useState(null)
   const [jobId, setJobId] = useState(null)
   const [startErr, setStartErr] = useState(null)
-  const { output, state: jobState } = useJobStream(jobId)
+  const { output, state: jobState } = useJobStream(jobId, node)
 
   async function handleCheck() {
     setCheckState('checking')
     try {
-      const data = await checkUpdates()
+      const data = await checkUpdates(node)
       setPackages(data.packages ?? [])
     } catch (e) {
       setPackages([])
@@ -39,7 +39,7 @@ export default function Updates() {
   async function handleUpgrade() {
     setStartErr(null)
     try {
-      const data = await applyUpdates()
+      const data = await applyUpdates(node)
       setJobId(data.job_id)
     } catch (e) {
       setStartErr(e.message)

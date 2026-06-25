@@ -109,24 +109,38 @@ preventing two root shells from racing.
 
 ## Secondary Node Pairing (Milestone 5)
 
-These run on the **secondary** agent's own API (different port/process from
-Main, but same binary):
+Same binary, run with `mode: secondary`. The agent has **no UI and no session
+auth**. On first boot (not yet paired) it prints a single-use, 15-minute
+pairing code + its detected address to the log / `systemctl status`. The
+pairing code IS the credential for `/agent/pair`; every other `/agent/*` route
+requires the permanent token via `Authorization: Bearer <token>`.
 
-| Method | Path           | Body                         | Notes |
-|--------|----------------|-------------------------------|-------|
-| GET    | `/agent/status`| —                             | `{ "paired": bool, "hostname": string }` |
-| POST   | `/agent/pair`  | `{ "pairing_code": string }`  | One-time use. Returns `{ "auth_token": string }` on success, 403 on bad/expired code. |
+These run on the **secondary** agent (port 7575 by default):
 
-These run on the **main** node, calling out to secondaries:
+| Method | Path                        | Auth | Notes |
+|--------|-----------------------------|------|-------|
+| POST   | `/agent/pair`               | `Authorization: Bearer <pairing-code>` | One-time use. Returns `{ "token": string }`; 401 on bad/expired/spent code. Persists the token and burns the code. |
+| GET    | `/agent/resources`          | Bearer token | Same snapshot shape as `/api/resources`. |
+| GET    | `/agent/updates/check`      | Bearer token | As `/api/updates/check`. |
+| POST   | `/agent/updates/apply`      | Bearer token | As `/api/updates/apply` → `{ "job_id": string }`. |
+| GET    | `/agent/catalog`            | Bearer token | As `/api/catalog`. |
+| POST   | `/agent/catalog/:slug/run`  | Bearer token | As `/api/catalog/:slug/run` → `{ "job_id": string }`. |
+| GET    | `/agent/jobs/:id`           | Bearer token | As `/api/jobs/:id`. |
+| WS     | `/agent/jobs/:id/stream`    | Bearer token (handshake header) | As `/api/jobs/:id/stream`. |
 
-| Method | Path                          | Body | Notes |
-|--------|-------------------------------|------|-------|
-| POST   | `/api/nodes/secondary`        | `{ "address": string, "pairing_code": string }` | Performs the pairing handshake, stores the returned token. |
-| GET    | `/api/nodes`                  | —    | Lists all known secondaries + their reachability. |
-| DELETE | `/api/nodes/:id`               | —    | Unpair / forget a secondary. |
+These run on the **main** node (session-gated like the rest of `/api`):
 
-Commands to secondaries (run update, run script) get proxied through Main's
-existing `/api/updates/*` and `/api/catalog/*` routes with a `?node=<id>`
-query param — frontend doesn't need a separate code path per node, Main's
-backend just forwards the executor call over the secondary's authenticated
-agent API instead of running it locally.
+| Method | Path                  | Body | Notes |
+|--------|-----------------------|------|-------|
+| GET    | `/api/nodes`          | —    | Lists paired secondaries: `[{ "id": string, "address": string }]`. The stored token is **never** returned. |
+| POST   | `/api/nodes/pair`     | `{ "address": string, "code": string }` | Main calls the secondary's `/agent/pair`, stores the returned token + address, returns `{ "id": string, "address": string }`. 502 if unreachable, 400 if the code is rejected. |
+| DELETE | `/api/nodes/:id`      | —    | Unpair / forget a secondary. |
+
+**Proxying.** Anything under `/api/nodes/:id/<rest>` is forwarded to the
+secondary's `/agent/<rest>` with the stored bearer token, so the same
+dashboard / scripts / updates views work against a secondary just by changing
+the path prefix (e.g. `/api/nodes/:id/resources`, `/api/nodes/:id/catalog`,
+`/api/nodes/:id/jobs/:jid/stream`). The browser never talks to a secondary
+directly — live job output is relayed through Main over its own WS. An
+unreachable node returns **502** with `{ "error": "node unreachable" }` rather
+than hanging (the M2 degraded-state pattern).

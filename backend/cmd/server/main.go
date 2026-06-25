@@ -5,8 +5,10 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"flag"
+	"fmt"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -56,7 +58,6 @@ func main() {
 		px.SetCreds(cfg.Proxmox.Host, cfg.Proxmox.TokenID, cfg.Proxmox.Secret)
 	}
 	poller := api.NewPoller(px, 3*time.Second)
-	go poller.Run(context.Background())
 
 	cat, err := catalog.Load()
 	if err != nil {
@@ -66,6 +67,15 @@ func main() {
 	exec := executor.New()
 	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, cat)
 	mux := http.NewServeMux()
+
+	// Secondary (agent) mode: no UI, no sessions — just the bearer-gated agent
+	// API and a pairing code advertised until main pairs with this node.
+	if cfg.Mode == "secondary" {
+		runAgent(srv, mux, cfg, *cfgPath, px)
+		return
+	}
+
+	go poller.Run(context.Background())
 	srv.Routes(mux)
 
 	sub, err := fs.Sub(web.DistFS, "dist")
@@ -90,4 +100,56 @@ func main() {
 
 	log.Printf("SimpDash listening on %s", cfg.ListenAddr)
 	log.Fatal(http.ListenAndServe(cfg.ListenAddr, mux))
+}
+
+// runAgent serves the secondary-node agent API and blocks. On first boot (not
+// yet paired) it advertises a single-use pairing code + this node's address so
+// the admin can read it off `systemctl status` / journal and enter it on main.
+func runAgent(srv *api.Server, mux *http.ServeMux, cfg *config.Config, cfgPath string, px *proxmox.Client) {
+	srv.AgentRoutes(mux)
+
+	// The agent reports this host's own PVE resources, so provision its token
+	// the same way main does at onboarding (best-effort; degraded without PVE).
+	if cfg.Proxmox == nil || cfg.Proxmox.TokenID == "" {
+		if err := proxmox.Provision(cfg, cfgPath); err != nil {
+			log.Printf("agent proxmox provisioning failed (resources degraded): %v", err)
+		} else if cfg.Proxmox != nil {
+			px.SetCreds(cfg.Proxmox.Host, cfg.Proxmox.TokenID, cfg.Proxmox.Secret)
+			log.Printf("agent proxmox token provisioned: %s", cfg.Proxmox.TokenID)
+		}
+	}
+
+	if cfg.AgentToken == "" {
+		code := srv.NewPairingCode()
+		addr := fmt.Sprintf("%s:%s", detectIP(), portOf(cfg.ListenAddr))
+		log.Printf("=========================================================")
+		log.Printf("  SECONDARY NODE NOT YET PAIRED")
+		log.Printf("  Pairing code:  %s   (valid 15 min, single use)", code)
+		log.Printf("  Node address:  %s", addr)
+		log.Printf("  On the main SimpDash: Nodes -> Add node, enter the above.")
+		log.Printf("=========================================================")
+	} else {
+		log.Printf("secondary already paired; agent API ready")
+	}
+
+	log.Printf("SimpDash agent listening on %s", cfg.ListenAddr)
+	log.Fatal(http.ListenAndServe(cfg.ListenAddr, mux))
+}
+
+// detectIP returns the host's primary outbound IP (the source address chosen to
+// reach the LAN/gateway). No packets are sent — UDP "connect" only picks a route.
+func detectIP() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "127.0.0.1"
+	}
+	defer conn.Close()
+	return conn.LocalAddr().(*net.UDPAddr).IP.String()
+}
+
+func portOf(listenAddr string) string {
+	if _, p, err := net.SplitHostPort(listenAddr); err == nil && p != "" {
+		return p
+	}
+	return "7575"
 }

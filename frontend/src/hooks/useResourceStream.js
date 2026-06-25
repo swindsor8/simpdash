@@ -1,19 +1,56 @@
 import { useEffect, useRef, useState } from 'react'
+import { nodeBase } from '../lib/api'
 
-// Connects to the live resource WebSocket and returns the latest nodes plus a
-// pulseKey that increments on every update (drives the StatusDot pulse), and a
-// connected flag. Auto-reconnects on drop. The browser sends the session cookie
-// with the WS handshake automatically, so no token plumbing here.
-export function useResourceStream() {
+// Returns the latest nodes for the selected target, a pulseKey that increments
+// on every update (drives the StatusDot pulse), a `connected` flag, and an
+// `unreachable` flag for paired secondaries that can't be reached.
+//
+// Local host (node=null): live WebSocket, auto-reconnecting. The browser sends
+// the session cookie with the handshake automatically.
+//
+// Paired secondary (node=id): main has to proxy, and relaying a second live WS
+// per node is more plumbing than it's worth — we poll the proxied one-shot
+// /resources every 3s instead. A failed poll surfaces as `unreachable` so the
+// UI degrades clearly (the M2 "Proxmox unavailable" pattern) rather than hanging.
+export function useResourceStream(node) {
   const [nodes, setNodes] = useState(null) // null = haven't received first frame
   const [connected, setConnected] = useState(false)
+  const [unreachable, setUnreachable] = useState(false)
   const [pulseKey, setPulseKey] = useState(0)
   const wsRef = useRef(null)
 
   useEffect(() => {
+    setNodes(null)
+    setConnected(false)
+    setUnreachable(false)
+
+    // --- secondary: poll the proxied snapshot ---
+    if (node) {
+      let stopped = false
+      async function poll() {
+        try {
+          const r = await fetch(`${nodeBase(node)}/resources`, { credentials: 'same-origin' })
+          if (!r.ok) throw new Error('unreachable')
+          const snap = await r.json()
+          if (stopped) return
+          setNodes(snap.nodes ?? [])
+          setConnected(true)
+          setUnreachable(false)
+          setPulseKey((k) => k + 1)
+        } catch {
+          if (stopped) return
+          setConnected(false)
+          setUnreachable(true)
+        }
+      }
+      poll()
+      const t = setInterval(poll, 3000)
+      return () => { stopped = true; clearInterval(t) }
+    }
+
+    // --- local: live WebSocket ---
     let closed = false
     let retry
-
     function connect() {
       const proto = location.protocol === 'https:' ? 'wss' : 'ws'
       const ws = new WebSocket(`${proto}://${location.host}/api/resources/stream`)
@@ -42,7 +79,7 @@ export function useResourceStream() {
       clearTimeout(retry)
       wsRef.current?.close()
     }
-  }, [])
+  }, [node])
 
-  return { nodes, connected, pulseKey }
+  return { nodes, connected, pulseKey, unreachable }
 }
