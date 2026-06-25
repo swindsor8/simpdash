@@ -147,3 +147,15 @@ the path prefix (e.g. `/api/nodes/:id/resources`, `/api/nodes/:id/catalog`,
 directly — live job output is relayed through Main over its own WS. An
 unreachable node returns **502** with `{ "error": "node unreachable" }` rather
 than hanging (the M2 degraded-state pattern).
+
+## Version & Update Check (Milestone 7)
+
+Session-gated like the rest of `/api`. The running version is embedded at
+release time via `-ldflags "-X main.version=$(git describe --tags --always)"`;
+local builds report `"dev"`.
+
+| Method | Path                | Notes |
+|--------|---------------------|-------|
+| GET    | `/api/version`      | `{ "version": string }` — the running build's version. |
+| GET    | `/api/update-check` | `{ "current_version": string, "latest_version": string, "update_available": bool }`. Compares the embedded version against the latest GitHub release (`tag_name`), cached ~24h. On any GitHub error it returns the current version with `latest_version: ""` and `update_available: false` — an update check never breaks the dashboard. A `"dev"` (non-release) build never reports an update available. |
+

@@ -35,6 +35,13 @@ export async function getMe() {
   return r.ok
 }
 
+// getUpdateCheck → { current_version, latest_version, update_available }.
+export async function getUpdateCheck() {
+  const r = await fetch(`${BASE}/update-check`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
 // The data helpers below take an optional `node` (paired node id, or null for
 // the local host) so the same dashboard/scripts/updates views can target a
 // secondary — main proxies the request.

@@ -5,6 +5,7 @@ import Updates from './Updates'
 import Scripts from './Scripts'
 import Themes from './Themes'
 import Nodes from './Nodes'
+import UpdateBanner from './UpdateBanner'
 
 // --- helpers ---
 function fmtBytes(n) {
@@ -376,6 +377,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
+
+      <UpdateBanner />
 
       {view === 'themes' ? (
         <>

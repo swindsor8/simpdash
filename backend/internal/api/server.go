@@ -18,6 +18,7 @@ import (
 	"simpdash/internal/executor"
 	"simpdash/internal/proxmox"
 	"simpdash/internal/store"
+	"simpdash/internal/update"
 )
 
 const (
@@ -34,6 +35,7 @@ type Server struct {
 	exec    *executor.Executor
 	db      *store.DB
 	catalog *catalog.Catalog
+	update  *update.Checker
 
 	// secretMu guards cfg.SessionSecret, read on every authenticated request
 	// (validSession) and written by logout (rotateSecret).
@@ -54,7 +56,7 @@ type Server struct {
 	loginLimiter *limiter
 }
 
-func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, cat *catalog.Catalog) *Server {
+func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, cat *catalog.Catalog, version string) *Server {
 	host, _ := os.Hostname()
 	s := &Server{
 		cfg:          cfg,
@@ -64,6 +66,7 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		exec:         exec,
 		db:           db,
 		catalog:      cat,
+		update:       update.New(version),
 		agent:        &agentPairing{},
 		selfNode:     host,
 		loginLimiter: newLimiter(5, time.Minute),
@@ -103,6 +106,8 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/auth/login", methodGate(http.MethodPost, s.Login))
 	mux.HandleFunc("/api/auth/logout", methodGate(http.MethodPost, s.Logout))
 	mux.HandleFunc("/api/auth/me", methodGate(http.MethodGet, s.Me))
+	mux.HandleFunc("/api/version", methodGate(http.MethodGet, s.requireAuth(s.Version)))
+	mux.HandleFunc("/api/update-check", methodGate(http.MethodGet, s.requireAuth(s.UpdateCheck)))
 	mux.HandleFunc("/api/resources", methodGate(http.MethodGet, s.requireAuth(s.Resources)))
 	mux.HandleFunc("/api/resources/stream", s.ResourcesStream)
 	mux.HandleFunc("/api/updates/check", methodGate(http.MethodGet, s.requireAuth(s.UpdatesCheck)))

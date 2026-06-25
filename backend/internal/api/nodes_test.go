@@ -32,7 +32,7 @@ func testServer(t *testing.T, cfg *config.Config) *Server {
 		t.Fatalf("load catalog: %v", err)
 	}
 	px := proxmox.NewClient()
-	return NewServer(cfg, filepath.Join(dir, "config.yaml"), px, NewPoller(px, time.Second), executor.New(), db, cat)
+	return NewServer(cfg, filepath.Join(dir, "config.yaml"), px, NewPoller(px, time.Second), executor.New(), db, cat, "dev")
 }
 
 func postJSON(t *testing.T, url, body string, cookie *http.Cookie) *http.Response {

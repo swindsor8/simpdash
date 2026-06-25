@@ -19,18 +19,21 @@ function IconRefresh({ spinning }) {
 export default function Updates({ node = null }) {
   const [checkState, setCheckState] = useState('idle') // idle | checking | done
   const [packages, setPackages] = useState(null)
+  const [checkErr, setCheckErr] = useState(null)
   const [jobId, setJobId] = useState(null)
   const [startErr, setStartErr] = useState(null)
   const { output, state: jobState } = useJobStream(jobId, node)
 
   async function handleCheck() {
     setCheckState('checking')
+    setCheckErr(null)
     try {
       const data = await checkUpdates(node)
       setPackages(data.packages ?? [])
     } catch (e) {
-      setPackages([])
-      console.error('check updates:', e)
+      // Don't fake "up to date" on a failed check — say the check failed.
+      setPackages(null)
+      setCheckErr(e.message)
     } finally {
       setCheckState('done')
     }
@@ -66,6 +69,13 @@ export default function Updates({ node = null }) {
           {checkState === 'checking' ? 'Checking…' : 'Check for updates'}
         </button>
       </div>
+
+      {/* Check failed — surfaced honestly instead of a false "up to date". */}
+      {checkErr && (
+        <div className="px-6 py-4 border-b border-white/[0.06]">
+          <p className="text-sm text-red-400">Couldn't check for updates: {checkErr}</p>
+        </div>
+      )}
 
       {/* Package list */}
       {packages !== null && (
@@ -139,7 +149,7 @@ export default function Updates({ node = null }) {
       )}
 
       {/* Empty state */}
-      {packages === null && (
+      {packages === null && !checkErr && (
         <div className="px-6 py-8 text-center">
           <p className="text-sm text-gray-600">Click "Check for updates" to scan for available apt packages.</p>
         </div>

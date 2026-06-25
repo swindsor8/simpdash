@@ -25,6 +25,11 @@ import (
 	"simpdash/web"
 )
 
+// version is the running build's version, injected at release time via
+// -ldflags "-X main.version=$(git describe --tags --always)". "dev" for local
+// builds — which the update checker treats as "never offer an update".
+var version = "dev"
+
 func main() {
 	cfgPath := flag.String("config", "/etc/homelab-dash/config.yaml", "path to config file")
 	flag.Parse()
@@ -65,7 +70,7 @@ func main() {
 	}
 
 	exec := executor.New()
-	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, cat)
+	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, cat, version)
 	mux := http.NewServeMux()
 
 	// Secondary (agent) mode: no UI, no sessions — just the bearer-gated agent

@@ -1,0 +1,48 @@
+name: release
+
+# Push a tag like v0.6.0 to cut a release: build the frontend, embed it, cross-
+# compile the binary for linux/amd64 + arm64, and attach them to a GitHub Release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # create the release + upload assets
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build   # outputs to backend/web/dist (embedded via go:embed)
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Cross-compile
+        working-directory: backend
+        env:
+          CGO_ENABLED: '0'
+          GOOS: linux
+        run: |
+          for arch in amd64 arm64; do
+            GOARCH=$arch go build \
+              -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" \
+              -o ../simpdash-linux-$arch ./cmd/server
+          done
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            simpdash-linux-amd64 simpdash-linux-arm64 \
+            --title "$GITHUB_REF_NAME" --generate-notes
