@@ -24,17 +24,23 @@ export default function SetupPassword({ onDone }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0c0c14] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-3xl font-bold text-white mb-1">SimpDash</h1>
-        <p className="text-gray-500 mb-8 text-sm">Set an admin password to get started.</p>
+        <div className="flex items-center gap-2.5 mb-8">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-sm font-bold text-white">S</span>
+          </div>
+          <span className="font-semibold text-white">SimpDash</span>
+        </div>
+        <h1 className="text-2xl font-bold text-white mb-1">Set up your dashboard</h1>
+        <p className="text-gray-500 mb-7 text-sm">Choose an admin password to get started.</p>
         <form onSubmit={submit} className="space-y-3">
           <input
             type="password"
             placeholder="Password"
             value={pw}
             onChange={e => setPw(e.target.value)}
-            className="w-full bg-gray-900 text-white border border-gray-800 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 placeholder-gray-600 text-sm"
+            className="w-full bg-[#13131e] text-white border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500/60 placeholder-gray-600 text-sm transition-colors"
             autoFocus
             required
           />
@@ -43,14 +49,14 @@ export default function SetupPassword({ onDone }) {
             placeholder="Confirm password"
             value={confirm}
             onChange={e => setConfirm(e.target.value)}
-            className="w-full bg-gray-900 text-white border border-gray-800 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 placeholder-gray-600 text-sm"
+            className="w-full bg-[#13131e] text-white border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500/60 placeholder-gray-600 text-sm transition-colors"
             required
           />
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-lg transition-colors text-sm"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-3 rounded-xl transition-colors text-sm"
           >
             {loading ? 'Setting up…' : 'Set password'}
           </button>

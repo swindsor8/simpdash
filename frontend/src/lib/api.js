@@ -51,3 +51,13 @@ export async function getJobs() {
   if (!r.ok) throw new Error(await r.text())
   return r.json()
 }
+
+export async function getCatalog() {
+  const r = await fetch(`${BASE}/catalog`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+export function runScript(slug) {
+  return post(`/catalog/${encodeURIComponent(slug)}/run`)
+}

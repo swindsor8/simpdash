@@ -1,17 +1,27 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { checkUpdates, applyUpdates } from '../lib/api'
+import { useJobStream } from '../hooks/useJobStream'
+import Terminal from './Terminal'
+
+function IconRefresh({ spinning }) {
+  return (
+    <svg
+      width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className={spinning ? 'animate-spin' : ''}
+    >
+      <polyline points="1 4 1 10 7 10"/>
+      <path d="M3.51 15a9 9 0 1 0 .49-4"/>
+    </svg>
+  )
+}
 
 export default function Updates() {
   const [checkState, setCheckState] = useState('idle') // idle | checking | done
-  const [packages, setPackages] = useState(null) // null = not checked yet
-  const [jobState, setJobState] = useState('idle') // idle | running | succeeded | failed
-  const [output, setOutput] = useState([])
-  const termRef = useRef(null)
-
-  // Auto-scroll terminal to bottom on new output.
-  useEffect(() => {
-    if (termRef.current) termRef.current.scrollTop = termRef.current.scrollHeight
-  }, [output])
+  const [packages, setPackages] = useState(null)
+  const [jobId, setJobId] = useState(null)
+  const [startErr, setStartErr] = useState(null)
+  const { output, state: jobState } = useJobStream(jobId)
 
   async function handleCheck() {
     setCheckState('checking')
@@ -27,112 +37,114 @@ export default function Updates() {
   }
 
   async function handleUpgrade() {
-    setJobState('running')
-    setOutput([])
-    let jobId
+    setStartErr(null)
     try {
       const data = await applyUpdates()
-      jobId = data.job_id
+      setJobId(data.job_id)
     } catch (e) {
-      // 409 or other error
-      setOutput([{ type: 'stderr', line: e.message }])
-      setJobState('failed')
-      return
-    }
-
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-    const ws = new WebSocket(`${proto}://${location.host}/api/jobs/${jobId}/stream`)
-
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data)
-        if (msg.type === 'done') {
-          setJobState(msg.exit_code === 0 ? 'succeeded' : 'failed')
-        } else {
-          setOutput(prev => [...prev, msg])
-        }
-      } catch { /* ignore malformed frame */ }
-    }
-    ws.onerror = () => {
-      setOutput(prev => [...prev, { type: 'stderr', line: '[stream error]' }])
-      setJobState('failed')
-    }
-    ws.onclose = () => {
-      // If still running when socket closes, mark failed.
-      setJobState(prev => prev === 'running' ? 'failed' : prev)
+      setStartErr(e.message)
     }
   }
 
   const busy = jobState === 'running'
-  const hasPackages = packages !== null
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-gray-300">System Updates</h2>
+    <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
+
+      {/* Card header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+        <div>
+          <h2 className="text-sm font-semibold text-white">System Updates</h2>
+          <p className="text-xs text-gray-500 mt-0.5">apt package upgrades</p>
+        </div>
         <button
           onClick={handleCheck}
           disabled={checkState === 'checking' || busy}
-          className="text-xs px-3 py-1.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-40 transition-colors"
+          className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 disabled:opacity-40 transition-colors"
         >
+          <IconRefresh spinning={checkState === 'checking'} />
           {checkState === 'checking' ? 'Checking…' : 'Check for updates'}
         </button>
       </div>
 
-      {hasPackages && (
-        <>
+      {/* Package list */}
+      {packages !== null && (
+        <div className="px-6 py-4 border-b border-white/[0.06]">
           {packages.length === 0 ? (
-            <p className="text-sm text-gray-500 mb-4">System is up to date.</p>
+            <p className="text-sm text-gray-500 py-2">System is up to date.</p>
           ) : (
-            <div className="mb-4">
-              <p className="text-sm text-gray-400 mb-2">
-                <span className="text-white font-medium">{packages.length}</span> package{packages.length !== 1 ? 's' : ''} available
-              </p>
-              <div className="max-h-28 overflow-y-auto space-y-0.5">
-                {packages.map(pkg => (
-                  <div key={pkg} className="text-xs text-gray-500 font-mono">{pkg}</div>
-                ))}
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm text-gray-400">
+                  <span className="text-white font-semibold">{packages.length}</span>
+                  {' '}package{packages.length !== 1 ? 's' : ''} available
+                </p>
+                {!busy && jobState !== 'succeeded' && (
+                  <button
+                    onClick={handleUpgrade}
+                    className="text-xs px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+                  >
+                    Apply updates
+                  </button>
+                )}
+                {busy && (
+                  <span className="text-xs px-4 py-1.5 rounded-lg bg-white/8 text-gray-400">
+                    Upgrading…
+                  </span>
+                )}
+                {jobState === 'succeeded' && (
+                  <span className="text-xs px-4 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 font-medium">
+                    Done
+                  </span>
+                )}
               </div>
-            </div>
-          )}
 
-          {packages.length > 0 && (
-            <button
-              onClick={handleUpgrade}
-              disabled={busy || jobState === 'succeeded'}
-              className={`text-sm px-4 py-2 rounded-lg font-medium transition-colors mb-4 ${
-                busy
-                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : jobState === 'succeeded'
-                  ? 'bg-green-900/50 text-green-400 cursor-default'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {busy ? 'Upgrading…' : jobState === 'succeeded' ? 'Done' : 'Apply updates'}
-            </button>
-          )}
-        </>
-      )}
-
-      {output.length > 0 && (
-        <div
-          ref={termRef}
-          className="bg-gray-950 border border-gray-800 rounded-lg p-3 h-56 overflow-y-auto font-mono text-xs leading-relaxed"
-        >
-          {output.map((line, i) => (
-            <div key={i} className={line.type === 'stderr' ? 'text-yellow-500' : 'text-gray-300'}>
-              {line.line}
-            </div>
-          ))}
-          {busy && (
-            <div className="text-gray-600 animate-pulse">▌</div>
+              {/* Package table */}
+              <div className="border border-white/[0.06] rounded-xl overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-white/[0.06]">
+                      <th className="text-left text-xs text-gray-600 font-medium px-4 py-2.5">#</th>
+                      <th className="text-left text-xs text-gray-600 font-medium px-4 py-2.5">Package</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {packages.slice(0, 8).map((pkg, i) => (
+                      <tr key={pkg} className="border-t border-white/[0.04]">
+                        <td className="px-4 py-2.5 text-xs text-gray-600 tabular-nums w-10">{i + 1}</td>
+                        <td className="px-4 py-2.5 text-sm text-gray-300 font-mono">{pkg}</td>
+                      </tr>
+                    ))}
+                    {packages.length > 8 && (
+                      <tr className="border-t border-white/[0.04]">
+                        <td colSpan={2} className="px-4 py-2.5 text-xs text-gray-600 text-center">
+                          +{packages.length - 8} more packages
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
 
-      {jobState === 'failed' && output.length > 0 && (
-        <p className="text-xs text-red-400 mt-2">Job exited with errors.</p>
+      {/* Terminal output */}
+      {(output.length > 0 || startErr) && (
+        <div className="px-6 py-4">
+          {startErr && <p className="text-xs text-red-400 mb-2">{startErr}</p>}
+          <Terminal output={output} state={jobState} />
+        </div>
       )}
+
+      {/* Empty state */}
+      {packages === null && (
+        <div className="px-6 py-8 text-center">
+          <p className="text-sm text-gray-600">Click "Check for updates" to scan for available apt packages.</p>
+        </div>
+      )}
+
     </div>
   )
 }

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"simpdash/internal/api"
+	"simpdash/internal/catalog"
 	"simpdash/internal/config"
 	"simpdash/internal/executor"
 	"simpdash/internal/proxmox"
@@ -57,8 +58,13 @@ func main() {
 	poller := api.NewPoller(px, 3*time.Second)
 	go poller.Run(context.Background())
 
+	cat, err := catalog.Load()
+	if err != nil {
+		log.Fatalf("load script catalog: %v", err)
+	}
+
 	exec := executor.New()
-	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db)
+	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, cat)
 	mux := http.NewServeMux()
 	srv.Routes(mux)
 

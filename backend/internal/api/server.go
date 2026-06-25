@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"simpdash/internal/catalog"
 	"simpdash/internal/config"
 	"simpdash/internal/executor"
 	"simpdash/internal/proxmox"
@@ -31,6 +32,7 @@ type Server struct {
 	poller  *Poller
 	exec    *executor.Executor
 	db      *store.DB
+	catalog *catalog.Catalog
 
 	// secretMu guards cfg.SessionSecret, read on every authenticated request
 	// (validSession) and written by logout (rotateSecret).
@@ -39,7 +41,7 @@ type Server struct {
 	loginLimiter *limiter
 }
 
-func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB) *Server {
+func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, cat *catalog.Catalog) *Server {
 	return &Server{
 		cfg:          cfg,
 		cfgPath:      cfgPath,
@@ -47,6 +49,7 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		poller:       poller,
 		exec:         exec,
 		db:           db,
+		catalog:      cat,
 		loginLimiter: newLimiter(5, time.Minute),
 	}
 }
@@ -65,6 +68,23 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/jobs", methodGate(http.MethodGet, s.requireAuth(s.Jobs)))
 	// /api/jobs/ is a prefix match; the handler parses /:id and /:id/stream.
 	mux.HandleFunc("/api/jobs/", s.handleJobsPrefix)
+	mux.HandleFunc("/api/catalog", methodGate(http.MethodGet, s.requireAuth(s.Catalog)))
+	// /api/catalog/ is a prefix match; the handler parses /:slug/run.
+	mux.HandleFunc("/api/catalog/", s.handleCatalogPrefix)
+}
+
+// handleCatalogPrefix dispatches POST /api/catalog/:slug/run.
+func (s *Server) handleCatalogPrefix(w http.ResponseWriter, r *http.Request) {
+	tail := strings.TrimPrefix(r.URL.Path, "/api/catalog/")
+	parts := strings.SplitN(tail, "/", 2)
+	slug := parts[0]
+	if slug == "" || len(parts) != 2 || parts[1] != "run" {
+		http.NotFound(w, r)
+		return
+	}
+	methodGate(http.MethodPost, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
+		s.CatalogRun(w, r, slug)
+	}))(w, r)
 }
 
 // handleJobsPrefix dispatches /api/jobs/:id and /api/jobs/:id/stream.

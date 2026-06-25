@@ -1,0 +1,63 @@
+# Curated subset of community-scripts/ProxmoxVE (formerly tteck) install scripts.
+# script_url MUST be a raw URL from that repo — it is the only thing fed to the
+# shell, looked up server-side by id, never taken from the client. Keep this
+# list small and hand-vetted: every entry here is run as root on the host.
+- id: pihole
+  name: Pi-hole
+  description: Network-wide ad blocking via a local DNS sinkhole.
+  category: Networking
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/pihole.sh
+  warnings:
+    - Creates a new LXC
+    - Requires root
+
+- id: adguard
+  name: AdGuard Home
+  description: Network-wide ad & tracker blocking DNS server with a web UI.
+  category: Networking
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/adguard.sh
+  warnings:
+    - Creates a new LXC
+    - Requires root
+
+- id: nginxproxymanager
+  name: Nginx Proxy Manager
+  description: Reverse proxy with a web UI and free Let's Encrypt certificates.
+  category: Networking
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/nginxproxymanager.sh
+  warnings:
+    - Creates a new LXC
+    - Requires root
+
+- id: uptimekuma
+  name: Uptime Kuma
+  description: Self-hosted uptime monitoring with status pages and alerts.
+  category: Monitoring
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/uptimekuma.sh
+  warnings:
+    - Creates a new LXC
+
+- id: jellyfin
+  name: Jellyfin
+  description: Free software media server for streaming your own movies and shows.
+  category: Media
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/jellyfin.sh
+  warnings:
+    - Creates a new LXC
+
+- id: docker
+  name: Docker
+  description: Docker Engine LXC, optionally with Portainer for container management.
+  category: Management
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/docker.sh
+  warnings:
+    - Creates a new LXC
+
+- id: haos
+  name: Home Assistant OS
+  description: Full Home Assistant OS appliance for smart-home automation.
+  category: Home Automation
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/haos-vm.sh
+  warnings:
+    - Creates a new VM
+    - Requires root
