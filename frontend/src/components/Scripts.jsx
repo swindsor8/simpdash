@@ -36,12 +36,16 @@ function fmtRam(mb) {
 }
 
 function TypeBadge({ type }) {
-  const isVm = type === 'vm'
+  const styles = {
+    vm:  'bg-purple-500/15 text-purple-300',
+    pve: 'bg-orange-500/15 text-orange-300',
+  }
+  const labels = { vm: 'VM', pve: 'PVE' }
   return (
     <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
-      isVm ? 'bg-purple-500/15 text-purple-300' : 'bg-blue-500/15 text-blue-300'
+      styles[type] ?? 'bg-blue-500/15 text-blue-300'
     }`}>
-      {isVm ? 'VM' : 'LXC'}
+      {labels[type] ?? 'LXC'}
     </span>
   )
 }
@@ -75,7 +79,7 @@ function ScriptCard({ script, disabled, onRun }) {
         disabled={disabled}
         className="text-xs px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed self-start"
       >
-        Install
+        {script.type === 'pve' ? 'Run' : 'Install'}
       </button>
     </div>
   )
@@ -103,7 +107,7 @@ function ConfirmDialog({ script, onCancel, onConfirm }) {
         className="bg-[#13131e] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-base font-semibold text-white mb-1">Install {script.name}?</h2>
+        <h2 className="text-base font-semibold text-white mb-1">{script.type === 'pve' ? 'Run' : 'Install'} {script.name}?</h2>
         <p className="text-xs text-gray-500 mb-4">{script.description}</p>
 
         {creates.length > 0 && (
@@ -139,7 +143,7 @@ function ConfirmDialog({ script, onCancel, onConfirm }) {
             onClick={onConfirm}
             className="text-xs px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
           >
-            Yes, install
+            {script.type === 'pve' ? 'Yes, run' : 'Yes, install'}
           </button>
         </div>
       </div>

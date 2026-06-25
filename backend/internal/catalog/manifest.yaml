@@ -96,3 +96,217 @@
     disk_gb: 32
   warnings:
     - Creates a new VM
+
+# ── Proxmox & Virtualization — PVE host management tools ────────────────────
+
+- id: post-pve-install
+  name: PVE Post Install
+  type: pve
+  description: Manages PVE repos (disable Enterprise, add/correct community), enables no-subscription updates, and applies optional post-install tweaks.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pve-install.sh
+  warnings:
+    - Modifies APT repositories
+    - Runs as root on the Proxmox host
+
+- id: pve-kernel-clean
+  name: PVE Kernel Clean
+  type: pve
+  description: Removes unused kernel images to free disk space and shorten the GRUB menu.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/kernel-clean.sh
+  warnings:
+    - Runs as root on the Proxmox host
+
+- id: pve-kernel-pin
+  name: PVE Kernel Pin
+  type: pve
+  description: Pin or unpin a specific kernel version to prevent unintended upgrades.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/kernel-pin.sh
+  warnings:
+    - Runs as root on the Proxmox host
+
+- id: pve-clean-orphaned-lvm
+  name: PVE Clean Orphaned LVM
+  type: pve
+  description: Identifies and removes LVM volumes no longer associated with any VM or LXC container.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/clean-orphaned-lvm.sh
+  warnings:
+    - Deletes storage volumes permanently
+    - Runs as root on the Proxmox host
+
+- id: pve-lxc-delete
+  name: PVE LXC Deletion
+  type: pve
+  description: Lists all LXC containers and lets you select one to stop and delete.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/lxc-delete.sh
+  warnings:
+    - Permanently deletes LXC containers
+    - Runs as root on the Proxmox host
+
+- id: pve-lxc-execute
+  name: PVE LXC Execute Command
+  type: pve
+  description: Execute a custom command inside one or multiple LXC containers on the node.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/execute.sh
+  warnings:
+    - Runs as root on the Proxmox host
+
+- id: pve-fstrim
+  name: PVE LXC Filesystem Trim
+  type: pve
+  description: Runs fstrim on all LXC containers to maintain SSD performance and reclaim thin-provisioned storage.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/fstrim.sh
+  warnings:
+    - Runs as root on the Proxmox host
+
+- id: pve-lxc-tag
+  name: PVE LXC Tag
+  type: pve
+  description: Installs a systemd service that automatically tags LXC containers and VMs with their IP addresses.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/add-iptag.sh
+  warnings:
+    - Installs a systemd service
+    - Runs as root on the Proxmox host
+
+- id: pve-update-lxcs
+  name: PVE LXC Updater
+  type: pve
+  description: Updates the OS inside all LXC containers on the node in one pass.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/update-lxcs.sh
+  warnings:
+    - Runs as root on the Proxmox host
+
+- id: pve-cron-update-lxcs
+  name: PVE Cron LXC Updater
+  type: pve
+  description: Adds or removes a cron job that updates all LXC containers every Sunday at midnight.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/cron-update-lxcs.sh
+  warnings:
+    - Modifies root crontab
+    - Runs as root on the Proxmox host
+
+- id: pve-monitor-all
+  name: PVE Monitor-All
+  type: pve
+  description: Installs Monitor-All to watch all VMs and containers and restart them automatically if they stop.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/monitor-all.sh
+  warnings:
+    - Installs a systemd service
+    - Runs as root on the Proxmox host
+
+- id: pve-scaling-governor
+  name: PVE CPU Scaling Governor
+  type: pve
+  description: Set the CPU frequency scaling governor (performance, powersave, etc.) across all cores.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/scaling-governor.sh
+  warnings:
+    - Runs as root on the Proxmox host
+
+- id: pve-nic-offloading-fix
+  name: Intel e1000e NIC Offloading Fix
+  type: pve
+  description: Disables NIC offloading features for Intel e1000e adapters to fix network instability on Proxmox.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/nic-offloading-fix.sh
+  warnings:
+    - Modifies network interface settings
+    - Runs as root on the Proxmox host
+
+- id: pve-microcode
+  name: PVE Processor Microcode
+  type: pve
+  description: Installs or updates CPU microcode packages for AMD and Intel processors.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/microcode.sh
+  warnings:
+    - Requires reboot to take effect
+    - Runs as root on the Proxmox host
+
+- id: pve-host-backup
+  name: PVE Host Backup
+  type: pve
+  description: Backs up Proxmox host configuration files to a specified directory.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/host-backup.sh
+  warnings:
+    - Runs as root on the Proxmox host
+
+- id: pve-clean-lxcs
+  name: PVE LXC Cleaner
+  type: pve
+  description: Deletes logs and cache, and repopulates apt lists for Ubuntu and Debian LXC containers.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/clean-lxcs.sh
+  warnings:
+    - Runs as root on the Proxmox host
+
+- id: pve-privilege-converter
+  name: PVE Privilege Converter
+  type: pve
+  description: Converts LXC containers between privileged and unprivileged modes using vzdump backup and restore.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/pve-privilege-converter.sh
+  warnings:
+    - Recreates the container (backup + restore)
+    - Runs as root on the Proxmox host
+
+- id: pve-update-repo
+  name: PVE Update Repositories
+  type: pve
+  description: Updates APT repo links in LXC containers, replacing old tteck repo URLs with the current community-scripts URLs.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/update-repo.sh
+  warnings:
+    - Modifies APT sources in all LXCs
+    - Runs as root on the Proxmox host
+
+- id: post-pbs-install
+  name: PBS Post Install
+  type: pve
+  description: Manages PBS repos (disable Enterprise, add/correct community) and applies optional post-install tweaks for Proxmox Backup Server.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pbs-install.sh
+  warnings:
+    - Modifies APT repositories
+    - Runs as root on the Proxmox host
+
+- id: pbs4-upgrade
+  name: PBS 4 Upgrade
+  type: pve
+  description: Guides you through upgrading Proxmox Backup Server from 3.x (Debian 12 Bookworm) to 4.0 (Debian 13 Trixie).
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/pbs4-upgrade.sh
+  warnings:
+    - Major OS upgrade — irreversible
+    - Runs as root on the Proxmox host
+
+- id: post-pmg-install
+  name: PMG Post Install
+  type: pve
+  description: Manages PMG repos and applies optional post-install tweaks for Proxmox Mail Gateway.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/post-pmg-install.sh
+  warnings:
+    - Modifies APT repositories
+    - Runs as root on the Proxmox host
+
+- id: pbs-microcode
+  name: PBS Processor Microcode
+  type: pve
+  description: Installs or updates CPU microcode packages on a Proxmox Backup Server host.
+  category: Proxmox & Virtualization
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/pve/pbs_microcode.sh
+  warnings:
+    - Requires reboot to take effect
+    - Runs as root on the Proxmox host

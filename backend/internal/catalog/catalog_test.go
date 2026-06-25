@@ -12,8 +12,8 @@ func TestManifestLoads(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if n := len(c.All()); n < 5 || n > 10 {
-		t.Errorf("catalog size = %d, want 5..10", n)
+	if n := len(c.All()); n < 5 {
+		t.Errorf("catalog size = %d, want >= 5", n)
 	}
 	for _, s := range c.All() {
 		if !strings.HasPrefix(s.ScriptURL, "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/") {
