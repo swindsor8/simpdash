@@ -155,6 +155,26 @@ func TestPairProxyAndRelay(t *testing.T) {
 	r.Body.Close()
 }
 
+// Monitor-only detection: the local node and paired secondaries are managed;
+// a cluster-visible node with no agent is not.
+func TestManagedAnnotation(t *testing.T) {
+	srv := testServer(t, &config.Config{
+		Mode:        "main",
+		PairedNodes: []config.PairedNode{{ID: "a", Address: "10.0.0.2:7575", NodeName: "pve2"}},
+	})
+	srv.selfNode = "pve1" // deterministic; real value is os.Hostname()
+
+	snap := &proxmox.Snapshot{Nodes: []proxmox.Node{{ID: "pve1"}, {ID: "pve2"}, {ID: "pve3"}}}
+	annotateManaged(snap, srv.managedNodeNames())
+
+	want := map[string]bool{"pve1": true, "pve2": true, "pve3": false}
+	for _, n := range snap.Nodes {
+		if n.Managed != want[n.ID] {
+			t.Errorf("node %s managed=%v, want %v", n.ID, n.Managed, want[n.ID])
+		}
+	}
+}
+
 func TestNormalizeAddr(t *testing.T) {
 	cases := map[string]string{
 		"192.168.1.5":             "192.168.1.5:7575",

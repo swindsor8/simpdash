@@ -72,9 +72,12 @@ comment for reasoning.
 }
 ```
 
-`managed: false` marks a node visible via the cluster API but without an
-agent installed — frontend renders the "monitor only" badge from this flag
-(see Milestone 5 design discussion).
+`managed` (Milestone 6) marks whether SimpDash can act on a node: `true` for
+the local host and paired secondaries, `false` for a node visible via the
+cluster API but without an agent. The frontend renders the "monitor only"
+badge + "Install agent" prompt from `managed: false`. Main sets this by
+cross-referencing `/cluster/resources` node names against its own hostname and
+each paired node's reported `node_name`.
 
 ## Updates (Milestone 3)
 
@@ -119,7 +122,7 @@ These run on the **secondary** agent (port 7575 by default):
 
 | Method | Path                        | Auth | Notes |
 |--------|-----------------------------|------|-------|
-| POST   | `/agent/pair`               | `Authorization: Bearer <pairing-code>` | One-time use. Returns `{ "token": string }`; 401 on bad/expired/spent code. Persists the token and burns the code. |
+| POST   | `/agent/pair`               | `Authorization: Bearer <pairing-code>` | One-time use. Returns `{ "token": string, "node": string }` (node = the secondary's hostname/PVE node name, stored by main for monitor-only cross-referencing); 401 on bad/expired/spent code. Persists the token and burns the code. |
 | GET    | `/agent/resources`          | Bearer token | Same snapshot shape as `/api/resources`. |
 | GET    | `/agent/updates/check`      | Bearer token | As `/api/updates/check`. |
 | POST   | `/agent/updates/apply`      | Bearer token | As `/api/updates/apply` → `{ "job_id": string }`. |

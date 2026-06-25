@@ -20,6 +20,11 @@ type Poller struct {
 	px       *proxmox.Client
 	interval time.Duration
 
+	// managed returns the set of "managed" PVE node names (local + paired) so
+	// each snapshot can be flagged for monitor-only badging (M6). Set by the
+	// Server; nil before wiring (no annotation).
+	managed func() map[string]bool
+
 	mu     sync.RWMutex
 	latest []byte // last marshaled snapshot, sent to new subscribers immediately
 	subs   map[chan []byte]struct{}
@@ -48,12 +53,19 @@ func (p *Poller) Run(ctx context.Context) {
 	}
 }
 
+// SetManaged wires the function that reports which node names are managed, so
+// streamed snapshots carry the same monitor-only flags as the one-shot view.
+func (p *Poller) SetManaged(fn func() map[string]bool) { p.managed = fn }
+
 func (p *Poller) tick() {
 	snap, err := p.px.Fetch()
 	if err != nil {
 		// Degraded: Proxmox unavailable or not yet provisioned. Emit an empty
 		// (but valid) snapshot so the UI shows "no nodes" rather than stalling.
 		snap = proxmox.Snapshot{Nodes: []proxmox.Node{}}
+	}
+	if p.managed != nil {
+		annotateManaged(&snap, p.managed())
 	}
 	msg, err := json.Marshal(snap)
 	if err != nil {
@@ -91,12 +103,25 @@ func (p *Poller) snapshot() []byte {
 }
 
 // Resources handles GET /api/resources — one-shot snapshot.
+//
+// Also serves the agent's GET /agent/resources, so a secondary annotates its
+// own snapshot the same way (its host = managed, its cluster peers = monitor
+// only) — consistent whether viewed locally or proxied through main.
 func (s *Server) Resources(w http.ResponseWriter, r *http.Request) {
 	snap, err := s.px.Fetch()
 	if err != nil {
 		snap = proxmox.Snapshot{Nodes: []proxmox.Node{}}
 	}
+	annotateManaged(&snap, s.managedNodeNames())
 	writeJSON(w, http.StatusOK, snap)
+}
+
+// annotateManaged sets each node's Managed flag: true if SimpDash can act on it
+// (local host or a paired secondary), false for monitor-only cluster peers.
+func annotateManaged(snap *proxmox.Snapshot, managed map[string]bool) {
+	for i := range snap.Nodes {
+		snap.Nodes[i].Managed = managed[snap.Nodes[i].ID]
+	}
 }
 
 var upgrader = websocket.Upgrader{

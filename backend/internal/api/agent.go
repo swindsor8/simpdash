@@ -17,6 +17,7 @@ import (
 	"encoding/hex"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -68,8 +69,11 @@ func (s *Server) AgentPair(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, "failed to persist pairing")
 		return
 	}
+	// Report this node's hostname (== its Proxmox node name) so main can
+	// cross-reference it against /cluster/resources for monitor-only badging (M6).
+	host, _ := os.Hostname()
 	log.Printf("agent paired with main; permanent token issued")
-	writeJSON(w, http.StatusOK, map[string]string{"token": token})
+	writeJSON(w, http.StatusOK, map[string]string{"token": token, "node": host})
 }
 
 // requireAgentToken gates every agent endpoint except pairing.

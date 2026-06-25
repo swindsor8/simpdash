@@ -60,6 +60,11 @@ type PairedNode struct {
 	ID        string `yaml:"id"`
 	Address   string `yaml:"address"`
 	AuthToken string `yaml:"auth_token"`
+	// NodeName is the secondary's Proxmox node name (its hostname), reported at
+	// pairing. Used in Milestone 6 to cross-reference main's /cluster/resources:
+	// a cluster node matching a paired NodeName is "managed", others are
+	// "monitor only".
+	NodeName string `yaml:"node_name,omitempty"`
 }
 
 func defaults() *Config {

@@ -164,15 +164,62 @@ function StatusDot({ pulseKey, connected }) {
   )
 }
 
-function NodeCard({ node }) {
+function IconEye() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+    </svg>
+  )
+}
+function IconWarnSm() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  )
+}
+
+// MonitorOnlyBadge marks a cluster node SimpDash can see but has no agent on —
+// amber "partial state" language, deliberately distinct from the emerald
+// "online/running" status so it reads as a heads-up, not a healthy node.
+function MonitorOnlyBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium bg-amber-500/15 text-amber-400">
+      <IconEye />
+      Monitor only
+    </span>
+  )
+}
+
+// DegradedNotice is the single "something's down / partial" panel used for both
+// Proxmox-unavailable and node-unreachable, so every degraded state looks the
+// same across the app (consistent with the M2 degraded pattern).
+function DegradedNotice({ title, detail }) {
+  return (
+    <div className="bg-[#13131e] border border-amber-500/20 rounded-2xl p-10 text-center">
+      <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 mb-3">
+        <IconWarnSm />
+      </div>
+      <p className="text-sm text-gray-300 font-medium">{title}</p>
+      <p className="text-xs text-gray-600 mt-1 max-w-md mx-auto">{detail}</p>
+    </div>
+  )
+}
+
+function NodeCard({ node, onInstallAgent }) {
+  const monitorOnly = node.managed === false
   return (
     <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex items-start justify-between mb-5 gap-2">
         <div>
           <h2 className="text-sm font-semibold text-white">{node.id}</h2>
           <p className="text-xs text-gray-600 mt-0.5">up {fmtUptime(node.uptime)}</p>
         </div>
-        <StatusPill status={node.status} />
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          {monitorOnly && <MonitorOnlyBadge />}
+          <StatusPill status={node.status} />
+        </div>
       </div>
 
       <div className="space-y-4 mb-5">
@@ -214,6 +261,20 @@ function NodeCard({ node }) {
               {node.lxcs.map(ct => <GuestRow key={ct.vmid} item={ct} type="CT" />)}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {monitorOnly && (
+        <div className="border-t border-white/[0.06] pt-4 mt-1 flex items-center justify-between gap-3">
+          <p className="text-xs text-gray-600">
+            No SimpDash agent here — stats only. Pair an agent for updates &amp; script installs.
+          </p>
+          <button
+            onClick={onInstallAgent}
+            className="shrink-0 text-xs px-3 py-1.5 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+          >
+            Install agent
+          </button>
         </div>
       )}
     </div>
@@ -363,16 +424,6 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
 
         <main className="p-8 space-y-6 max-w-6xl">
 
-          {/* Unreachable secondary — degraded state (M2 "Proxmox unavailable" pattern). */}
-          {unreachable && (
-            <div className="bg-red-500/10 border border-red-500/25 rounded-2xl px-6 py-4">
-              <p className="text-sm text-red-300 font-medium">Node unreachable</p>
-              <p className="text-xs text-red-400/70 mt-0.5">
-                Can't reach {activeAddr} — the agent may be down or the network is interrupted. Retrying every 3s.
-              </p>
-            </div>
-          )}
-
           {/* Stat cards */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard
@@ -403,22 +454,31 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             />
           </div>
 
-          {/* Node cards */}
-          {nodes === null ? (
-            <div className="text-center py-16 text-gray-600 text-sm">Connecting to Proxmox…</div>
-          ) : nodes.length === 0 ? (
-            <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-12 text-center">
-              <p className="text-gray-400 text-sm">No nodes reporting.</p>
-              <p className="text-gray-600 text-xs mt-1">Proxmox may be unavailable or credentials are not provisioned yet.</p>
+          {/* Node cards — degraded states share one consistent treatment. */}
+          {unreachable ? (
+            <DegradedNotice
+              title="Node unreachable"
+              detail={`Can't reach ${activeAddr || 'the node'} — the agent may be down or the network is interrupted. Retrying every 3 seconds.`}
+            />
+          ) : nodes === null ? (
+            <div className="text-center py-16 text-gray-600 text-sm">
+              {activeAddr ? `Connecting to ${activeAddr}…` : 'Connecting to Proxmox…'}
             </div>
+          ) : nodes.length === 0 ? (
+            <DegradedNotice
+              title={activeNode ? 'No data from node' : 'Proxmox unavailable'}
+              detail={activeNode
+                ? 'The node is reachable but reported no Proxmox resources — its API token may not be provisioned.'
+                : 'No nodes reporting. Proxmox may be unavailable, or credentials are not provisioned yet.'}
+            />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {nodes.map(node => <NodeCard key={node.id} node={node} />)}
+              {nodes.map(node => <NodeCard key={node.id} node={node} onInstallAgent={() => setView('nodes')} />)}
             </div>
           )}
 
-          {/* Updates */}
-          <Updates node={activeNode} />
+          {/* Updates — hidden while the node is unreachable (nothing to act on). */}
+          {!unreachable && <Updates node={activeNode} />}
 
         </main>
         </>

@@ -71,13 +71,14 @@ func (s *Server) PairNode(w http.ResponseWriter, r *http.Request) {
 	}
 	var pr struct {
 		Token string `json:"token"`
+		Node  string `json:"node"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil || pr.Token == "" {
 		writeErr(w, http.StatusBadGateway, "node returned no token")
 		return
 	}
 
-	node := config.PairedNode{ID: randomHex(4), Address: addr, AuthToken: pr.Token}
+	node := config.PairedNode{ID: randomHex(4), Address: addr, AuthToken: pr.Token, NodeName: pr.Node}
 	s.cfgMu.Lock()
 	s.cfg.PairedNodes = append(s.cfg.PairedNodes, node)
 	err = s.cfg.Save(s.cfgPath)

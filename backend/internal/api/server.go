@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -46,11 +47,16 @@ type Server struct {
 	// agent holds the secondary's single-use pairing code until it is paired.
 	agent *agentPairing
 
+	// selfNode is this host's Proxmox node name (its hostname). The local node
+	// is always "managed"; see managedNodeNames (M6).
+	selfNode string
+
 	loginLimiter *limiter
 }
 
 func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, cat *catalog.Catalog) *Server {
-	return &Server{
+	host, _ := os.Hostname()
+	s := &Server{
 		cfg:          cfg,
 		cfgPath:      cfgPath,
 		px:           px,
@@ -59,8 +65,35 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		db:           db,
 		catalog:      cat,
 		agent:        &agentPairing{},
+		selfNode:     host,
 		loginLimiter: newLimiter(5, time.Minute),
 	}
+	// The live resource stream is annotated with the same managed/monitor-only
+	// flags as the one-shot view (M6).
+	poller.SetManaged(s.managedNodeNames)
+	return s
+}
+
+// managedNodeNames returns the set of Proxmox node names SimpDash can act on:
+// the local host plus every paired secondary. Cluster nodes outside this set
+// are "monitor only" — visible via the cluster API but without an agent.
+//
+// ponytail: keyed on hostname == PVE node name, which holds on a standard
+// Proxmox install. If someone renames a node away from its hostname, it just
+// shows as monitor-only — honest, if conservative.
+func (s *Server) managedNodeNames() map[string]bool {
+	m := map[string]bool{}
+	if s.selfNode != "" {
+		m[s.selfNode] = true
+	}
+	s.cfgMu.Lock()
+	for _, n := range s.cfg.PairedNodes {
+		if n.NodeName != "" {
+			m[n.NodeName] = true
+		}
+	}
+	s.cfgMu.Unlock()
+	return m
 }
 
 // Routes registers every HTTP/WS route on mux.
