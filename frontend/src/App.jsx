@@ -3,8 +3,10 @@ import SetupPassword from './components/SetupPassword'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import { getSetupStatus, getMe } from './lib/api'
+import { useTheme } from './hooks/useTheme'
 
 export default function App() {
+  const { theme, setTheme } = useTheme()
   const [screen, setScreen] = useState('loading')
 
   useEffect(() => {
@@ -25,5 +27,5 @@ export default function App() {
   }
   if (screen === 'setup') return <SetupPassword onDone={() => setScreen('login')} />
   if (screen === 'login') return <Login onDone={() => setScreen('dashboard')} />
-  return <Dashboard onLogout={() => setScreen('login')} />
+  return <Dashboard onLogout={() => setScreen('login')} theme={theme} setTheme={setTheme} />
 }

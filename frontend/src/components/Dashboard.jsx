@@ -3,6 +3,7 @@ import { logout } from '../lib/api'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
 import Scripts from './Scripts'
+import Themes from './Themes'
 
 // --- helpers ---
 function fmtBytes(n) {
@@ -36,6 +37,15 @@ function IconTerminal() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+    </svg>
+  )
+}
+function IconPalette() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
     </svg>
   )
 }
@@ -220,8 +230,8 @@ function GuestRow({ item, type }) {
 }
 
 // --- main ---
-export default function Dashboard({ onLogout }) {
-  const [view, setView] = useState('dashboard') // 'dashboard' | 'scripts'
+export default function Dashboard({ onLogout, theme, setTheme }) {
+  const [view, setView] = useState('dashboard') // 'dashboard' | 'scripts' | 'themes'
   const { nodes, connected, pulseKey } = useResourceStream()
 
   const totalNodes = nodes?.length ?? 0
@@ -254,6 +264,7 @@ export default function Dashboard({ onLogout }) {
         <nav className="flex-1 px-2 space-y-0.5">
           <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
           <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => setView('scripts')} />
+          <NavItem icon={<IconPalette />} label="Themes" active={view === 'themes'} onClick={() => setView('themes')} />
         </nav>
 
         <div className="px-2 pt-3 border-t border-white/[0.06]">
@@ -264,7 +275,15 @@ export default function Dashboard({ onLogout }) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
 
-      {view === 'scripts' ? (
+      {view === 'themes' ? (
+        <>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
+            <h1 className="text-base font-semibold">Appearance</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Choose a colour theme</p>
+          </header>
+          <Themes theme={theme} setTheme={setTheme} />
+        </>
+      ) : view === 'scripts' ? (
         <>
           <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
             <h1 className="text-base font-semibold">Script Catalog</h1>
