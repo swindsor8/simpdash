@@ -158,14 +158,17 @@ func (s *Server) streamJob(w http.ResponseWriter, r *http.Request, id string) {
 		}
 	}
 
-	// Detect client disconnect without blocking the send loop.
+	// Read client messages: forward them as keystrokes to the job's PTY (no-op
+	// for non-interactive jobs), and detect disconnect without blocking sends.
 	gone := make(chan struct{})
 	go func() {
 		defer close(gone)
 		for {
-			if _, _, err := conn.ReadMessage(); err != nil {
+			_, data, err := conn.ReadMessage()
+			if err != nil {
 				return
 			}
+			s.exec.Input(id, data)
 		}
 	}()
 

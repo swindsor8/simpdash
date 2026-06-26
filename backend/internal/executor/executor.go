@@ -12,10 +12,13 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/creack/pty"
 
 	"simpdash/internal/store"
 )
@@ -33,11 +36,12 @@ type activeJob struct {
 	id      string
 	jobType string
 
-	// mu protects lines and subs. Never held while e.mu is held.
-	mu   sync.Mutex
-	done bool     // set before channels are closed; Subscribe checks this
+	// mu protects lines, subs, and ptmx. Never held while e.mu is held.
+	mu    sync.Mutex
+	done  bool     // set before channels are closed; Subscribe checks this
 	lines []string // accumulated JSON output lines (including the final "done" line)
 	subs  []chan string
+	ptmx  *os.File // PTY master for interactive jobs; nil for pipe-based jobs. Input() writes here.
 }
 
 // New returns a ready Executor.
@@ -52,6 +56,18 @@ func New() *Executor { return &Executor{} }
 // Safety: cmd must be built with exec.Command (not sh -c with user input).
 // DEBIAN_FRONTEND=noninteractive must be set by the caller for apt commands.
 func (e *Executor) Start(jobType string, cmd *exec.Cmd, db *store.DB) (string, error) {
+	return e.start(jobType, cmd, db, false)
+}
+
+// StartPTY is like Start but runs cmd attached to a pseudo-terminal, so
+// interactive tools (whiptail menus in the community-scripts) render and can
+// read keystrokes fed back via Input. Output is streamed raw (ANSI included)
+// as {"type":"out","data":...} frames instead of line-typed stdout/stderr.
+func (e *Executor) StartPTY(jobType string, cmd *exec.Cmd, db *store.DB) (string, error) {
+	return e.start(jobType, cmd, db, true)
+}
+
+func (e *Executor) start(jobType string, cmd *exec.Cmd, db *store.DB, interactive bool) (string, error) {
 	e.mu.Lock()
 	if e.current != nil {
 		e.mu.Unlock()
@@ -71,8 +87,25 @@ func (e *Executor) Start(jobType string, cmd *exec.Cmd, db *store.DB) (string, e
 		return "", fmt.Errorf("create job record: %w", err)
 	}
 
-	go e.run(job, cmd, db, now)
+	go e.run(job, cmd, db, now, interactive)
 	return id, nil
+}
+
+// Input writes data to a running interactive job's PTY (keystrokes from the web
+// terminal). No-op if the job isn't current or isn't a PTY job.
+func (e *Executor) Input(id string, data []byte) {
+	e.mu.Lock()
+	job := e.current
+	e.mu.Unlock()
+	if job == nil || job.id != id {
+		return
+	}
+	job.mu.Lock()
+	ptmx := job.ptmx
+	job.mu.Unlock()
+	if ptmx != nil {
+		ptmx.Write(data) //nolint:errcheck
+	}
 }
 
 // Subscribe returns the accumulated output so far plus a channel for future
@@ -109,7 +142,7 @@ func (e *Executor) Active() bool {
 	return e.current != nil
 }
 
-func (e *Executor) run(job *activeJob, cmd *exec.Cmd, db *store.DB, startedAt time.Time) {
+func (e *Executor) run(job *activeJob, cmd *exec.Cmd, db *store.DB, startedAt time.Time, interactive bool) {
 	exitCode := -1
 	status := "failed"
 
@@ -140,6 +173,12 @@ func (e *Executor) run(job *activeJob, cmd *exec.Cmd, db *store.DB, startedAt ti
 			close(ch)
 		}
 	}()
+
+	if interactive {
+		exitCode, status = e.runPTY(job, cmd)
+		e.emit(job, encDone(exitCode))
+		return
+	}
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -195,6 +234,48 @@ func (e *Executor) run(job *activeJob, cmd *exec.Cmd, db *store.DB, startedAt ti
 	e.emit(job, encDone(exitCode))
 }
 
+// runPTY starts cmd on a pseudo-terminal, streams its raw output as "out"
+// frames, and exposes the master via job.ptmx so Input can feed keystrokes.
+// Returns the exit code and final status.
+func (e *Executor) runPTY(job *activeJob, cmd *exec.Cmd) (exitCode int, status string) {
+	exitCode, status = -1, "failed"
+
+	ptmx, err := pty.Start(cmd)
+	if err != nil {
+		e.emit(job, encLine("stderr", "failed to start pty: "+err.Error()))
+		return
+	}
+	// ponytail: fixed 90x28 — matches the xterm size on the client so whiptail
+	// menus line up. Wire a resize control message if variable sizing matters.
+	_ = pty.Setsize(ptmx, &pty.Winsize{Rows: 28, Cols: 90})
+
+	job.mu.Lock()
+	job.ptmx = ptmx
+	job.mu.Unlock()
+	defer ptmx.Close()
+
+	// Read raw bytes until the child exits (Linux returns EIO on the master
+	// once the slave closes — treated as normal EOF, not an error to surface).
+	buf := make([]byte, 4096)
+	for {
+		n, rerr := ptmx.Read(buf)
+		if n > 0 {
+			e.emit(job, encOut(buf[:n]))
+		}
+		if rerr != nil {
+			break
+		}
+	}
+
+	if werr := cmd.Wait(); werr != nil {
+		if ee, ok := werr.(*exec.ExitError); ok {
+			exitCode = ee.ExitCode()
+		}
+		return exitCode, "failed"
+	}
+	return 0, "succeeded"
+}
+
 // emit appends a JSON line to job history and fans it out to subscribers.
 func (e *Executor) emit(job *activeJob, line string) {
 	job.mu.Lock()
@@ -219,6 +300,11 @@ func (j *activeJob) outputString() string {
 func encLine(typ, line string) string {
 	b, _ := json.Marshal(map[string]string{"type": typ, "line": line})
 	return string(b)
+}
+
+func encOut(b []byte) string {
+	out, _ := json.Marshal(map[string]string{"type": "out", "data": string(b)})
+	return string(out)
 }
 
 func encDone(exitCode int) string {

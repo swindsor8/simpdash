@@ -179,7 +179,7 @@ export default function Scripts({ node = null }) {
   const [running, setRunning] = useState(null)   // name of the running script
   const [jobId, setJobId] = useState(null)
   const [startErr, setStartErr] = useState(null)
-  const { output, state: jobState } = useJobStream(jobId, node)
+  const { output, state: jobState, sendInput } = useJobStream(jobId, node)
   const busy = jobState === 'running'
 
   useEffect(() => {
@@ -235,7 +235,7 @@ export default function Scripts({ node = null }) {
             </p>
           )}
           {startErr && <p className="text-xs text-red-400">{startErr}</p>}
-          <Terminal output={output} state={jobState} />
+          <Terminal output={output} state={jobState} sendInput={sendInput} />
         </div>
       )}
 

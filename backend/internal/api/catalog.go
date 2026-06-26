@@ -41,7 +41,9 @@ func (s *Server) CatalogRun(w http.ResponseWriter, r *http.Request, slug string)
 	// stdin defaults to /dev/null (EOF, not a hang). Add a PTY in M4+ if a script
 	// we list actually needs one; can't verify without real PVE.
 
-	id, err := s.exec.Start("catalog_script", cmd, s.db)
+	// PTY-backed: these scripts use interactive whiptail menus that need a
+	// real terminal and keystroke input (streamed back via the job WebSocket).
+	id, err := s.exec.StartPTY("catalog_script", cmd, s.db)
 	if errors.Is(err, executor.ErrBusy) {
 		writeErr(w, http.StatusConflict, "a job is already running")
 		return

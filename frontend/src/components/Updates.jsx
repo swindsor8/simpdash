@@ -22,7 +22,7 @@ export default function Updates({ node = null }) {
   const [checkErr, setCheckErr] = useState(null)
   const [jobId, setJobId] = useState(null)
   const [startErr, setStartErr] = useState(null)
-  const { output, state: jobState } = useJobStream(jobId, node)
+  const { output, state: jobState, sendInput } = useJobStream(jobId, node)
 
   async function handleCheck() {
     setCheckState('checking')
@@ -144,7 +144,7 @@ export default function Updates({ node = null }) {
       {(output.length > 0 || startErr) && (
         <div className="px-6 py-4">
           {startErr && <p className="text-xs text-red-400 mb-2">{startErr}</p>}
-          <Terminal output={output} state={jobState} />
+          <Terminal output={output} state={jobState} sendInput={sendInput} />
         </div>
       )}
 
