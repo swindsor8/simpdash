@@ -8,7 +8,7 @@
 # Re-run to update: pulls latest, rebuilds, restarts. Config is preserved.
 set -euo pipefail
 
-REPO="veidrdev/simpdash"
+REPO="swindsor8/simpdash"
 REPO_URL="https://github.com/$REPO"
 BUILD_DIR="/tmp/simpdash-build"
 BIN="/usr/local/bin/simpdash"
