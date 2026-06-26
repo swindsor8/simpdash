@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SimpDash installer / updater.
 #
-#   curl -fsSL https://raw.githubusercontent.com/veidrdev/simpdash/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/swindsor8/simpdash/main/scripts/install.sh | bash
 #
 # Installs Go + Node if missing, clones the repo, builds the frontend and
 # backend from source, installs the binary, and starts a systemd service.
@@ -41,17 +41,12 @@ if ! command -v node &>/dev/null; then
   apt-get install -y nodejs
 fi
 
-apt-get install -y --no-install-recommends git
-
-# ── Repo ───────────────────────────────────────────────────────────────────────
-if [ -d "$BUILD_DIR/.git" ]; then
-  echo "Updating repo ..."
-  git -C "$BUILD_DIR" pull --ff-only
-else
-  echo "Cloning $REPO ..."
-  rm -rf "$BUILD_DIR"
-  git clone --depth 1 "$REPO_URL" "$BUILD_DIR"
-fi
+# ── Repo (tarball — no git required) ──────────────────────────────────────────
+echo "Downloading $REPO ..."
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
+curl -fsSL "https://github.com/$REPO/archive/refs/heads/main.tar.gz" \
+  | tar -xz -C "$BUILD_DIR" --strip-components=1
 
 # ── Frontend ───────────────────────────────────────────────────────────────────
 echo "Building frontend ..."
