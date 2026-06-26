@@ -41,10 +41,7 @@ if ! command -v node &>/dev/null; then
   apt-get install -y nodejs
 fi
 
-if ! command -v git &>/dev/null; then
-  echo "Installing git ..."
-  apt-get install -y git
-fi
+apt-get install -y --no-install-recommends git
 
 # ── Repo ───────────────────────────────────────────────────────────────────────
 if [ -d "$BUILD_DIR/.git" ]; then
