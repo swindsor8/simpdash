@@ -37,9 +37,13 @@ export PATH=$PATH:/usr/local/go/bin
 # ── Node / npm ─────────────────────────────────────────────────────────────────
 if ! command -v node &>/dev/null; then
   echo "Installing Node.js 22 ..."
-  # nodesource one-liner works on Debian/Ubuntu (what PVE runs on)
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
   apt-get install -y nodejs
+fi
+
+if ! command -v git &>/dev/null; then
+  echo "Installing git ..."
+  apt-get install -y git
 fi
 
 # ── Repo ───────────────────────────────────────────────────────────────────────
