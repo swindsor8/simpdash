@@ -66,10 +66,33 @@ function Win98Preview() {
   )
 }
 
+// A tiny Pip-Boy screen (phosphor green on black + scanlines) for the Fallout
+// theme preview. Inline-styled so it always reads Fallout regardless of theme.
+function FalloutPreview() {
+  const pip = '#1aff40'
+  return (
+    <div className="h-24 relative overflow-hidden p-2"
+      style={{ background: '#020a02', color: pip, fontFamily: "'Courier New', monospace",
+        textShadow: '0 0 4px rgba(26,255,64,0.6)', fontSize: 10, letterSpacing: 1 }}>
+      <div className="flex justify-between font-bold">
+        <span>STAT</span><span>HP 348/450</span>
+      </div>
+      <div className="mt-1.5 h-2 w-full" style={{ border: `1px solid ${pip}` }}>
+        <div className="h-full" style={{ width: '77%', background: pip }} />
+      </div>
+      <div className="mt-2 text-[16px] font-bold tracking-widest">VAULT-TEC</div>
+      {/* scanlines */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.3) 50%)', backgroundSize: '100% 3px' }} />
+    </div>
+  )
+}
+
 function ThemeCard({ t, active, onSelect }) {
   const isRetro = t.id === 'retro'
   const isMario = t.id === 'mario'
   const isWin98 = t.id === 'win98'
+  const isFallout = t.id === 'fallout'
   return (
     <div
       className={`bg-[#13131e] border rounded-2xl p-5 flex flex-col gap-4 transition-colors cursor-pointer ${
@@ -80,7 +103,11 @@ function ThemeCard({ t, active, onSelect }) {
       onClick={() => onSelect(t.id)}
     >
       {/* Mini preview */}
-      {isWin98 ? (
+      {isFallout ? (
+        <div className="rounded-xl overflow-hidden border border-white/10">
+          <FalloutPreview />
+        </div>
+      ) : isWin98 ? (
         <div className="rounded-xl overflow-hidden border border-white/10">
           <Win98Preview />
         </div>

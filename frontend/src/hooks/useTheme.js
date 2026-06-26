@@ -21,6 +21,11 @@ export const THEMES = [
     name: 'Win98',
     description: 'Silver bevels, teal desktop, navy title bars.',
   },
+  {
+    id: 'fallout',
+    name: 'Vault-Tec',
+    description: 'Pip-Boy CRT: phosphor green on black, scanlines, glow.',
+  },
 ]
 
 export function useTheme() {

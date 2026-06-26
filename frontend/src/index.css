@@ -571,3 +571,154 @@
 [data-theme="win98"] .font-mono .text-gray-400 { color: #c0c0c0; }
 [data-theme="win98"] .font-mono .text-gray-600 { color: #909090; }
 [data-theme="win98"] .font-mono .text-gray-700 { color: #707070; }
+
+/* ===========================================================================
+   FALLOUT THEME — Pip-Boy CRT skin (phosphor-green text on near-black, mono
+   uppercase labels, green glow, scanline overlay). Aesthetic ported from the
+   Pip-Boy card: pip-green #1aff40 · glow rgba(26,255,64,.6) · bg #020a02.
+   Same override-only approach; default theme untouched.
+   =========================================================================== */
+[data-theme="fallout"] {
+  color-scheme: dark;
+  font-family: 'Courier New', ui-monospace, monospace;
+  --pip: #1aff40;
+  --pip-glow: rgba(26, 255, 64, 0.6);
+  /* Plastic chassis the CRT screen sits in (shows in the margin gap below) */
+  background-image:
+    radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(135deg, #2b2b2b, #111, #222);
+  background-size: 3px 3px, 100% 100%;
+  background-attachment: fixed;
+}
+
+/* The whole app (sidebar = Pip-Boy menu, main = readout) becomes the CRT screen:
+   thick dark bezel floating in the plastic chassis, rounded glass, inner glow. */
+[data-theme="fallout"] .h-screen.bg-\[\#0c0c14\] {
+  position: relative;
+  height: calc(100vh - 2.5rem);
+  margin: 1.25rem;
+  border: 10px solid #0a0a0a;
+  border-radius: 1.5rem;
+  box-shadow:
+    inset 0 0 70px rgba(0,0,0,1),
+    inset 0 0 140px rgba(26,255,64,0.05),
+    0 0 0 2px #333,
+    0 20px 50px rgba(0,0,0,0.8);
+}
+/* Four bezel screws painted at the screen corners (one layer, no markup) */
+[data-theme="fallout"] .h-screen.bg-\[\#0c0c14\]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image:
+    radial-gradient(circle at 13px 13px, #666 1.5px, #111 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 13px) 13px, #666 1.5px, #111 5px, transparent 6px),
+    radial-gradient(circle at 13px calc(100% - 13px), #666 1.5px, #111 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 13px) calc(100% - 13px), #666 1.5px, #111 5px, transparent 6px);
+}
+
+/* CRT scanlines + vignette over the whole viewport (html carries data-theme).
+   pointer-events:none keeps everything underneath clickable. */
+[data-theme="fallout"]::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.28) 50%),
+    radial-gradient(circle at 50% 50%, rgba(26,255,64,0.03), rgba(0,0,0,0.55) 95%);
+  background-size: 100% 3px, 100% 100%;
+}
+
+/* Uppercase the showpiece labels, like a terminal readout */
+[data-theme="fallout"] h1,
+[data-theme="fallout"] h2,
+[data-theme="fallout"] aside .tracking-tight,
+[data-theme="fallout"] nav,
+[data-theme="fallout"] .text-2xl {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* --- Surfaces --- */
+[data-theme="fallout"] .bg-\[\#0c0c14\]     { background-color: #020a02; }   /* canvas */
+[data-theme="fallout"] .bg-\[\#0c0c14\]\/90 { background-color: rgba(2,10,2,0.92); }
+[data-theme="fallout"] .bg-\[\#101018\]     { background-color: #04140a; }   /* sidebar */
+[data-theme="fallout"] .bg-\[\#13131e\]     { background-color: #04130a; }   /* cards + inputs */
+
+/* --- Borders → phosphor green --- */
+[data-theme="fallout"] .border-white\/\[0\.04\] { border-color: rgba(26,255,64,0.15); }
+[data-theme="fallout"] .border-white\/\[0\.06\] { border-color: rgba(26,255,64,0.25); }
+[data-theme="fallout"] .border-white\/\[0\.07\],
+[data-theme="fallout"] .border-white\/10,
+[data-theme="fallout"] .border-white\/20,
+[data-theme="fallout"] .border-white\/30      { border-color: rgba(26,255,64,0.4); }
+
+/* Cards & stat tiles → green-edged terminal panels with a soft glow */
+[data-theme="fallout"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="fallout"] .bg-\[\#c6edda\], [data-theme="fallout"] .bg-\[\#e8e8f4\],
+[data-theme="fallout"] .bg-\[\#fef9c3\], [data-theme="fallout"] .bg-\[\#e4dcf8\] {
+  border: 1px solid rgba(26,255,64,0.4);
+  box-shadow: inset 0 0 20px rgba(26,255,64,0.06), 0 0 8px rgba(26,255,64,0.08);
+}
+[data-theme="fallout"] .bg-\[\#c6edda\], [data-theme="fallout"] .bg-\[\#e8e8f4\],
+[data-theme="fallout"] .bg-\[\#fef9c3\], [data-theme="fallout"] .bg-\[\#e4dcf8\] {
+  background-color: #06180c;   /* flatten pastel stat tiles to dark green */
+}
+
+/* --- Translucent fills → green tints --- */
+[data-theme="fallout"] .bg-white\/10 { background-color: rgba(26,255,64,0.12); }
+[data-theme="fallout"] .bg-white\/8  { background-color: rgba(26,255,64,0.10); }
+[data-theme="fallout"] .bg-white\/5  { background-color: rgba(26,255,64,0.06); }
+
+/* --- Text → phosphor-green scale, with a subtle glow on headings/values --- */
+[data-theme="fallout"] .text-white    { color: #2bff52; text-shadow: 0 0 4px var(--pip-glow); }
+[data-theme="fallout"] .text-gray-300 { color: #2bd94a; }
+[data-theme="fallout"] .text-gray-400 { color: #1fb53c; }
+[data-theme="fallout"] .text-gray-500 { color: #169a30; }
+[data-theme="fallout"] .text-gray-600 { color: #117a26; }
+
+/* Semantic — keep red/amber legible for warnings, healthy stays green */
+[data-theme="fallout"] .text-emerald-400 { color: #1aff40; }
+[data-theme="fallout"] .text-red-400     { color: #ff5a3c; }
+[data-theme="fallout"] .text-amber-400   { color: #ffb03a; }
+[data-theme="fallout"] .text-amber-300   { color: #ffc966; }
+
+/* --- Accent: buttons/logo → outlined green terminal keys, fill on hover --- */
+[data-theme="fallout"] .bg-blue-600 {
+  background-color: rgba(26,255,64,0.10);
+  border: 1px solid var(--pip);
+  color: #2bff52;
+  box-shadow: inset 0 0 10px rgba(26,255,64,0.15), 0 0 8px rgba(26,255,64,0.10);
+}
+[data-theme="fallout"] .bg-blue-600\/60 { background-color: rgba(26,255,64,0.45); }
+[data-theme="fallout"] .hover\:bg-blue-700:hover { background-color: var(--pip); color: #020a02; }
+[data-theme="fallout"] button.bg-blue-600:active { box-shadow: inset 0 0 14px rgba(26,255,64,0.3); }
+
+/* Bars → green fill; category badges → green chip */
+[data-theme="fallout"] .bg-blue-500     { background-color: var(--pip); }
+[data-theme="fallout"] .bg-blue-500\/15 { background-color: rgba(26,255,64,0.15); }
+[data-theme="fallout"] .text-blue-300   { color: #2bff52; }
+[data-theme="fallout"] .border-blue-500\/60,
+[data-theme="fallout"] .focus\:border-blue-500\/60:focus { border-color: var(--pip); }
+
+/* Active sidebar item → solid phosphor highlight with dark text (Pip-Boy nav) */
+[data-theme="fallout"] aside .bg-white\/10 {
+  background-color: var(--pip);
+  color: #020a02;
+  box-shadow: 0 0 10px var(--pip-glow);
+}
+
+/* Terminal → deep-green phosphor console */
+[data-theme="fallout"] .font-mono.bg-\[\#0c0c14\] {
+  background-color: #010801;
+  border-color: rgba(26,255,64,0.4);
+  box-shadow: inset 0 0 30px rgba(26,255,64,0.06);
+}
+[data-theme="fallout"] .font-mono .text-gray-400 { color: #2bff52; }
+[data-theme="fallout"] .font-mono .text-gray-600 { color: #1aa030; }
+[data-theme="fallout"] .font-mono .text-gray-700 { color: #137322; }
