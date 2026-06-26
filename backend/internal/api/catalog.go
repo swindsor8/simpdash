@@ -34,7 +34,9 @@ func (s *Server) CatalogRun(w http.ResponseWriter, r *http.Request, slug string)
 	// Mirrors the documented community-scripts one-liner
 	// `bash -c "$(curl -fsSL <url>)"`, with the URL as $1 (injection-safe).
 	cmd := exec.Command("bash", "-c", `bash -c "$(curl -fsSL "$1")"`, "simpdash", script.ScriptURL)
-	cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
+	// TERM is required or whiptail/tput-based scripts abort with
+	// "TERM environment variable not set" before doing any work.
+	cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive", "TERM=xterm")
 	// ponytail: no tty — interactive whiptail menus in some scripts won't render.
 	// stdin defaults to /dev/null (EOF, not a hang). Add a PTY in M4+ if a script
 	// we list actually needs one; can't verify without real PVE.

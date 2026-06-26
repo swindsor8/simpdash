@@ -14,7 +14,11 @@ import (
 const localHost = "https://127.0.0.1:8006"
 
 // privs granted to the SimpDash role — read-only monitoring only.
-const privs = "VM.Audit,VM.Monitor,Sys.Audit,Datastore.Audit"
+// VM.Audit is what lets /cluster/resources list VMs/CTs; Sys.Audit covers
+// nodes, Datastore.Audit covers storage. (VM.Monitor was removed: it grants
+// QEMU-monitor access — not read-only — and isn't a valid priv on PVE 9, where
+// it makes `pveum role add` fail outright and aborts provisioning.)
+const privs = "VM.Audit,Sys.Audit,Datastore.Audit"
 
 // Provision creates a dedicated read-only Proxmox API token by shelling out to
 // pveum, then writes the credentials into cfg and saves. Idempotent for the

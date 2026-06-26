@@ -64,8 +64,8 @@ func parseUpgradable(output string) []string {
 func (s *Server) UpdatesApply(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.Command("apt-get", "upgrade", "-y")
 	// DEBIAN_FRONTEND=noninteractive prevents apt from hanging on a prompt
-	// that nobody is watching.
-	cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive")
+	// that nobody is watching; TERM keeps tput/whiptail-based hooks from aborting.
+	cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive", "TERM=xterm")
 
 	id, err := s.exec.Start("apt_upgrade", cmd, s.db)
 	if errors.Is(err, executor.ErrBusy) {
