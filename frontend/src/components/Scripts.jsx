@@ -151,6 +151,27 @@ function ConfirmDialog({ script, onCancel, onConfirm }) {
   )
 }
 
+// Group scripts by category, preserving the manifest's first-seen order.
+function groupByCategory(scripts) {
+  const groups = new Map()
+  for (const s of scripts) {
+    const cat = s.category || 'Other'
+    if (!groups.has(cat)) groups.set(cat, [])
+    groups.get(cat).push(s)
+  }
+  return [...groups]
+}
+
+function IconChevron() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className="shrink-0 transition-transform group-open:rotate-90">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  )
+}
+
 export default function Scripts({ node = null }) {
   const [scripts, setScripts] = useState(null)
   const [loadErr, setLoadErr] = useState(null)
@@ -188,13 +209,22 @@ export default function Scripts({ node = null }) {
         <p className="text-sm text-gray-600">Loading catalog…</p>
       )}
 
-      {scripts && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {scripts.map(s => (
-            <ScriptCard key={s.id} script={s} disabled={busy} onRun={setPending} />
-          ))}
-        </div>
-      )}
+      {scripts && groupByCategory(scripts).map(([cat, items]) => (
+        <details key={cat} open className="group">
+          <summary className="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden text-sm font-semibold text-white py-2">
+            <IconChevron />
+            {cat}
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/8 text-gray-400 font-medium">
+              {items.length}
+            </span>
+          </summary>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-3">
+            {items.map(s => (
+              <ScriptCard key={s.id} script={s} disabled={busy} onRun={setPending} />
+            ))}
+          </div>
+        </details>
+      ))}
 
       {(running || startErr) && (
         <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6 space-y-2">
