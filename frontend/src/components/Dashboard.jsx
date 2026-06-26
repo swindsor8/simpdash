@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { logout, getNodes } from '../lib/api'
+import { logout, getNodes, getGuestServices } from '../lib/api'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
 import Scripts from './Scripts'
@@ -282,22 +282,76 @@ function NodeCard({ node, onInstallAgent }) {
   )
 }
 
+// GuestRow is a VM/LXC row that expands (when running) to list the services
+// running inside the guest — pct exec for CTs, qm guest exec for VMs.
 function GuestRow({ item, type }) {
   const running = item.status === 'running'
+  const [open, setOpen] = useState(false)
+  const [svc, setSvc] = useState(null) // null = not fetched yet
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState(null)
+
+  async function toggle() {
+    if (!running) return
+    const next = !open
+    setOpen(next)
+    if (next && svc === null && !loading) {
+      setLoading(true)
+      setErr(null)
+      try {
+        setSvc(await getGuestServices(item.vmid, type === 'VM' ? 'qemu' : 'lxc'))
+      } catch (e) {
+        setErr(e.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
   return (
-    <tr className="border-t border-white/[0.04]">
-      <td className="py-2 pr-3 text-sm text-gray-300">{item.name}</td>
-      <td className="py-2 pr-3">
-        <span className="text-xs text-gray-600 font-mono">{type}{item.vmid}</span>
-      </td>
-      <td className="py-2 pr-3"><StatusPill status={item.status} /></td>
-      <td className="py-2 pr-3 text-xs text-gray-500 tabular-nums">
-        {running ? `${(item.cpu * 100).toFixed(1)}%` : '—'}
-      </td>
-      <td className="py-2 text-xs text-gray-500 tabular-nums">
-        {running ? fmtBytes(item.mem) : '—'}
-      </td>
-    </tr>
+    <>
+      <tr
+        className={`border-t border-white/[0.04] ${running ? 'cursor-pointer hover:bg-white/[0.02]' : ''}`}
+        onClick={toggle}
+      >
+        <td className="py-2 pr-3 text-sm text-gray-300">
+          <span className="inline-block w-3 text-gray-600">{running ? (open ? '▾' : '▸') : ''}</span>
+          {item.name}
+        </td>
+        <td className="py-2 pr-3">
+          <span className="text-xs text-gray-600 font-mono">{type}{item.vmid}</span>
+        </td>
+        <td className="py-2 pr-3"><StatusPill status={item.status} /></td>
+        <td className="py-2 pr-3 text-xs text-gray-500 tabular-nums">
+          {running ? `${(item.cpu * 100).toFixed(1)}%` : '—'}
+        </td>
+        <td className="py-2 text-xs text-gray-500 tabular-nums">
+          {running ? fmtBytes(item.mem) : '—'}
+        </td>
+      </tr>
+      {open && (
+        <tr className="bg-white/[0.015]">
+          <td colSpan={5} className="px-3 pb-3 pt-1">
+            {loading && <p className="text-xs text-gray-600">Loading services…</p>}
+            {err && <p className="text-xs text-red-400">{err}</p>}
+            {svc && svc.length === 0 && <p className="text-xs text-gray-600">No running services reported.</p>}
+            {svc && svc.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {svc.map(s => (
+                  <span
+                    key={s.name}
+                    title={s.description}
+                    className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono"
+                  >
+                    {s.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 

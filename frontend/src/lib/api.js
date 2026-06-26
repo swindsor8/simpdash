@@ -80,6 +80,18 @@ export function runScript(node, slug) {
   return post(`${rel}/catalog/${encodeURIComponent(slug)}/run`)
 }
 
+// getGuestServices → running systemd services inside a guest. type is 'lxc'
+// (pct exec) or 'qemu' (qm guest exec, needs the QEMU guest agent). Local host
+// only for now.
+export async function getGuestServices(vmid, type) {
+  const r = await fetch(`${BASE}/guests/${vmid}/services?type=${type}`, { credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
 // --- paired secondary nodes (Milestone 5) ---
 
 export async function getNodes() {

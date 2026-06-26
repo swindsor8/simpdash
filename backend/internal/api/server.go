@@ -118,6 +118,8 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/catalog", methodGate(http.MethodGet, s.requireAuth(s.Catalog)))
 	// /api/catalog/ is a prefix match; the handler parses /:slug/run.
 	mux.HandleFunc("/api/catalog/", s.handleCatalogPrefix)
+	// /api/guests/:vmid/services — running services inside a local guest.
+	mux.HandleFunc("/api/guests/", s.handleGuestsPrefix)
 	// Paired secondary nodes (M5). /api/nodes lists; /api/nodes/ handles pair,
 	// unpair, and per-node proxy (resources/updates/catalog/jobs + WS relay).
 	mux.HandleFunc("/api/nodes", methodGate(http.MethodGet, s.requireAuth(s.ListNodes)))
@@ -135,6 +137,20 @@ func (s *Server) handleCatalogPrefix(w http.ResponseWriter, r *http.Request) {
 	}
 	methodGate(http.MethodPost, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
 		s.CatalogRun(w, r, slug)
+	}))(w, r)
+}
+
+// handleGuestsPrefix dispatches GET /api/guests/:vmid/services.
+func (s *Server) handleGuestsPrefix(w http.ResponseWriter, r *http.Request) {
+	tail := strings.TrimPrefix(r.URL.Path, "/api/guests/")
+	parts := strings.SplitN(tail, "/", 2)
+	vmid := parts[0]
+	if vmid == "" || len(parts) != 2 || parts[1] != "services" {
+		http.NotFound(w, r)
+		return
+	}
+	methodGate(http.MethodGet, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
+		s.GuestServices(w, r, vmid)
 	}))(w, r)
 }
 
