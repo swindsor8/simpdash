@@ -1,69 +1,77 @@
 #!/usr/bin/env bash
 # SimpDash installer / updater.
 #
-#   curl -fsSL https://raw.githubusercontent.com/swindsor8/simpdash/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/veidrdev/simpdash/main/scripts/install.sh | bash
 #
-# Fresh install: drops the binary + a systemd unit, seeds a minimal config, and
-# starts the service. Then open http://<this-host>:7575 to set your admin
-# password — onboarding happens in the web UI, not here.
-#
-# Re-run to update: stops the service, swaps in the latest release binary, and
-# restarts. Existing config/token are left untouched, so onboarding never
-# repeats. A config that exists but looks malformed aborts the run rather than
-# getting silently overwritten.
-#
-# Secondary node: run with SIMPDASH_MODE=secondary (the agent prints its pairing
-# code to `systemctl status simpdash` on first boot).
+# Installs Go + Node if missing, clones the repo, builds the frontend and
+# backend from source, installs the binary, and starts a systemd service.
+# Re-run to update: pulls latest, rebuilds, restarts. Config is preserved.
 set -euo pipefail
 
-REPO="swindsor8/simpdash"
+REPO="veidrdev/simpdash"
+REPO_URL="https://github.com/$REPO"
+BUILD_DIR="/tmp/simpdash-build"
 BIN="/usr/local/bin/simpdash"
 CONFIG_DIR="/etc/homelab-dash"
 CONFIG="$CONFIG_DIR/config.yaml"
 UNIT="/etc/systemd/system/simpdash.service"
 MODE="${SIMPDASH_MODE:-main}"
+GO_VERSION="1.22.4"
 
-[ "$(id -u)" -eq 0 ] || { echo "Please run as root (e.g. with sudo)." >&2; exit 1; }
+[ "$(id -u)" -eq 0 ] || { echo "Please run as root." >&2; exit 1; }
 
 case "$(uname -m)" in
-  x86_64|amd64)   ARCH=amd64 ;;
-  aarch64|arm64)  ARCH=arm64 ;;
+  x86_64|amd64)  ARCH=amd64 ;;
+  aarch64|arm64) ARCH=arm64 ;;
   *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;;
 esac
-URL="https://github.com/$REPO/releases/latest/download/simpdash-linux-$ARCH"
 
+# ── Go ─────────────────────────────────────────────────────────────────────────
+if ! command -v /usr/local/go/bin/go &>/dev/null; then
+  echo "Installing Go $GO_VERSION ..."
+  curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${ARCH}.tar.gz" \
+    | tar -C /usr/local -xz
+fi
+export PATH=$PATH:/usr/local/go/bin
+
+# ── Node / npm ─────────────────────────────────────────────────────────────────
+if ! command -v node &>/dev/null; then
+  echo "Installing Node.js 22 ..."
+  # nodesource one-liner works on Debian/Ubuntu (what PVE runs on)
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  apt-get install -y nodejs
+fi
+
+# ── Repo ───────────────────────────────────────────────────────────────────────
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Updating repo ..."
+  git -C "$BUILD_DIR" pull --ff-only
+else
+  echo "Cloning $REPO ..."
+  rm -rf "$BUILD_DIR"
+  git clone --depth 1 "$REPO_URL" "$BUILD_DIR"
+fi
+
+# ── Frontend ───────────────────────────────────────────────────────────────────
+echo "Building frontend ..."
+cd "$BUILD_DIR/frontend"
+npm install --silent
+npm run build --silent
+
+# ── Backend ────────────────────────────────────────────────────────────────────
+echo "Building backend ..."
+cd "$BUILD_DIR/backend"
+CGO_ENABLED=0 go build -o "$BIN" ./cmd/server
+
+# ── Config ─────────────────────────────────────────────────────────────────────
 UPDATING=0
-if [ -f "$BIN" ] || [ -f "$UNIT" ] || [ -f "$CONFIG" ]; then
+if [ -f "$BIN.old" ] || [ -f "$UNIT" ] || [ -f "$CONFIG" ]; then
   UPDATING=1
-  echo "Existing SimpDash install detected — updating in place."
-  # A present-but-broken config means a half-finished or corrupted install.
-  # Fail loudly rather than start a service that can't read its own config, or
-  # clobber config the admin may still want to recover.
-  # ponytail: the 'mode:' key is a minimal sanity check, not a full schema validation.
-  if [ -f "$CONFIG" ] && ! grep -q '^mode:' "$CONFIG"; then
-    echo "Config $CONFIG exists but looks malformed (no 'mode:' key)." >&2
-    echo "Refusing to overwrite it. Fix or remove it, then re-run." >&2
-    exit 1
-  fi
 fi
-
-echo "Downloading simpdash-linux-$ARCH ..."
-TMP="$(mktemp)"
-trap 'rm -f "$TMP"' EXIT
-curl -fsSL "$URL" -o "$TMP"
-
-if [ "$UPDATING" -eq 1 ] && systemctl is-active --quiet simpdash; then
-  echo "Stopping simpdash ..."
-  systemctl stop simpdash
-fi
-
-install -m 0755 "$TMP" "$BIN"
 
 mkdir -p "$CONFIG_DIR"
 chmod 0700 "$CONFIG_DIR"
 
-# Fresh install only: seed a minimal config. The binary generates its session
-# secret on first boot; the UI handles password onboarding.
 if [ ! -f "$CONFIG" ]; then
   cat > "$CONFIG" <<EOF
 mode: $MODE
@@ -73,7 +81,14 @@ EOF
   chmod 0600 "$CONFIG"
 fi
 
-# (Re)write the unit every run so unit fixes ship with updates.
+# ponytail: minimal sanity check, not full schema validation
+if [ -f "$CONFIG" ] && ! grep -q '^mode:' "$CONFIG"; then
+  echo "Config $CONFIG exists but looks malformed (no 'mode:' key)." >&2
+  echo "Refusing to overwrite it. Fix or remove it, then re-run." >&2
+  exit 1
+fi
+
+# ── Systemd ────────────────────────────────────────────────────────────────────
 cat > "$UNIT" <<EOF
 [Unit]
 Description=SimpDash
@@ -96,5 +111,6 @@ systemctl restart simpdash
 if [ "$UPDATING" -eq 1 ]; then
   echo "SimpDash updated and restarted."
 else
-  echo "SimpDash installed. Open http://<this-host>:7575 to set your admin password."
+  echo ""
+  echo "SimpDash installed. Open http://$(hostname -I | awk '{print $1}'):7575 to set your password."
 fi
