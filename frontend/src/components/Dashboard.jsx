@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { logout, getNodes, getGuestServices, getBackups } from '../lib/api'
-import logo from '../../assets/superdashlogo.png'
+import logo from '../../assets/logo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
 import Scripts from './Scripts'

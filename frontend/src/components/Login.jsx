@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { login } from '../lib/api'
-import logo from '../../assets/superdashlogo.png'
+import logo from '../../assets/logo.png'
 
 export default function Login({ onDone }) {
   const [pw, setPw] = useState('')
