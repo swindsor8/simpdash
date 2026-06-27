@@ -87,6 +87,23 @@ export async function getNetwork() {
   return r.json()
 }
 
+// getNetworkStats → raw RX/TX byte counters per interface from /proc/net/dev.
+export async function getNetworkStats() {
+  const r = await fetch(`${BASE}/network/stats`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// runSpeedtest → download/upload/ping from speedtest-cli. Takes ~15-30 s.
+export async function runSpeedtest() {
+  const r = await fetch(`${BASE}/network/speedtest`, { method: 'POST', credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
 // getGuestServices → running systemd services inside a guest. type is 'lxc'
 // (pct exec) or 'qemu' (qm guest exec, needs the QEMU guest agent). Local host
 // only for now.

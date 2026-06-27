@@ -109,6 +109,8 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/version", methodGate(http.MethodGet, s.requireAuth(s.Version)))
 	mux.HandleFunc("/api/update-check", methodGate(http.MethodGet, s.requireAuth(s.UpdateCheck)))
 	mux.HandleFunc("/api/network", methodGate(http.MethodGet, s.requireAuth(s.Network)))
+	mux.HandleFunc("/api/network/stats", methodGate(http.MethodGet, s.requireAuth(s.NetworkStats)))
+	mux.HandleFunc("/api/network/speedtest", methodGate(http.MethodPost, s.requireAuth(s.Speedtest)))
 	mux.HandleFunc("/api/resources", methodGate(http.MethodGet, s.requireAuth(s.Resources)))
 	mux.HandleFunc("/api/resources/stream", s.ResourcesStream)
 	mux.HandleFunc("/api/updates/check", methodGate(http.MethodGet, s.requireAuth(s.UpdatesCheck)))
