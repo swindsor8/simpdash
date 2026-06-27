@@ -4,6 +4,29 @@ A one-click update/install dashboard for Proxmox VE hosts, with cluster-wide
 resource monitoring (host + VM + LXC) and optional multi-node management via
 a lightweight agent pairing model.
 
+## Progressive Web App (PWA)
+
+The frontend ships a web app manifest, app icons, and a service worker
+(`vite-plugin-pwa`, build-time only) so SuperDash can be added to a phone's
+home screen and the app shell loads instantly on repeat visits. The service
+worker precaches **only** the static shell (JS/CSS/HTML/icons) — it never
+caches `/api/*` (REST or the WebSocket stream endpoints under
+`/api/.../stream`), so live monitoring data is always fetched fresh.
+
+**Caveat — service workers require a secure context (HTTPS or `localhost`).**
+Most homelab installs are reached over plain HTTP on a LAN IP
+(e.g. `http://192.168.1.50:7575`), where the browser will **not** register
+the service worker and full "Add to Home Screen" installability won't
+trigger. The manifest, icons, and theme color still improve the bookmark
+experience (especially on Android Chrome), but instant-load precaching and
+guaranteed installability only kick in when the dashboard is served over
+HTTPS or accessed via `localhost`. Put SuperDash behind a reverse proxy with
+TLS for the full PWA experience. (A self-signed-cert workaround is
+intentionally out of scope.)
+
+> Note: the plugin emits the manifest as `manifest.webmanifest` (the standard
+> filename + MIME type), not `manifest.json` — functionally identical.
+
 ## Status
 
 This is scaffolding from Milestone 1 (see project history) — structure,

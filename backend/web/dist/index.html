@@ -5,13 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/assets/logo-C3c41tdf.png" />
     <title>SuperDash</title>
+    <!-- PWA: theme + iOS Add-to-Home-Screen (Safari ignores manifest.json for these). -->
+    <meta name="theme-color" content="#0a0b0f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="SuperDash" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <!-- Pixel font for the Mario theme only; falls back to monospace if offline. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
     <script type="module" crossorigin src="/assets/index-DEEI0qtd.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-CCjupzZf.css">
-  </head>
+  <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
     <div id="root"></div>
   </body>
