@@ -33,23 +33,26 @@ func Provision(cfg *config.Config, cfgPath string) error {
 		return nil // already provisioned
 	}
 
+	// ponytail: full path because systemd drops /usr/sbin from PATH
+	const pveum = "/usr/sbin/pveum"
+
 	// 1. Role (idempotent).
-	if err := idempotent(exec.Command("pveum", "role", "add", "SimpDash", "-privs", privs)); err != nil {
+	if err := idempotent(exec.Command(pveum, "role", "add", "SimpDash", "-privs", privs)); err != nil {
 		return fmt.Errorf("create role: %w", err)
 	}
 	// 2. User (idempotent).
-	if err := idempotent(exec.Command("pveum", "user", "add", "simpdash@pve")); err != nil {
+	if err := idempotent(exec.Command(pveum, "user", "add", "simpdash@pve")); err != nil {
 		return fmt.Errorf("create user: %w", err)
 	}
 	// 3. Grant the role to the user at the root path. NOT in the original
 	// 3-command spec, but required: with --privsep 0 the token inherits the
 	// user's privileges, and without this ACL the user (hence token) can read
 	// nothing — /cluster/resources comes back empty. Idempotent.
-	if err := idempotent(exec.Command("pveum", "acl", "modify", "/", "-user", "simpdash@pve", "-role", "SimpDash")); err != nil {
+	if err := idempotent(exec.Command(pveum, "acl", "modify", "/", "-user", "simpdash@pve", "-role", "SimpDash")); err != nil {
 		return fmt.Errorf("grant acl: %w", err)
 	}
 	// 4. Token — secret is shown exactly once, so capture it now.
-	out, err := exec.Command("pveum", "user", "token", "add", "simpdash@pve", "dashtoken",
+	out, err := exec.Command(pveum, "user", "token", "add", "simpdash@pve", "dashtoken",
 		"--privsep", "0", "--output-format", "json").Output()
 	if err != nil {
 		return fmt.Errorf("create token: %w", stderrOf(err))

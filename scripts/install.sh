@@ -95,6 +95,7 @@ Wants=network-online.target
 ExecStart=$BIN --config $CONFIG
 Restart=on-failure
 User=root
+Environment=PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
 [Install]
 WantedBy=multi-user.target

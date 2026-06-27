@@ -333,7 +333,14 @@ function GuestRow({ item, type }) {
         <tr className="bg-white/[0.015]">
           <td colSpan={5} className="px-3 pb-3 pt-1">
             {loading && <p className="text-xs text-gray-600">Loading services…</p>}
-            {err && <p className="text-xs text-red-400">{err}</p>}
+            {err && (
+              <div className="text-xs text-red-400 space-y-1">
+                <p>{err}</p>
+                {type === 'VM' && (
+                  <p className="text-gray-500">Run inside the VM: <code className="bg-white/5 px-1 rounded font-mono text-gray-300">apt install -y qemu-guest-agent && systemctl enable --now qemu-guest-agent</code></p>
+                )}
+              </div>
+            )}
             {svc && svc.length === 0 && <p className="text-xs text-gray-600">No running services reported.</p>}
             {svc && svc.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
