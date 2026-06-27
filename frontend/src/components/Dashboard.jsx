@@ -5,6 +5,7 @@ import Updates from './Updates'
 import Scripts from './Scripts'
 import Themes from './Themes'
 import Nodes from './Nodes'
+import Network from './Network'
 import UpdateBanner from './UpdateBanner'
 
 // --- helpers ---
@@ -99,6 +100,14 @@ function IconNetwork() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/>
       <path d="M12 8v4M12 12H5v4M12 12h7v4"/>
+    </svg>
+  )
+}
+
+function IconWifi() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>
     </svg>
   )
 }
@@ -427,6 +436,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         <nav className="flex-1 px-2 space-y-0.5">
           <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
           <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => setView('scripts')} />
+          <NavItem icon={<IconWifi />} label="Network" active={view === 'network'} onClick={() => setView('network')} />
           <NavItem icon={<IconNetwork />} label="Nodes" active={view === 'nodes'} onClick={() => setView('nodes')} />
           <NavItem icon={<IconPalette />} label="Themes" active={view === 'themes'} onClick={() => setView('themes')} />
         </nav>
@@ -448,6 +458,14 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             <p className="text-xs text-gray-500 mt-0.5">Choose a colour theme</p>
           </header>
           <Themes theme={theme} setTheme={setTheme} />
+        </>
+      ) : view === 'network' ? (
+        <>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
+            <h1 className="text-base font-semibold">Network</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Host network interfaces and bridges</p>
+          </header>
+          <Network />
         </>
       ) : view === 'nodes' ? (
         <>

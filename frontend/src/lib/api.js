@@ -80,6 +80,13 @@ export function runScript(node, slug) {
   return post(`${rel}/catalog/${encodeURIComponent(slug)}/run`)
 }
 
+// getNetwork → PVE host network interfaces.
+export async function getNetwork() {
+  const r = await fetch(`${BASE}/network`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
 // getGuestServices → running systemd services inside a guest. type is 'lxc'
 // (pct exec) or 'qemu' (qm guest exec, needs the QEMU guest agent). Local host
 // only for now.

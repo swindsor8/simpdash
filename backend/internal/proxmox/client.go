@@ -43,6 +43,48 @@ type Guest struct {
 	Uptime  int64   `json:"uptime"`
 }
 
+// NetworkIface is one interface from GET /nodes/{node}/network.
+type NetworkIface struct {
+	Iface       string `json:"iface"`
+	Type        string `json:"type"`
+	Address     string `json:"address,omitempty"`
+	Netmask     string `json:"netmask,omitempty"`
+	CIDR        string `json:"cidr,omitempty"`
+	Gateway     string `json:"gateway,omitempty"`
+	BridgePorts string `json:"bridge_ports,omitempty"`
+	Active      int    `json:"active"`
+	Autostart   int    `json:"autostart"`
+}
+
+// FetchNetwork returns the network interfaces for a node. Pass the node name
+// (hostname). Callers typically pass the local node name.
+func (c *Client) FetchNetwork(node string) ([]NetworkIface, error) {
+	host, tokenID, secret := c.creds()
+	if tokenID == "" {
+		return nil, fmt.Errorf("proxmox not configured")
+	}
+	req, err := http.NewRequest(http.MethodGet, host+"/api2/json/nodes/"+node+"/network", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("PVEAPIToken=%s=%s", tokenID, secret))
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("proxmox returned %s", resp.Status)
+	}
+	var body struct {
+		Data []NetworkIface `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return nil, err
+	}
+	return body.Data, nil
+}
+
 // rawResource is one entry from GET /cluster/resources (only fields we use).
 type rawResource struct {
 	Type    string  `json:"type"` // "node" | "qemu" | "lxc" | "storage" | ...
