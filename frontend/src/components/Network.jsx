@@ -54,7 +54,7 @@ function IconPing() {
 // SpeedMetric is one hero result in the speed-test panel.
 function SpeedMetric({ icon, label, value, unit, color, glow }) {
   return (
-    <div className="relative rounded-2xl bg-white/[0.03] border border-white/[0.06] p-5 overflow-hidden">
+    <div className="relative rounded-2xl bg-white/5 border border-white/[0.06] p-5 overflow-hidden">
       <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-20 ${glow}`} />
       <div className={`flex items-center gap-2 text-xs font-medium ${color}`}>
         {icon}<span className="uppercase tracking-wider">{label}</span>
@@ -165,7 +165,7 @@ export default function Network() {
     <div className="p-8 max-w-5xl space-y-6">
 
       {/* Speed test */}
-      <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-transparent p-6 space-y-5">
+      <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold">Internet Speed Test</h2>
@@ -215,7 +215,7 @@ export default function Network() {
       {/* Host interfaces */}
       <div>
         <h2 className="text-sm font-semibold mb-3 px-1">Host Interfaces</h2>
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+        <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06] text-xs text-gray-500 uppercase tracking-wider">
@@ -235,8 +235,8 @@ export default function Network() {
                   ? `${iface.address}/${iface.netmask}` : iface.address || '—')
                 const r = rates[iface.iface]
                 return (
-                  <tr key={iface.iface} className="border-t border-white/[0.04] hover:bg-white/[0.02]">
-                    <td className="px-4 py-3 font-mono text-gray-200">{iface.iface}</td>
+                  <tr key={iface.iface} className="border-t border-white/[0.04] hover:bg-white/5">
+                    <td className="px-4 py-3 font-mono text-gray-300">{iface.iface}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-md font-mono ${typeBadge(iface.type)}`}>{typeLabel(iface.type)}</span>
                     </td>
@@ -259,7 +259,7 @@ export default function Network() {
       {/* Guest network */}
       <div>
         <h2 className="text-sm font-semibold mb-3 px-1">VM &amp; Container Traffic</h2>
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+        <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] overflow-hidden">
           {guestsSorted.length === 0 ? (
             <p className="px-4 py-6 text-xs text-gray-600">No guests reporting — Proxmox may be unavailable.</p>
           ) : (
@@ -277,8 +277,8 @@ export default function Network() {
                 {guestsSorted.map(g => {
                   const running = g.status === 'running'
                   return (
-                    <tr key={`${g.type}-${g.vmid}`} className="border-t border-white/[0.04] hover:bg-white/[0.02]">
-                      <td className="px-4 py-3 text-gray-200">{g.name}</td>
+                    <tr key={`${g.type}-${g.vmid}`} className="border-t border-white/[0.04] hover:bg-white/5">
+                      <td className="px-4 py-3 text-gray-300">{g.name}</td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-gray-600 font-mono">{g.type === 'qemu' ? 'VM' : 'CT'}{g.vmid}</span>
                       </td>
