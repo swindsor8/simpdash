@@ -151,6 +151,47 @@ function ConfirmDialog({ script, onCancel, onConfirm }) {
   )
 }
 
+// TerminalDialog floats the live install output in a modal so it doesn't push
+// the catalog down. Stays open while running (interactive whiptail menus need
+// the keystroke stream); closeable any time via the X, backdrop, or Escape —
+// the job keeps running on the server if dismissed mid-install.
+function TerminalDialog({ running, busy, startErr, output, jobState, sendInput, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#13131e] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-2"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-4">
+          {running && (
+            <p className="text-sm text-gray-400">
+              {busy ? 'Installing' : 'Last install:'}{' '}
+              <span className="text-white font-medium">{running}</span>
+            </p>
+          )}
+          <button
+            onClick={onClose}
+            className="ml-auto text-xs px-3 py-1 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+        {startErr && <p className="text-xs text-red-400">{startErr}</p>}
+        <Terminal output={output} state={jobState} sendInput={sendInput} />
+      </div>
+    </div>
+  )
+}
+
 // Group scripts by category, preserving the manifest's first-seen order.
 function groupByCategory(scripts) {
   const groups = new Map()
@@ -179,6 +220,7 @@ export default function Scripts({ node = null }) {
   const [running, setRunning] = useState(null)   // name of the running script
   const [jobId, setJobId] = useState(null)
   const [startErr, setStartErr] = useState(null)
+  const [showTerm, setShowTerm] = useState(false)
   const { output, state: jobState, sendInput } = useJobStream(jobId, node)
   const busy = jobState === 'running'
 
@@ -196,6 +238,7 @@ export default function Scripts({ node = null }) {
       const data = await runScript(node, script.id)
       setRunning(script.name)
       setJobId(data.job_id)
+      setShowTerm(true)
     } catch (e) {
       // 409 = a job is already running; surface it rather than silently failing.
       setStartErr(e.message)
@@ -226,17 +269,16 @@ export default function Scripts({ node = null }) {
         </details>
       ))}
 
-      {(running || startErr) && (
-        <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6 space-y-2">
-          {running && (
-            <p className="text-sm text-gray-400">
-              {busy ? 'Installing' : 'Last install:'}{' '}
-              <span className="text-white font-medium">{running}</span>
-            </p>
-          )}
-          {startErr && <p className="text-xs text-red-400">{startErr}</p>}
-          <Terminal output={output} state={jobState} sendInput={sendInput} />
-        </div>
+      {(showTerm || startErr) && (
+        <TerminalDialog
+          running={running}
+          busy={busy}
+          startErr={startErr}
+          output={output}
+          jobState={jobState}
+          sendInput={sendInput}
+          onClose={() => { setShowTerm(false); setStartErr(null) }}
+        />
       )}
 
       {pending && (
