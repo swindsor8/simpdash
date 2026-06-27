@@ -72,7 +72,8 @@ export default function Network() {
   const [rates, setRates] = useState({})       // iface → {rx, tx} bytes/s
   const [guestRates, setGuestRates] = useState([]) // [{vmid,name,type,status,rx,tx}]
   const [err, setErr] = useState(null)
-  const prev = useRef(null)   // { ifaces, guests, t }
+  const prev = useRef(null)        // host iface counters: { ifaces, t }
+  const gstate = useRef({})        // per-vmid: { netin, netout, t, rx, tx }
 
   const [stRunning, setStRunning] = useState(false)
   const [stResult, setStResult] = useState(null)
@@ -82,34 +83,52 @@ export default function Network() {
     getNetwork().then(setIfaces).catch(e => setErr(e.message))
   }, [])
 
-  // Poll counters every 2 s; compute rates by diffing against the prior sample.
+  // Poll counters every 2 s. Host interfaces (/proc/net/dev) update in real
+  // time, so a fixed 2 s diff is fine. Guest counters come from Proxmox
+  // cluster/resources, which pvestatd only refreshes ~every 10 s — so we
+  // compute each guest's rate over the actual interval between counter CHANGES
+  // and hold the value between updates (else it would flicker 0 → spike → 0).
+  const STALE_MS = 16000 // no counter change in this long ⇒ treat guest as idle
   useEffect(() => {
     let cancelled = false
     async function poll() {
       try {
         const { ifaces: ifStats, guests } = await getNetworkStats()
         const now = Date.now()
+
+        // host interfaces — straight 2 s diff
         if (prev.current) {
           const dt = (now - prev.current.t) / 1000
-          // host interfaces
           const nr = {}
           for (const [iface, cur] of Object.entries(ifStats)) {
             const p = prev.current.ifaces[iface]
             if (p) nr[iface] = { rx: (cur.rx_bytes - p.rx_bytes) / dt, tx: (cur.tx_bytes - p.tx_bytes) / dt }
           }
-          // guests (keyed by vmid)
-          const pg = Object.fromEntries((prev.current.guests || []).map(g => [g.vmid, g]))
-          const gr = guests.map(g => {
-            const p = pg[g.vmid]
-            return {
-              vmid: g.vmid, name: g.name, type: g.type, status: g.status,
-              rx: p ? (g.netin - p.netin) / dt : null,
-              tx: p ? (g.netout - p.netout) / dt : null,
-            }
-          })
-          if (!cancelled) { setRates(nr); setGuestRates(gr) }
+          if (!cancelled) setRates(nr)
         }
-        prev.current = { ifaces: ifStats, guests, t: now }
+        prev.current = { ifaces: ifStats, t: now }
+
+        // guests — rate over time-between-changes, held in between
+        const seen = new Set()
+        const gr = guests.map(g => {
+          seen.add(g.vmid)
+          const st = gstate.current[g.vmid]
+          if (!st) {
+            gstate.current[g.vmid] = { netin: g.netin, netout: g.netout, t: now, rx: null, tx: null }
+          } else if (g.netin !== st.netin || g.netout !== st.netout) {
+            const dt = (now - st.t) / 1000
+            st.rx = dt > 0 ? Math.max(0, (g.netin - st.netin) / dt) : st.rx
+            st.tx = dt > 0 ? Math.max(0, (g.netout - st.netout) / dt) : st.tx
+            st.netin = g.netin; st.netout = g.netout; st.t = now
+          } else if (now - st.t > STALE_MS) {
+            st.rx = 0; st.tx = 0 // counter idle ⇒ no traffic
+          }
+          const cur = gstate.current[g.vmid]
+          return { vmid: g.vmid, name: g.name, type: g.type, status: g.status, rx: cur.rx, tx: cur.tx }
+        })
+        // drop state for guests that disappeared
+        for (const k of Object.keys(gstate.current)) if (!seen.has(Number(k))) delete gstate.current[k]
+        if (!cancelled) setGuestRates(gr)
       } catch (_) { /* best-effort */ }
       if (!cancelled) setTimeout(poll, 2000)
     }
