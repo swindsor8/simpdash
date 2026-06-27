@@ -41,6 +41,8 @@ type Guest struct {
 	Disk    *int64  `json:"disk"`              // null for VMs (cluster/resources doesn't report it)
 	MaxDisk *int64  `json:"maxdisk,omitempty"` // present for LXCs only, per contract
 	Uptime  int64   `json:"uptime"`
+	NetIn   int64   `json:"netin"`  // cumulative bytes received since guest start
+	NetOut  int64   `json:"netout"` // cumulative bytes sent since guest start
 }
 
 // NetworkIface is one interface from GET /nodes/{node}/network.
@@ -99,6 +101,8 @@ type rawResource struct {
 	Disk    int64   `json:"disk"`
 	MaxDisk int64   `json:"maxdisk"`
 	Uptime  int64   `json:"uptime"`
+	NetIn   int64   `json:"netin"`
+	NetOut  int64   `json:"netout"`
 }
 
 // Client calls the Proxmox VE API. Credentials are set after token
@@ -217,6 +221,8 @@ func reshape(raw []rawResource) Snapshot {
 				MaxMem: r.MaxMem,
 				Disk:   nil, // VMs report null disk per contract
 				Uptime: r.Uptime,
+				NetIn:  r.NetIn,
+				NetOut: r.NetOut,
 			})
 		case "lxc":
 			n := nodes[r.Node]
@@ -234,6 +240,8 @@ func reshape(raw []rawResource) Snapshot {
 				Disk:    &disk,
 				MaxDisk: &maxdisk,
 				Uptime:  r.Uptime,
+				NetIn:   r.NetIn,
+				NetOut:  r.NetOut,
 			})
 		}
 	}

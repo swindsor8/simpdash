@@ -28,17 +28,52 @@ type IfaceStats struct {
 	TxPackets uint64 `json:"tx_packets"`
 }
 
-// NetworkStats handles GET /api/network/stats — raw RX/TX counters from
-// /proc/net/dev. The frontend polls every 2 s and computes rates itself.
+// GuestNet is one VM/CT's cumulative network counters (from cluster/resources).
+type GuestNet struct {
+	VMID   int    `json:"vmid"`
+	Name   string `json:"name"`
+	Type   string `json:"type"` // "qemu" | "lxc"
+	Status string `json:"status"`
+	NetIn  int64  `json:"netin"`
+	NetOut int64  `json:"netout"`
+}
+
+// NetworkStats handles GET /api/network/stats — cumulative byte counters for
+// both the host's interfaces (/proc/net/dev) and every guest (cluster/resources).
+// The frontend polls every 2 s and computes rates itself by diffing.
 func (s *Server) NetworkStats(w http.ResponseWriter, r *http.Request) {
+	resp := struct {
+		Ifaces map[string]IfaceStats `json:"ifaces"`
+		Guests []GuestNet            `json:"guests"`
+	}{
+		Ifaces: readProcNetDev(),
+		Guests: []GuestNet{},
+	}
+
+	// Guest counters are best-effort: if Proxmox is unreachable the host
+	// interface table still works.
+	if snap, err := s.px.Fetch(); err == nil {
+		for _, n := range snap.Nodes {
+			for _, g := range n.VMs {
+				resp.Guests = append(resp.Guests, GuestNet{g.VMID, g.Name, "qemu", g.Status, g.NetIn, g.NetOut})
+			}
+			for _, g := range n.LXCs {
+				resp.Guests = append(resp.Guests, GuestNet{g.VMID, g.Name, "lxc", g.Status, g.NetIn, g.NetOut})
+			}
+		}
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// readProcNetDev parses /proc/net/dev into per-interface counters.
+func readProcNetDev() map[string]IfaceStats {
+	out := map[string]IfaceStats{}
 	f, err := os.Open("/proc/net/dev")
 	if err != nil {
-		writeErr(w, http.StatusInternalServerError, err.Error())
-		return
+		return out
 	}
 	defer f.Close()
 
-	out := map[string]IfaceStats{}
 	sc := bufio.NewScanner(f)
 	for i := 0; sc.Scan(); i++ {
 		if i < 2 { // skip two header lines
@@ -62,7 +97,7 @@ func (s *Server) NetworkStats(w http.ResponseWriter, r *http.Request) {
 			TxPackets: parse(fields[9]),
 		}
 	}
-	writeJSON(w, http.StatusOK, out)
+	return out
 }
 
 // SpeedtestResult is the subset of speedtest-cli --json output we care about.

@@ -41,6 +41,12 @@ if ! command -v node &>/dev/null; then
   apt-get install -y nodejs
 fi
 
+# ── speedtest-cli (powers the Network tab speed test) ─────────────────────────
+if ! command -v speedtest-cli &>/dev/null; then
+  echo "Installing speedtest-cli ..."
+  apt-get install -y speedtest-cli || echo "speedtest-cli install failed — speed test will be unavailable." >&2
+fi
+
 # ── Repo (tarball — no git required) ──────────────────────────────────────────
 echo "Downloading $REPO ..."
 rm -rf "$BUILD_DIR"

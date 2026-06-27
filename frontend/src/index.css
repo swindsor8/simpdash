@@ -722,3 +722,9 @@
 [data-theme="fallout"] .font-mono .text-gray-400 { color: #2bff52; }
 [data-theme="fallout"] .font-mono .text-gray-600 { color: #1aa030; }
 [data-theme="fallout"] .font-mono .text-gray-700 { color: #137322; }
+
+/* Indeterminate sliding bar for the network speed test in progress. */
+@keyframes speedbar {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
