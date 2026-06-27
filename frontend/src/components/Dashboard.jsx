@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { logout, getNodes, getGuestServices } from '../lib/api'
+import logo from '../../assets/superdashlogo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
 import Scripts from './Scripts'
@@ -277,7 +278,7 @@ function NodeCard({ node, onInstallAgent }) {
       {monitorOnly && (
         <div className="border-t border-white/[0.06] pt-4 mt-1 flex items-center justify-between gap-3">
           <p className="text-xs text-gray-600">
-            No SimpDash agent here — stats only. Pair an agent for updates &amp; script installs.
+            No SuperDash agent here — stats only. Pair an agent for updates &amp; script installs.
           </p>
           <button
             onClick={onInstallAgent}
@@ -410,10 +411,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       <aside className="w-52 shrink-0 bg-[#101018] border-r border-white/[0.06] flex flex-col py-5">
         <div className="px-4 mb-7">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
-              <span className="text-xs font-bold">S</span>
-            </div>
-            <span className="font-semibold text-sm tracking-tight">SimpDash</span>
+            <img src={logo} alt="SuperDash" className="w-7 h-7 rounded-lg object-contain shrink-0" />
+            <span className="font-semibold text-sm tracking-tight">SuperDash</span>
           </div>
         </div>
 

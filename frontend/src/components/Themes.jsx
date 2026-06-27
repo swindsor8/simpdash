@@ -53,7 +53,7 @@ function Win98Preview() {
       <div style={{ background: '#c0c0c0', boxShadow: raised, width: 150, fontFamily: tahoma }}>
         <div className="flex items-center justify-between px-1 py-0.5"
           style={{ background: '#000080', color: '#fff', fontSize: 11, fontWeight: 700 }}>
-          <span>SimpDash</span>
+          <span>SuperDash</span>
           <span className="px-1 leading-none"
             style={{ background: '#c0c0c0', color: '#000', boxShadow: raised, fontSize: 10 }}>×</span>
         </div>

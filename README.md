@@ -1,4 +1,4 @@
-# SimpDash
+# SuperDash
 
 A one-click update/install dashboard for Proxmox VE hosts, with cluster-wide
 resource monitoring (host + VM + LXC) and optional multi-node management via

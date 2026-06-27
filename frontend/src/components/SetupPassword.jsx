@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { setupPassword } from '../lib/api'
+import logo from '../../assets/superdashlogo.png'
 
 export default function SetupPassword({ onDone }) {
   const [pw, setPw] = useState('')
@@ -27,10 +28,8 @@ export default function SetupPassword({ onDone }) {
     <div className="min-h-screen bg-[#0c0c14] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 mb-8">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-sm font-bold text-white">S</span>
-          </div>
-          <span className="font-semibold text-white">SimpDash</span>
+          <img src={logo} alt="SuperDash" className="w-8 h-8 rounded-lg object-contain" />
+          <span className="font-semibold text-white">SuperDash</span>
         </div>
         <h1 className="text-2xl font-bold text-white mb-1">Set up your dashboard</h1>
         <p className="text-gray-500 mb-7 text-sm">Choose an admin password to get started.</p>

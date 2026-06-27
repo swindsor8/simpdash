@@ -41,7 +41,7 @@ export default function Nodes({ nodes, onChange }) {
       <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-white mb-1">Add a node</h2>
         <p className="text-xs text-gray-500 mb-4">
-          On the secondary, run SimpDash in <span className="font-mono text-gray-400">secondary</span> mode.
+          On the secondary, run SuperDash in <span className="font-mono text-gray-400">secondary</span> mode.
           Its pairing code and address are printed to the console / <span className="font-mono text-gray-400">systemctl status</span>.
         </p>
         <form onSubmit={handleAdd} className="flex flex-wrap gap-3 items-end">
