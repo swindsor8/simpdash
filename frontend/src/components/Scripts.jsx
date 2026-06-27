@@ -254,7 +254,7 @@ export default function Scripts({ node = null }) {
 
       {scripts && groupByCategory(scripts).map(([cat, items]) => (
         <details key={cat} open className="group">
-          <summary className="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden text-sm font-semibold text-white py-2">
+          <summary className="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden text-lg font-semibold text-white py-2">
             <IconChevron />
             {cat}
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/8 text-gray-400 font-medium">
