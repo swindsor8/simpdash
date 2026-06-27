@@ -26,6 +26,11 @@ export const THEMES = [
     name: 'Vault-Tec',
     description: 'Pip-Boy CRT: phosphor green on black, scanlines, glow.',
   },
+  {
+    id: 'glass',
+    name: 'Liquid Glass',
+    description: 'Frosted translucent panels over a drifting aurora.',
+  },
 ]
 
 export function useTheme() {

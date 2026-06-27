@@ -728,3 +728,102 @@
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(400%); }
 }
+
+/* ===========================================================================
+   LIQUID GLASS THEME — frosted translucent panels (Apple "liquid glass") over
+   a slowly drifting aurora. backdrop-blur + a bright inset rim give the wet-
+   glass edge; the deep gradient keeps the default white text legible. Same
+   override-only approach; default theme untouched.
+   ponytail: no SVG refraction (#glass-distortion) — blur + rim gets ~95% of
+   the look without injecting a distortion layer per card; add the filter later
+   if you want the refractive edge.
+   =========================================================================== */
+[data-theme="glass"] { color-scheme: dark; }
+
+/* Drifting aurora behind the whole app. Scoped to the root (.h-screen) so the
+   terminal and select — which also use bg-[#0c0c14] — stay dark. */
+[data-theme="glass"] .h-screen.bg-\[\#0c0c14\] {
+  background: linear-gradient(135deg, #2a1758, #14306e, #0c5d57, #5e1f6e, #2a1758);
+  background-size: 400% 400%;
+  animation: glassbg 30s ease infinite;
+}
+
+/* Pillowy corners read more "glass" than the default radii */
+[data-theme="glass"] .rounded-2xl { border-radius: 1.5rem; }
+[data-theme="glass"] .rounded-xl  { border-radius: 1.15rem; }
+
+/* --- Frosted surfaces: translucent white + backdrop blur --- */
+[data-theme="glass"] .bg-\[\#101018\],
+[data-theme="glass"] .bg-\[\#13131e\],
+[data-theme="glass"] .bg-\[\#0c0c14\]\/90,
+[data-theme="glass"] .bg-\[\#c6edda\], [data-theme="glass"] .bg-\[\#e8e8f4\],
+[data-theme="glass"] .bg-\[\#fef9c3\], [data-theme="glass"] .bg-\[\#e4dcf8\] {
+  background-color: rgba(255,255,255,0.10);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+}
+
+/* The signature: cards & stat tiles get a bright inset rim + soft drop shadow */
+[data-theme="glass"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="glass"] .bg-\[\#c6edda\], [data-theme="glass"] .bg-\[\#e8e8f4\],
+[data-theme="glass"] .bg-\[\#fef9c3\], [data-theme="glass"] .bg-\[\#e4dcf8\] {
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow:
+    inset 2px 2px 1px -1px rgba(255,255,255,0.6),
+    inset -1px -1px 1px 1px rgba(255,255,255,0.35),
+    0 8px 24px rgba(0,0,0,0.25);
+}
+
+/* --- Borders → frosted white edges --- */
+[data-theme="glass"] .border-white\/\[0\.04\] { border-color: rgba(255,255,255,0.10); }
+[data-theme="glass"] .border-white\/\[0\.06\] { border-color: rgba(255,255,255,0.14); }
+[data-theme="glass"] .border-white\/\[0\.07\],
+[data-theme="glass"] .border-white\/10,
+[data-theme="glass"] .border-white\/20,
+[data-theme="glass"] .border-white\/30      { border-color: rgba(255,255,255,0.22); }
+
+/* --- Translucent fills lifted for contrast on glass --- */
+[data-theme="glass"] .bg-white\/10 { background-color: rgba(255,255,255,0.16); }
+[data-theme="glass"] .bg-white\/8  { background-color: rgba(255,255,255,0.12); }
+[data-theme="glass"] .bg-white\/5  { background-color: rgba(255,255,255,0.08); }
+
+/* --- Text: keep white; lift the dim grays for contrast over the gradient --- */
+[data-theme="glass"] .text-gray-500 { color: #c2c8d4; }
+[data-theme="glass"] .text-gray-600 { color: #a6adbd; }
+
+/* --- Accent: primary button/logo as a blue-tinted glass key --- */
+[data-theme="glass"] .bg-blue-600 {
+  background-color: rgba(59,130,246,0.55);
+  backdrop-filter: blur(8px) saturate(1.4);
+  -webkit-backdrop-filter: blur(8px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.30);
+  box-shadow: inset 1px 1px 1px rgba(255,255,255,0.5), 0 6px 16px rgba(0,0,0,0.25);
+}
+[data-theme="glass"] .hover\:bg-blue-700:hover { background-color: rgba(59,130,246,0.8); }
+
+/* Active sidebar item → brighter frosted highlight */
+[data-theme="glass"] aside .bg-white\/10 {
+  background-color: rgba(255,255,255,0.22);
+  box-shadow: inset 1px 1px 1px rgba(255,255,255,0.4);
+}
+
+/* Node selector → frosted input */
+[data-theme="glass"] select.bg-\[\#0c0c14\] {
+  background-color: rgba(255,255,255,0.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Terminal stays a dark glassy inset (readability over flash) */
+[data-theme="glass"] .font-mono.bg-\[\#0c0c14\] {
+  background-color: rgba(8,10,20,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(255,255,255,0.18);
+}
+
+@keyframes glassbg {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

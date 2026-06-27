@@ -88,11 +88,32 @@ function FalloutPreview() {
   )
 }
 
+// A frosted glass chip over a mini aurora for the Liquid Glass preview.
+// Inline-styled so it always reads "glass" regardless of the active theme.
+function GlassPreview() {
+  return (
+    <div className="h-24 flex items-center justify-center"
+      style={{ background: 'linear-gradient(135deg,#2a1758,#14306e,#0c5d57,#5e1f6e)' }}>
+      <div className="px-6 py-3 rounded-2xl text-white text-xs font-semibold"
+        style={{
+          background: 'rgba(255,255,255,0.12)',
+          backdropFilter: 'blur(6px) saturate(1.6)',
+          WebkitBackdropFilter: 'blur(6px) saturate(1.6)',
+          boxShadow: 'inset 2px 2px 1px -1px rgba(255,255,255,0.6), inset -1px -1px 1px 1px rgba(255,255,255,0.35), 0 6px 16px rgba(0,0,0,0.3)',
+          border: '1px solid rgba(255,255,255,0.22)',
+        }}>
+        Liquid Glass
+      </div>
+    </div>
+  )
+}
+
 function ThemeCard({ t, active, onSelect }) {
   const isRetro = t.id === 'retro'
   const isMario = t.id === 'mario'
   const isWin98 = t.id === 'win98'
   const isFallout = t.id === 'fallout'
+  const isGlass = t.id === 'glass'
   return (
     <div
       className={`bg-[#13131e] border rounded-2xl p-5 flex flex-col gap-4 transition-colors cursor-pointer ${
@@ -103,7 +124,11 @@ function ThemeCard({ t, active, onSelect }) {
       onClick={() => onSelect(t.id)}
     >
       {/* Mini preview */}
-      {isFallout ? (
+      {isGlass ? (
+        <div className="rounded-xl overflow-hidden border border-white/10">
+          <GlassPreview />
+        </div>
+      ) : isFallout ? (
         <div className="rounded-xl overflow-hidden border border-white/10">
           <FalloutPreview />
         </div>
