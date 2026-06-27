@@ -104,6 +104,14 @@ export async function runSpeedtest() {
   return r.json()
 }
 
+// getBackups → { guests: [...], jobs: [...] } — per-guest last-backup status
+// and recent vzdump job results for the local PVE cluster.
+export async function getBackups() {
+  const r = await fetch(`${BASE}/backups`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
 // getGuestServices → running systemd services inside a guest. type is 'lxc'
 // (pct exec) or 'qemu' (qm guest exec, needs the QEMU guest agent). Local host
 // only for now.

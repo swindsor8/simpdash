@@ -49,6 +49,9 @@ type Server struct {
 	// agent holds the secondary's single-use pairing code until it is paired.
 	agent *agentPairing
 
+	// backups memoizes the (multi-call) backup report; zero value is ready.
+	backups backupCache
+
 	// selfNode is this host's Proxmox node name (its hostname). The local node
 	// is always "managed"; see managedNodeNames (M6).
 	selfNode string
@@ -113,6 +116,7 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/network/speedtest", methodGate(http.MethodPost, s.requireAuth(s.Speedtest)))
 	mux.HandleFunc("/api/resources", methodGate(http.MethodGet, s.requireAuth(s.Resources)))
 	mux.HandleFunc("/api/resources/stream", s.ResourcesStream)
+	mux.HandleFunc("/api/backups", methodGate(http.MethodGet, s.requireAuth(s.Backups)))
 	mux.HandleFunc("/api/updates/check", methodGate(http.MethodGet, s.requireAuth(s.UpdatesCheck)))
 	mux.HandleFunc("/api/updates/apply", methodGate(http.MethodPost, s.requireAuth(s.UpdatesApply)))
 	mux.HandleFunc("/api/jobs", methodGate(http.MethodGet, s.requireAuth(s.Jobs)))

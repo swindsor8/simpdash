@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { logout, getNodes, getGuestServices } from '../lib/api'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { logout, getNodes, getGuestServices, getBackups } from '../lib/api'
 import logo from '../../assets/superdashlogo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
@@ -7,6 +7,7 @@ import Scripts from './Scripts'
 import Themes from './Themes'
 import Nodes from './Nodes'
 import Network from './Network'
+import Backups, { BackupBadge } from './Backups'
 import UpdateBanner from './UpdateBanner'
 
 // --- helpers ---
@@ -109,6 +110,14 @@ function IconWifi() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/>
+    </svg>
+  )
+}
+
+function IconArchive() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><line x1="10" y1="12" x2="14" y2="12"/>
     </svg>
   )
 }
@@ -218,7 +227,7 @@ function DegradedNotice({ title, detail }) {
   )
 }
 
-function NodeCard({ node, onInstallAgent }) {
+function NodeCard({ node, onInstallAgent, backups }) {
   const monitorOnly = node.managed === false
   return (
     <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
@@ -262,14 +271,14 @@ function NodeCard({ node, onInstallAgent }) {
           <table className="w-full">
             <thead>
               <tr>
-                {['Name', 'Type', 'Status', 'CPU', 'Memory'].map(h => (
+                {['Name', 'Type', 'Status', 'CPU', 'Memory', 'Backup'].map(h => (
                   <th key={h} className="text-left text-xs text-gray-600 font-medium pb-2.5 pr-3">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {node.vms.map(vm => <GuestRow key={vm.vmid} item={vm} type="VM" />)}
-              {node.lxcs.map(ct => <GuestRow key={ct.vmid} item={ct} type="CT" />)}
+              {node.vms.map(vm => <GuestRow key={vm.vmid} item={vm} type="VM" backup={backups?.[vm.vmid]} />)}
+              {node.lxcs.map(ct => <GuestRow key={ct.vmid} item={ct} type="CT" backup={backups?.[ct.vmid]} />)}
             </tbody>
           </table>
         </div>
@@ -294,7 +303,7 @@ function NodeCard({ node, onInstallAgent }) {
 
 // GuestRow is a VM/LXC row that expands (when running) to list the services
 // running inside the guest — pct exec for CTs, qm guest exec for VMs.
-function GuestRow({ item, type }) {
+function GuestRow({ item, type, backup }) {
   const running = item.status === 'running'
   const [open, setOpen] = useState(false)
   const [svc, setSvc] = useState(null) // null = not fetched yet
@@ -335,13 +344,14 @@ function GuestRow({ item, type }) {
         <td className="py-2 pr-3 text-xs text-gray-500 tabular-nums">
           {running ? `${(item.cpu * 100).toFixed(1)}%` : '—'}
         </td>
-        <td className="py-2 text-xs text-gray-500 tabular-nums">
+        <td className="py-2 pr-3 text-xs text-gray-500 tabular-nums">
           {running ? fmtBytes(item.mem) : '—'}
         </td>
+        <td className="py-2"><BackupBadge backup={backup} /></td>
       </tr>
       {open && (
         <tr className="bg-white/[0.015]">
-          <td colSpan={5} className="px-3 pb-3 pt-1">
+          <td colSpan={6} className="px-3 pb-3 pt-1">
             {loading && <p className="text-xs text-gray-600">Loading services…</p>}
             {err && (
               <div className="text-xs text-red-400 space-y-1">
@@ -391,6 +401,24 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
   const { nodes, connected, pulseKey, unreachable } = useResourceStream(activeNode)
   const activeAddr = pairedNodes.find(n => n.id === activeNode)?.address
 
+  // Backup status for the local cluster, refreshed every 5 min (matches the
+  // server-side cache TTL). Only used when viewing the local host — a paired
+  // node's vmids belong to a different cluster, so we don't map them here.
+  const [backups, setBackups] = useState(null)
+  useEffect(() => {
+    let live = true
+    const load = () => getBackups().then(d => live && setBackups(d)).catch(() => live && setBackups(null))
+    load()
+    const t = setInterval(load, 5 * 60 * 1000)
+    return () => { live = false; clearInterval(t) }
+  }, [])
+  const backupByVmid = useMemo(() => {
+    if (activeNode) return {} // local cluster only — see note above
+    const m = {}
+    for (const g of backups?.guests ?? []) m[g.vmid] = g
+    return m
+  }, [backups, activeNode])
+
   const totalNodes = nodes?.length ?? 0
   const onlineNodes = nodes?.filter(n => n.status === 'online').length ?? 0
   const totalVMs = nodes?.reduce((s, n) => s + n.vms.length, 0) ?? 0
@@ -436,6 +464,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
           <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => setView('scripts')} />
           <NavItem icon={<IconWifi />} label="Network" active={view === 'network'} onClick={() => setView('network')} />
+          <NavItem icon={<IconArchive />} label="Backups" active={view === 'backups'} onClick={() => setView('backups')} />
           <NavItem icon={<IconNetwork />} label="Nodes" active={view === 'nodes'} onClick={() => setView('nodes')} />
           <NavItem icon={<IconPalette />} label="Themes" active={view === 'themes'} onClick={() => setView('themes')} />
         </nav>
@@ -465,6 +494,14 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             <p className="text-xs text-gray-500 mt-0.5">Host network interfaces and bridges</p>
           </header>
           <Network />
+        </>
+      ) : view === 'backups' ? (
+        <>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
+            <h1 className="text-base font-semibold">Backups</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Last backup per guest and recent vzdump jobs</p>
+          </header>
+          <Backups />
         </>
       ) : view === 'nodes' ? (
         <>
@@ -554,7 +591,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {nodes.map(node => <NodeCard key={node.id} node={node} onInstallAgent={() => setView('nodes')} />)}
+              {nodes.map(node => <NodeCard key={node.id} node={node} onInstallAgent={() => setView('nodes')} backups={backupByVmid} />)}
             </div>
           )}
 

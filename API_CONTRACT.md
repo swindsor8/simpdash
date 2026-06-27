@@ -79,6 +79,40 @@ badge + "Install agent" prompt from `managed: false`. Main sets this by
 cross-referencing `/cluster/resources` node names against its own hostname and
 each paired node's reported `node_name`.
 
+## Backups (Milestone 8)
+
+| Method | Path           | Notes |
+|--------|----------------|-------|
+| GET    | `/api/backups` | Per-guest last-backup status + recent vzdump job results for the local PVE cluster. Cached server-side 5 min. |
+
+Per-guest age comes from each backup storage's content listing (newest file's
+`ctime` per vmid). Pass/fail comes from each node's `vzdump` task log — PVE
+reports backup success **per job, not per guest**, so a guest badge shows only
+its last backup's age (or "no backup"); job failures surface in `jobs`.
+
+Local cluster only (everything reachable via the main token); paired-agent
+backups are not proxied yet. Uses the existing read-only token role
+(`Sys.Audit` for tasks, `Datastore.Audit` for storage content) — no new privs.
+
+```json
+{
+  "guests": [
+    { "vmid": 101, "name": "jellyfin", "type": "qemu", "node": "pve1",
+      "status": "running", "last_backup": 1719446400, "size": 8400000000 },
+    { "vmid": 201, "name": "pihole", "type": "lxc", "node": "pve1",
+      "status": "running", "last_backup": 0, "size": 0 }
+  ],
+  "jobs": [
+    { "node": "pve1", "upid": "UPID:pve1:...", "status": "OK",
+      "starttime": 1719446400, "endtime": 1719448200 }
+  ]
+}
+```
+
+`last_backup` is unix seconds, `0` when no backup file was found. A job
+`status` of `"OK"` is success, `""` means still running, anything else is the
+failure message.
+
 ## Updates (Milestone 3)
 
 | Method | Path                  | Notes |
