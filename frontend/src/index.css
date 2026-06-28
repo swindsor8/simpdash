@@ -1132,6 +1132,181 @@
   100% { opacity: 0; background-position: 0 0; }
 }
 
+/* ===========================================================================
+   PER-THEME ANIMATION OVERRIDES — each theme's personality expressed in motion.
+   All decorative transforms/animations sit under prefers-reduced-motion: no-preference.
+   Stat-flash tint and glow keyframe name overrides are here; the underlying
+   mechanism (flash-fade, glow-success etc.) is still defined in the MOTION block.
+   =========================================================================== */
+
+/* ----- Stat-flash tint per theme (functional colour, no motion guard needed) ----- */
+[data-theme="retro"]    .stat-flash-overlay { background: rgba(242,76,0,0.13); }
+[data-theme="mario"]    .stat-flash-overlay { background: rgba(251,208,0,0.20); }
+[data-theme="win98"]    .stat-flash-overlay { background: rgba(0,0,128,0.10); }
+[data-theme="glass"]    .stat-flash-overlay { background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(100,180,255,0.15), rgba(200,150,255,0.12)); }
+[data-theme="terminal"] .stat-flash-overlay { background: rgba(26,255,64,0.10); }
+
+/* ----- Retro: neobrutalist — card shifts into the shadow on hover, stamps in ----- */
+@keyframes retro-card-enter {
+  from { opacity: 0; transform: scale(0.96) translate(3px, 3px); }
+  to   { opacity: 1; transform: scale(1) translate(0,0); }
+}
+@keyframes glow-success-retro {
+  from { box-shadow: 5px 5px 0 #121331, 0 0 0 3px #f24c00; }
+  50%  { box-shadow: 3px 3px 0 #121331, 0 0 0 5px rgba(242,76,0,0.45); }
+  to   { box-shadow: 5px 5px 0 #121331; }
+}
+@keyframes glow-neutral-retro {
+  from { box-shadow: 5px 5px 0 #121331, 0 0 0 2px rgba(18,19,49,0.5); }
+  to   { box-shadow: 5px 5px 0 #121331; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="retro"] .card-lift {
+    transition: transform 100ms steps(3), box-shadow 100ms steps(3), border-color 100ms steps(3);
+  }
+  [data-theme="retro"] .card-lift:hover { transform: translate(-3px, -3px); }
+  /* Override the card's base shadow — shrinks as the card shifts left/up */
+  [data-theme="retro"] .bg-\[\#13131e\].rounded-2xl.card-lift:hover { box-shadow: 2px 2px 0 #121331; }
+  [data-theme="retro"] .stagger > * {
+    animation-name: retro-card-enter;
+    animation-duration: 180ms;
+    animation-timing-function: steps(4, end);
+  }
+  [data-theme="retro"] .glow-success { animation-name: glow-success-retro; }
+  [data-theme="retro"] .glow-neutral { animation-name: glow-neutral-retro; }
+}
+
+/* ----- Mario: pixel block — hard jump, shadow extends (floating block) ----- */
+@keyframes mario-card-enter {
+  0%   { opacity: 0; transform: translateY(14px) scaleY(0.85); }
+  55%  { opacity: 1; transform: translateY(-5px) scaleY(1.03); }
+  80%  { transform: translateY(2px) scaleY(0.98); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+@keyframes glow-success-mario {
+  0%   { box-shadow: 4px 4px 0 #000, 0 0 0 3px #fbd000, 0 0 16px rgba(251,208,0,0.8); }
+  60%  { box-shadow: 4px 4px 0 #000, 0 0 0 6px rgba(251,208,0,0.35); }
+  100% { box-shadow: 4px 4px 0 #000; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="mario"] .card-lift {
+    transition: transform 80ms steps(2), box-shadow 80ms steps(2);
+  }
+  [data-theme="mario"] .card-lift:hover { transform: translateY(-6px); }
+  /* Shadow stretches down as the block floats up */
+  [data-theme="mario"] .bg-\[\#13131e\].rounded-2xl.card-lift:hover { box-shadow: 4px 10px 0 #000; }
+  [data-theme="mario"] .stagger > * {
+    animation-name: mario-card-enter;
+    animation-duration: 280ms;
+    animation-timing-function: steps(6, end);
+  }
+  [data-theme="mario"] .glow-success { animation-name: glow-success-mario; }
+  [data-theme="mario"] .glow-neutral { animation: none; }
+}
+
+/* ----- Win98: no motion — panels don't float, windows snap in ----- */
+@keyframes win98-card-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes glow-success-win98 {
+  from { box-shadow: var(--raised), 0 0 0 2px #000080; }
+  to   { box-shadow: var(--raised); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="win98"] .card-lift { transition: none; }
+  [data-theme="win98"] .card-lift:hover { transform: none; }
+  [data-theme="win98"] .stagger > * {
+    animation-name: win98-card-enter;
+    animation-duration: 60ms;
+    animation-timing-function: steps(1, end);
+  }
+  [data-theme="win98"] .glow-success {
+    animation-name: glow-success-win98;
+    animation-timing-function: steps(2, end);
+  }
+  [data-theme="win98"] .glow-neutral { animation: none; }
+}
+
+/* ----- Glass: liquid float — slow, springy entry; hover amplifies the frost ----- */
+@keyframes glass-card-enter {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes glow-success-glass {
+  from {
+    box-shadow:
+      inset 2px 2px 1px -1px rgba(255,255,255,0.85),
+      inset -1px -1px 1px 1px rgba(255,255,255,0.5),
+      0 0 32px rgba(100,200,255,0.65),
+      0 0 60px rgba(180,100,255,0.35),
+      0 8px 24px rgba(0,0,0,0.25);
+  }
+  to {
+    box-shadow:
+      inset 2px 2px 1px -1px rgba(255,255,255,0.6),
+      inset -1px -1px 1px 1px rgba(255,255,255,0.35),
+      0 8px 24px rgba(0,0,0,0.25);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="glass"] .card-lift {
+    transition:
+      transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 260ms ease-out;
+  }
+  [data-theme="glass"] .card-lift:hover {
+    transform: translateY(-8px);
+    box-shadow:
+      inset 2px 2px 1px -1px rgba(255,255,255,0.78),
+      inset -1px -1px 1px 1px rgba(255,255,255,0.42),
+      0 28px 60px rgba(0,0,0,0.42),
+      0 8px 16px rgba(0,0,0,0.2);
+  }
+  [data-theme="glass"] .stagger > * {
+    animation-name: glass-card-enter;
+    animation-duration: 520ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-theme="glass"] .glow-success { animation-name: glow-success-glass; animation-duration: 650ms; }
+  [data-theme="glass"] .glow-neutral { animation: none; }
+}
+
+/* ----- Terminal: phosphor warmup card entry; green glows everywhere ----- */
+@keyframes terminal-card-enter {
+  0%   { opacity: 0; filter: brightness(0); }
+  35%  { opacity: 1; filter: brightness(3.5); }
+  100% { filter: brightness(1); }
+}
+@keyframes glow-success-terminal {
+  from { box-shadow: 0 0 0 1px rgba(26,255,64,0.9), 0 0 22px 3px rgba(26,255,64,0.55); }
+  to   { box-shadow: 0 0 0 0 rgba(26,255,64,0); }
+}
+@keyframes glow-neutral-terminal {
+  from { box-shadow: 0 0 0 1px rgba(26,255,64,0.45), 0 0 10px rgba(26,255,64,0.2); }
+  to   { box-shadow: 0 0 0 0 rgba(26,255,64,0); }
+}
+@keyframes reconnect-pulse-terminal {
+  from { box-shadow: 0 0 0 2px rgba(26,255,64,0.5), 0 0 24px rgba(26,255,64,0.25); }
+  to   { box-shadow: 0 0 0 0 rgba(26,255,64,0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="terminal"] .card-lift {
+    transition: filter var(--crt-fast), border-color var(--crt-fast);
+  }
+  /* No translateY — phosphor panels don't float; brightness bump reads as "active scan" */
+  [data-theme="terminal"] .card-lift:hover { transform: none; filter: brightness(1.1); }
+  [data-theme="terminal"] .stagger > * {
+    animation-name: terminal-card-enter;
+    animation-duration: 360ms;
+    animation-timing-function: ease-out;
+  }
+  [data-theme="terminal"] .glow-success { animation-name: glow-success-terminal; }
+  [data-theme="terminal"] .glow-neutral { animation-name: glow-neutral-terminal; }
+  [data-theme="terminal"] .reconnect-pulse { animation-name: reconnect-pulse-terminal; }
+}
+
 /* (4) Boot sequence — full-screen phosphor readout shown once per session before
    the dashboard reveals. Skippable; styling only, the reveal/typewriter is in
    BootSequence.jsx. Its own scanlines so it reads as a CRT even over the bezel. */
