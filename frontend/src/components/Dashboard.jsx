@@ -13,13 +13,17 @@ import Backups, { BackupBadge } from './Backups'
 import Notebook from './Notebook'
 import UpdateBanner from './UpdateBanner'
 import { Card, StatCard, StatusPill, statusVariant } from './Card'
-import { AnimatedNumber, usePowerMorph, useStatusGlow } from './motion'
+import RadialGauge from './RadialGauge'
+import { usePowerMorph, useStatusGlow } from './motion'
 import { copy } from '../lib/copy'
 
 // --- helpers ---
-function fmtBytes(n) {
-  if (n == null) return '—'
-  return n >= 1e9 ? `${(n / 1e9).toFixed(1)} GB` : `${(n / 1e6).toFixed(0)} MB`
+// fmtPair — "8.8 / 34 GB": used/total in a single unit, for a gauge's caption.
+function fmtPair(a, b) {
+  const gb = b >= 1e9
+  const div = gb ? 1e9 : 1e6
+  const f = (n) => { const v = n / div; return v >= 100 ? Math.round(v) : v.toFixed(1) }
+  return `${f(a)} / ${f(b)} ${gb ? 'GB' : 'MB'}`
 }
 function fmtUptime(s) {
   const d = Math.floor(s / 86400)
@@ -319,12 +323,23 @@ function NavItem({ icon, label, active, onClick }) {
   )
 }
 
-function Bar({ value, max }) {
-  const p = max > 0 ? Math.min(100, (value / max) * 100) : 0
-  const color = p > 90 ? 'bg-red-500' : p > 70 ? 'bg-yellow-500' : 'bg-blue-500'
+// NodeGauge — a labelled large gauge for the node card (metric name above the
+// ring, absolute figures folded into the gauge's own centre caption).
+function NodeGauge({ name, ...rest }) {
   return (
-    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-      <div className={`h-full rounded-full ${color} bar-fill`} style={{ width: `${p}%` }} />
+    <div className="flex flex-col items-center gap-1.5">
+      <span className="text-[10px] uppercase tracking-wider text-gray-500">{name}</span>
+      <RadialGauge size="lg" {...rest} />
+    </div>
+  )
+}
+
+// CompactGauge — a small gauge + metric name for a VM/LXC card.
+function CompactGauge({ name, ...rest }) {
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <RadialGauge size="sm" {...rest} />
+      <span className="text-[9px] uppercase tracking-wider text-gray-500">{name}</span>
     </div>
   )
 }
@@ -420,78 +435,66 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
         </div>
       </div>
 
-      <div className="flex items-start justify-between mb-5 gap-2 pr-12">
-        <div>
-          <h2 className="text-sm font-semibold text-white">{node.id}</h2>
-          <p className="text-xs text-gray-600 mt-0.5">up {fmtUptime(node.uptime)}</p>
-        </div>
-        <div className="flex items-center gap-1.5 flex-wrap justify-end">
-          {monitorOnly && <MonitorOnlyBadge />}
-          <StatusPill variant={statusVariant(node.status)}>{node.status}</StatusPill>
-        </div>
-      </div>
+      <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+        {/* Identity + status + power controls */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between mb-5 gap-2 pr-12">
+            <div>
+              <h2 className="text-sm font-semibold text-white">{node.id}</h2>
+              <p className="text-xs text-gray-600 mt-0.5">up {fmtUptime(node.uptime)}</p>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+              {monitorOnly && <MonitorOnlyBadge />}
+              <StatusPill variant={statusVariant(node.status)}>{node.status}</StatusPill>
+            </div>
+          </div>
 
-      <div className="space-y-4 mb-5">
-        <div>
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-gray-500">CPU</span>
-            <span className="text-gray-400"><AnimatedNumber value={node.cpu * 100} format={n => n.toFixed(1)} />% of {node.maxcpu} cores</span>
+          {/* Node power controls */}
+          <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+            <button
+              disabled={isInflight}
+              onClick={() => onAction({ entityType: 'node', entityId: node.id, action: 'reboot', isSelf: node.id === selfNode })}
+              className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+            >
+              Reboot
+            </button>
+            <button
+              disabled={isInflight}
+              onClick={() => onAction({ entityType: 'node', entityId: node.id, action: 'shutdown', isSelf: node.id === selfNode })}
+              className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+            >
+              Shutdown
+            </button>
+            {isInflight ? (
+              <svg className="animate-spin text-gray-500 ml-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+            ) : justDone ? (
+              <span className="ml-1 text-emerald-400 animate-fade-in" title="Done">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+            ) : null}
+            {monitorOnly && (
+              <button
+                onClick={onInstallAgent}
+                className="ml-auto shrink-0 text-xs px-3 py-1.5 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+              >
+                Install agent
+              </button>
+            )}
           </div>
-          <Bar value={node.cpu} max={1} />
+          {monitorOnly && (
+            <p className="text-xs text-gray-600 mt-2">No SuperDash agent here — stats only.</p>
+          )}
         </div>
-        <div>
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-gray-500">Memory</span>
-            <span className="text-gray-400">{fmtBytes(node.mem)} / {fmtBytes(node.maxmem)}</span>
-          </div>
-          <Bar value={node.mem} max={node.maxmem} />
-        </div>
-        <div>
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-gray-500">Disk</span>
-            <span className="text-gray-400">{fmtBytes(node.disk)} / {fmtBytes(node.maxdisk)}</span>
-          </div>
-          <Bar value={node.disk} max={node.maxdisk} />
-        </div>
-      </div>
 
-      {/* Node power controls */}
-      <div className="border-t border-white/[0.06] pt-4 mt-1 flex items-center gap-2" onClick={e => e.stopPropagation()}>
-        <button
-          disabled={isInflight}
-          onClick={() => onAction({ entityType: 'node', entityId: node.id, action: 'reboot', isSelf: node.id === selfNode })}
-          className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
-        >
-          Reboot
-        </button>
-        <button
-          disabled={isInflight}
-          onClick={() => onAction({ entityType: 'node', entityId: node.id, action: 'shutdown', isSelf: node.id === selfNode })}
-          className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
-        >
-          Shutdown
-        </button>
-        {isInflight ? (
-          <svg className="animate-spin text-gray-500 ml-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-          </svg>
-        ) : justDone ? (
-          <span className="ml-1 text-emerald-400 animate-fade-in" title="Done">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          </span>
-        ) : null}
-        {monitorOnly && (
-          <button
-            onClick={onInstallAgent}
-            className="ml-auto shrink-0 text-xs px-3 py-1.5 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
-          >
-            Install agent
-          </button>
-        )}
+        {/* CPU / Memory / Disk gauges — fill the horizontal space freed up at wide widths */}
+        <div className="flex items-center justify-center gap-5 sm:gap-7 shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
+          <NodeGauge name="CPU" value={node.cpu} max={1} label={`of ${node.maxcpu} cores`} format={n => `${n.toFixed(1)}%`} />
+          <NodeGauge name="Memory" value={node.mem} max={node.maxmem} label={fmtPair(node.mem, node.maxmem)} />
+          <NodeGauge name="Disk" value={node.disk} max={node.maxdisk} label={fmtPair(node.disk, node.maxdisk)} />
+        </div>
       </div>
-      {monitorOnly && (
-        <p className="text-xs text-gray-600 mt-2">No SuperDash agent here — stats only.</p>
-      )}
     </Card>
   )
 }
@@ -567,14 +570,9 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
         </div>
       </div>
 
-      {/* Status + live stats + note badge */}
+      {/* Status + backup + note badge */}
       <div className="flex items-center gap-2 flex-wrap mb-3">
         <StatusPill variant={statusVariant(item.status)}>{item.status}</StatusPill>
-        {running && (
-          <span className="text-[11px] text-gray-500 tabular-nums">
-            {(item.cpu * 100).toFixed(1)}% · {fmtBytes(item.mem)}
-          </span>
-        )}
         <BackupBadge backup={backup} />
         {noteCount > 0 && (
           <button
@@ -585,6 +583,14 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
             <IconNoteSm /> {noteCount}
           </button>
         )}
+      </div>
+
+      {/* Compact CPU / Memory / Storage gauges. Storage is N/A for VMs (the API
+          reports no per-guest disk usage for QEMU); stopped guests read idle. */}
+      <div className="flex items-start justify-around gap-1 mb-3" onClick={e => e.stopPropagation()}>
+        <CompactGauge name="CPU" value={item.cpu} max={1} idle={!running} />
+        <CompactGauge name="RAM" value={item.mem} max={item.maxmem} idle={!running} />
+        <CompactGauge name="Disk" value={item.disk} max={item.maxdisk} idle={!running} />
       </div>
 
       {/* Power controls */}
@@ -936,7 +942,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           </div>
         </header>
 
-        <main className={`p-8 space-y-6 max-w-6xl cards-region ${dimmed ? 'dimmed' : ''} ${reconnecting ? 'reconnect-pulse' : ''}`}>
+        <main className={`p-8 space-y-6 max-w-[1600px] cards-region ${dimmed ? 'dimmed' : ''} ${reconnecting ? 'reconnect-pulse' : ''}`}>
 
           {/* Stat cards — dark elevated surface; no trend pills (no historical
               comparison data exists to compare against). */}
@@ -986,7 +992,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
                 <div className="skeleton h-1.5 w-full" />
                 <div className="skeleton h-1.5 w-full" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
                 {[0, 1, 2].map(i => (
                   <div key={i} className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-4 space-y-3">
                     <div className="flex items-center gap-2.5">
@@ -1022,7 +1028,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
                     onInstallAgent={() => setView('nodes')}
                   />
                   {(node.vms.length > 0 || node.lxcs.length > 0) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 stagger">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 stagger">
                       {node.vms.map(vm => (
                         <GuestCard
                           key={`vm-${vm.vmid}`} item={vm} type="VM" nodeName={node.id}

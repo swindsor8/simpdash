@@ -126,6 +126,73 @@
 }
 
 /* ===========================================================================
+   RADIAL GAUGES — one component, two looks. The default theme paints a
+   threshold-coloured progress ring; the terminal theme (overrides at the bottom)
+   swaps it for a monochrome analog dial. The arc/needle transition over
+   --motion-medium so values sweep, matching .bar-fill and the AnimatedNumber.
+   =========================================================================== */
+.radial-gauge { position: relative; display: inline-flex; flex: none; }
+.rg-lg { width: 104px; height: 104px; }
+.rg-sm { width: 58px; height: 58px; }
+.rg-svg { width: 100%; height: 100%; display: block; }
+
+.gauge-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 7; stroke-linecap: round; }
+.gauge-fill {
+  fill: none; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 100;
+  stroke: var(--gauge-color, #10b981);
+  transition: stroke-dashoffset var(--motion-medium), stroke var(--motion-medium);
+}
+.rg-sm .gauge-track, .rg-sm .gauge-fill { stroke-width: 9; }
+
+/* Threshold colours reuse the status palette (emerald → amber → red). */
+.radial-gauge[data-level="low"]  { --gauge-color: #10b981; }
+.radial-gauge[data-level="mid"]  { --gauge-color: #f59e0b; }
+.radial-gauge[data-level="high"] { --gauge-color: #ef4444; }
+.radial-gauge[data-level="na"],
+.radial-gauge[data-level="idle"] { --gauge-color: rgba(148,163,184,0.25); }
+.radial-gauge[data-level="na"] .gauge-track,
+.radial-gauge[data-level="idle"] .gauge-track { stroke: rgba(255,255,255,0.05); }
+.radial-gauge[data-level="na"] .rg-center,
+.radial-gauge[data-level="idle"] .rg-center { opacity: 0.5; }
+
+/* Analog-dial bits exist in the markup always; the default theme hides them. */
+.gauge-ticks, .gauge-needle, .gauge-hub { display: none; }
+
+.rg-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; pointer-events: none;
+}
+.rg-label { font-size: 10px; line-height: 1.1; margin-top: 2px; }
+.rg-sm .rg-label { font-size: 9px; }
+
+/* ----- terminal theme: monochrome phosphor dial, no hue shift ----- */
+[data-theme="terminal"] .gauge-fill  { display: none; }   /* needle replaces the arc fill */
+[data-theme="terminal"] .gauge-track { stroke: rgba(26,255,64,0.18); stroke-width: 3; }
+[data-theme="terminal"] .rg-sm .gauge-track { stroke-width: 4; }
+[data-theme="terminal"] .gauge-ticks { display: block; }
+[data-theme="terminal"] .gauge-ticks line { stroke: var(--pip); stroke-width: 1.4; opacity: 0.45; }
+[data-theme="terminal"] .gauge-needle {
+  display: block; stroke: var(--pip); stroke-width: 2.5; stroke-linecap: round;
+  transform-box: view-box; transform-origin: 50px 50px;
+  transition: transform var(--motion-medium);
+  filter: drop-shadow(0 0 var(--g, 1px) var(--pip-glow));
+}
+[data-theme="terminal"] .gauge-hub { display: block; fill: var(--pip); }
+/* Threshold feedback = brightness/glow only (single-hue rule). */
+[data-theme="terminal"] .radial-gauge[data-level="low"]  { --g: 1px; }
+[data-theme="terminal"] .radial-gauge[data-level="mid"]  { --g: 4px; }
+[data-theme="terminal"] .radial-gauge[data-level="high"] { --g: 7px; }
+[data-theme="terminal"] .radial-gauge[data-level="mid"] .gauge-ticks line,
+[data-theme="terminal"] .radial-gauge[data-level="high"] .gauge-ticks line { opacity: 0.85; }
+[data-theme="terminal"] .radial-gauge[data-level="high"] .gauge-needle { stroke-width: 3; }
+[data-theme="terminal"] .radial-gauge[data-level="na"] .gauge-ticks line,
+[data-theme="terminal"] .radial-gauge[data-level="idle"] .gauge-ticks line { opacity: 0.2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gauge-fill, [data-theme="terminal"] .gauge-needle { transition: none; }
+}
+
+/* ===========================================================================
    RETRO THEME — neobrutalist skin (thick ink outlines, hard offset shadows,
    flat cream surfaces, burnt-orange accents). Applied entirely by overriding
    Tailwind's generated classes under [data-theme="retro"], so the default
