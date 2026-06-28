@@ -61,6 +61,17 @@ export async function applyUpdates(node) {
   return r.json()
 }
 
+// updateContainer → starts an apt upgrade inside a local LXC (pct exec) and
+// returns { job_id } for streaming. Containers only, local host only.
+export async function updateContainer(vmid) {
+  const r = await fetch(`${BASE}/guests/${vmid}/update`, { method: 'POST', credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
 export async function getJobs() {
   const r = await fetch(`${BASE}/jobs`, { credentials: 'same-origin' })
   if (!r.ok) throw new Error(await r.text())

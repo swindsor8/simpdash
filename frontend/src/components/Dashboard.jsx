@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { logout, getNodes, getBackups, getNoteCounts, getInfo, entityAction, getServiceLinks, upsertServiceLink, deleteServiceLink } from '../lib/api'
+import { logout, getNodes, getBackups, getNoteCounts, getInfo, entityAction, updateContainer, getServiceLinks, upsertServiceLink, deleteServiceLink } from '../lib/api'
 import logo from '../../assets/logo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
+import { useJobStream } from '../hooks/useJobStream'
+import Terminal from './Terminal'
 import Updates from './Updates'
 import Scripts from './Scripts'
 import Themes from './Themes'
@@ -159,6 +161,37 @@ function IconExternalLink() {
   )
 }
 
+function IconUpdateSm() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+      <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+    </svg>
+  )
+}
+
+// JobModal — streams a running executor job's live output (reuses the Updates/
+// Scripts terminal plumbing). Used for per-container apt upgrades.
+function JobModal({ jobId, title, onClose }) {
+  const { output, state, sendInput } = useJobStream(jobId, null)
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-[#13131e] border border-white/10 rounded-2xl w-full max-w-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h2 className="text-base font-semibold text-white truncate">{title}</h2>
+          <div className="flex items-center gap-2 shrink-0">
+            {state === 'running' && <StatusPill variant="neutral">Running…</StatusPill>}
+            {state === 'succeeded' && <StatusPill variant="success">Done</StatusPill>}
+            {state === 'failed' && <StatusPill variant="error">Failed</StatusPill>}
+            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-sm">✕</button>
+          </div>
+        </div>
+        <Terminal output={output} state={state} sendInput={sendInput} />
+      </div>
+    </div>
+  )
+}
+
 // ConfirmModal — generic danger confirmation, reuses the Scripts.jsx pattern.
 function ConfirmModal({ confirm, onConfirm, onCancel }) {
   useEffect(() => {
@@ -167,13 +200,16 @@ function ConfirmModal({ confirm, onConfirm, onCancel }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [onCancel])
 
-  const { entityType, entityId, action, isSelf } = confirm
+  const { entityType, entityId, action, isSelf, name } = confirm
   const isForceStop = action === 'stop'
-  const isNodeAction = entityType === 'node'
-  const verb = action === 'reboot' ? 'Reboot' : action === 'shutdown' ? 'Shut down' : 'Force stop'
+  const isUpdate = action === 'update'
+  const verb = isUpdate ? 'Update' : action === 'reboot' ? 'Reboot' : action === 'shutdown' ? 'Shut down' : 'Force stop'
 
   let title, body, danger = isForceStop
-  if (isForceStop) {
+  if (isUpdate) {
+    title = `Update ${name || `container ${entityId}`}?`
+    body = 'Runs apt-get update && apt-get -y upgrade inside the container. It must be running; the upgrade can restart services inside it.'
+  } else if (isForceStop) {
     title = `Force stop ${entityId}?`
     body = 'This is the equivalent of pulling the power. The guest will not shut down gracefully and may lose unsaved data or corrupt the filesystem.'
   } else {
@@ -482,7 +518,7 @@ function ServiceIcon({ url, fallback }) {
 // GuestCard is one VM/LXC as a self-contained, clickable service card: the card
 // body opens the linked service in a new tab; the gear edits the link; power
 // controls live at the bottom. Replaces the old in-node table rows.
-function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link, onServiceLinkChange, isInflight, onAction }) {
+function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link, onServiceLinkChange, isInflight, onAction, onUpdate }) {
   const running = item.status === 'running'
   const etype = type === 'VM' ? 'vm' : 'lxc'
   const pxType = type === 'VM' ? 'qemu' : 'lxc' // Proxmox API type
@@ -571,6 +607,11 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
             <button onClick={() => act('reboot')} className="text-[11px] px-2 py-1 rounded-md bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
               Reboot
             </button>
+            {onUpdate && (
+              <button onClick={() => onUpdate(item)} title="Update packages (apt update && upgrade)" className="text-[11px] px-1.5 py-1 rounded-md bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+                <IconUpdateSm />
+              </button>
+            )}
             <button onClick={() => act('stop')} className="ml-auto text-[11px] text-gray-600 hover:text-red-400 transition-colors" title="Force stop — equivalent to pulling the power">
               Force stop
             </button>
@@ -597,6 +638,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
   const [inflight, setInflight] = useState({}) // key -> { prevStatus, timerId }
   const [confirm, setConfirm] = useState(null) // pending confirmation
   const [toast, setToast] = useState(null)
+  const [updateJob, setUpdateJob] = useState(null) // { jobId, title } for the apt-upgrade log modal
 
   useEffect(() => {
     getInfo().then(d => setSelfNode(d?.self_node ?? null)).catch(() => {})
@@ -670,6 +712,21 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       setConfirm({ entityType, entityId, entityNode, action, isSelf })
     } else {
       executeAction({ entityType, entityId, entityNode, action })
+    }
+  }
+
+  // Container apt upgrade: always confirmed (privileged in-guest mutation), then
+  // streamed in the JobModal. Local LXCs only — see GuestCard's onUpdate wiring.
+  function handleUpdate(item) {
+    setConfirm({ entityType: 'lxc', entityId: String(item.vmid), action: 'update', name: item.name })
+  }
+
+  async function runUpdate(c) {
+    try {
+      const { job_id } = await updateContainer(c.entityId)
+      setUpdateJob({ jobId: job_id, title: `Updating ${c.name || `CT ${c.entityId}`}` })
+    } catch (e) {
+      setToast(e.message)
     }
   }
 
@@ -980,6 +1037,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
                           onServiceLinkChange={refreshServiceLinks}
                           isInflight={!!inflight[`lxc:${ct.vmid}`]}
                           onAction={handleAction}
+                          onUpdate={activeNode == null ? handleUpdate : undefined}
                         />
                       ))}
                     </div>
@@ -1001,9 +1059,14 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       {confirm && (
         <ConfirmModal
           confirm={confirm}
-          onConfirm={() => { const c = confirm; setConfirm(null); executeAction(c) }}
+          onConfirm={() => { const c = confirm; setConfirm(null); c.action === 'update' ? runUpdate(c) : executeAction(c) }}
           onCancel={() => setConfirm(null)}
         />
+      )}
+
+      {/* Live apt-upgrade log for a container update */}
+      {updateJob && (
+        <JobModal jobId={updateJob.jobId} title={updateJob.title} onClose={() => setUpdateJob(null)} />
       )}
 
       {/* Error toast */}

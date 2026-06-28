@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,6 +69,34 @@ func (s *Server) UpdatesApply(w http.ResponseWriter, r *http.Request) {
 	cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive", "TERM=xterm")
 
 	id, err := s.exec.Start("apt_upgrade", cmd, s.db)
+	if errors.Is(err, executor.ErrBusy) {
+		writeErr(w, http.StatusConflict, "a job is already running")
+		return
+	}
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"job_id": id})
+}
+
+// GuestUpdate handles POST /api/guests/:vmid/update — starts an async apt
+// upgrade *inside* a local LXC container via `pct exec`, returning {"job_id":...}
+// so the client can stream the live log (same plumbing as the host updater).
+// Containers only: VMs have no reliable host-driven exec. vmid is validated
+// numeric and the apt script is a fixed string passed as a single argv element,
+// so there's no shell-injection surface. 409 if another job is already running.
+func (s *Server) GuestUpdate(w http.ResponseWriter, r *http.Request, vmid string) {
+	if _, err := strconv.Atoi(vmid); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid vmid")
+		return
+	}
+	// Set DEBIAN_FRONTEND inside the container — the host process env doesn't
+	// cross the pct-exec boundary — so apt never blocks on an unattended prompt.
+	const script = "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y upgrade"
+	cmd := exec.Command("pct", "exec", vmid, "--", "sh", "-c", script)
+
+	id, err := s.exec.Start("ct_upgrade", cmd, s.db)
 	if errors.Is(err, executor.ErrBusy) {
 		writeErr(w, http.StatusConflict, "a job is already running")
 		return

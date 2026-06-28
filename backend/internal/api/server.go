@@ -168,18 +168,27 @@ func (s *Server) handleCatalogPrefix(w http.ResponseWriter, r *http.Request) {
 	}))(w, r)
 }
 
-// handleGuestsPrefix dispatches GET /api/guests/:vmid/services.
+// handleGuestsPrefix dispatches /api/guests/:vmid/{services,update}.
 func (s *Server) handleGuestsPrefix(w http.ResponseWriter, r *http.Request) {
 	tail := strings.TrimPrefix(r.URL.Path, "/api/guests/")
 	parts := strings.SplitN(tail, "/", 2)
 	vmid := parts[0]
-	if vmid == "" || len(parts) != 2 || parts[1] != "services" {
+	if vmid == "" || len(parts) != 2 {
 		http.NotFound(w, r)
 		return
 	}
-	methodGate(http.MethodGet, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
-		s.GuestServices(w, r, vmid)
-	}))(w, r)
+	switch parts[1] {
+	case "services":
+		methodGate(http.MethodGet, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
+			s.GuestServices(w, r, vmid)
+		}))(w, r)
+	case "update":
+		methodGate(http.MethodPost, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
+			s.GuestUpdate(w, r, vmid)
+		}))(w, r)
+	default:
+		http.NotFound(w, r)
+	}
 }
 
 // handleJobsPrefix dispatches /api/jobs/:id and /api/jobs/:id/stream.
