@@ -71,6 +71,11 @@ func main() {
 	px := proxmox.NewClient()
 	if cfg.Proxmox != nil && cfg.Proxmox.TokenID != "" {
 		px.SetCreds(cfg.Proxmox.Host, cfg.Proxmox.TokenID, cfg.Proxmox.Secret)
+		// Bring an already-provisioned (read-only, M2-era) role up to the current
+		// privilege set so power controls work without re-onboarding. Best-effort.
+		if err := proxmox.EnsureRole(); err != nil {
+			log.Printf("could not reconcile SimpDash role privileges (power controls may 403): %v", err)
+		}
 	}
 	poller := api.NewPoller(px, 3*time.Second)
 
