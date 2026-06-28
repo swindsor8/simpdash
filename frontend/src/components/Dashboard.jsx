@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { logout, getNodes, getGuestServices, getBackups, getNoteCounts, getInfo, entityAction, getServiceLinks, upsertServiceLink, deleteServiceLink } from '../lib/api'
+import { logout, getNodes, getBackups, getNoteCounts, getInfo, entityAction, getServiceLinks, upsertServiceLink, deleteServiceLink } from '../lib/api'
 import logo from '../../assets/logo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
@@ -368,7 +368,7 @@ function DegradedNotice({ title, detail }) {
   )
 }
 
-function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight, onAction, onInstallAgent, backups, noteCounts, onOpenNotes }) {
+function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight, onAction, onInstallAgent }) {
   const monitorOnly = node.managed === false
   const link = serviceLinks[`node:${node.id}`]
   const isInflight = !!inflight[`node:${node.id}`]
@@ -438,34 +438,6 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
         </div>
       </div>
 
-      {(node.vms.length > 0 || node.lxcs.length > 0) && (
-        <div className="border-t border-white/[0.06] pt-4">
-          <table className="w-full">
-            <thead>
-              <tr>
-                {['Name', 'Type', 'Status', 'CPU', 'Memory', 'Backup', 'Actions'].map(h => (
-                  <th key={h} className="text-left text-xs text-gray-600 font-medium pb-2.5 pr-3">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {node.vms.map(vm => (
-                <GuestRow key={vm.vmid} item={vm} type="VM" nodeName={node.id}
-                  backup={backups?.[vm.vmid]} noteCounts={noteCounts} onOpenNotes={onOpenNotes}
-                  serviceLinks={serviceLinks} onServiceLinkChange={onServiceLinkChange}
-                  inflight={inflight} onAction={onAction} />
-              ))}
-              {node.lxcs.map(ct => (
-                <GuestRow key={ct.vmid} item={ct} type="CT" nodeName={node.id}
-                  backup={backups?.[ct.vmid]} noteCounts={noteCounts} onOpenNotes={onOpenNotes}
-                  serviceLinks={serviceLinks} onServiceLinkChange={onServiceLinkChange}
-                  inflight={inflight} onAction={onAction} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       {/* Node power controls */}
       <div className="border-t border-white/[0.06] pt-4 mt-1 flex items-center gap-2" onClick={e => e.stopPropagation()}>
         <button
@@ -503,152 +475,122 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
   )
 }
 
-// GuestRow is a VM/LXC row with power controls, service-link gear, and click-to-navigate.
-function GuestRow({ item, type, nodeName, backup, noteCounts, onOpenNotes, serviceLinks, onServiceLinkChange, inflight, onAction }) {
+// ServiceIcon shows the linked service's favicon (so an Immich card shows the
+// Immich logo, etc.), falling back to a generic VM/CT glyph if there's no link
+// or the favicon fails to load.
+function ServiceIcon({ url, fallback }) {
+  const [failed, setFailed] = useState(false)
+  let origin = null
+  if (url) {
+    try { origin = new URL(url).origin } catch { /* invalid — use fallback */ }
+  }
+  if (!origin || failed) return fallback
+  return (
+    <img
+      src={`${origin}/favicon.ico`}
+      alt=""
+      className="w-6 h-6 rounded object-contain"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
+// GuestCard is one VM/LXC as a self-contained, clickable service card: the card
+// body opens the linked service in a new tab; the gear edits the link; power
+// controls live at the bottom. Replaces the old in-node table rows.
+function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link, onServiceLinkChange, isInflight, onAction }) {
   const running = item.status === 'running'
   const etype = type === 'VM' ? 'vm' : 'lxc'
   const pxType = type === 'VM' ? 'qemu' : 'lxc' // Proxmox API type
-  const noteCount = noteCounts?.[`${etype}:${item.vmid}`] || 0
-  const link = serviceLinks[`${pxType}:${item.vmid}`]
-  const isInflight = !!inflight[`${pxType}:${item.vmid}`]
-  const [open, setOpen] = useState(false)
-  const [svc, setSvc] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [svcErr, setSvcErr] = useState(null)
   const [showEditor, setShowEditor] = useState(false)
+  const displayName = link?.label || item.name
 
-  function handleRowClick() {
-    if (link?.url) {
-      window.open(link.url, '_blank', 'noopener noreferrer')
-      return
-    }
-    if (!running) return
-    const next = !open
-    setOpen(next)
-    if (next && svc === null && !loading) {
-      setLoading(true); setSvcErr(null)
-      getGuestServices(item.vmid, pxType)
-        .then(d => setSvc(d))
-        .catch(e => setSvcErr(e.message))
-        .finally(() => setLoading(false))
-    }
+  function handleCardClick() {
+    if (link?.url) window.open(link.url, '_blank', 'noopener noreferrer')
   }
 
-  const rowClickable = link?.url || running
+  const act = (action) => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action })
 
   return (
-    <>
-      <tr
-        className={`border-t border-white/[0.04] ${rowClickable ? 'cursor-pointer hover:bg-white/[0.02]' : ''}`}
-        onClick={handleRowClick}
-      >
-        {/* Name cell — gear icon always visible */}
-        <td className="py-2 pr-3 text-sm text-gray-300">
-          <div className="flex items-center gap-1 min-w-0">
-            {!link && running && <span className="inline-block w-3 text-gray-600 shrink-0">{open ? '▾' : '▸'}</span>}
-            {link && <span className="text-gray-600 opacity-50 shrink-0"><IconExternalLink /></span>}
-            <span className="truncate">{item.name}</span>
-            {noteCount > 0 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onOpenNotes(etype, String(item.vmid)) }}
-                title={`${noteCount} note${noteCount !== 1 ? 's' : ''} — open notebook`}
-                className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-white/8 text-gray-400 hover:bg-white/15 transition-colors align-middle"
-              >
-                <IconNoteSm /> {noteCount}
-              </button>
-            )}
-            <div className="relative shrink-0 ml-0.5" onClick={e => e.stopPropagation()}>
-              <button
-                onClick={() => setShowEditor(v => !v)}
-                className="text-gray-700 hover:text-gray-500 transition-colors leading-none"
-                title="Edit service link"
-              >
-                <IconGear />
-              </button>
-              {showEditor && (
-                <ServiceLinkEditor
-                  entityType={pxType} entityId={String(item.vmid)} link={link}
-                  onDone={onServiceLinkChange} onClose={() => setShowEditor(false)}
-                />
-              )}
-            </div>
-          </div>
-        </td>
-        <td className="py-2 pr-3">
-          <span className="text-xs text-gray-600 font-mono">{type}{item.vmid}</span>
-        </td>
-        <td className="py-2 pr-3"><StatusPill status={item.status} /></td>
-        <td className="py-2 pr-3 text-xs text-gray-500 tabular-nums">
-          {running ? `${(item.cpu * 100).toFixed(1)}%` : '—'}
-        </td>
-        <td className="py-2 pr-3 text-xs text-gray-500 tabular-nums">
-          {running ? fmtBytes(item.mem) : '—'}
-        </td>
-        <td className="py-2 pr-3"><BackupBadge backup={backup} /></td>
-        {/* Actions column */}
-        <td className="py-2" onClick={e => e.stopPropagation()}>
-          {isInflight ? (
-            <svg className="animate-spin text-gray-500" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <div
+      className={`relative bg-[#13131e] border border-white/[0.07] rounded-2xl p-4 flex flex-col transition-colors ${link ? 'cursor-pointer hover:border-white/20' : ''}`}
+      onClick={handleCardClick}
+    >
+      {/* Gear + external-link indicator — always visible, never hover-only */}
+      <div className="absolute top-3 right-3 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+        {link && <span className="text-gray-600 opacity-60" title="Has a service link"><IconExternalLink /></span>}
+        <div className="relative">
+          <button onClick={() => setShowEditor(v => !v)} className="text-gray-600 hover:text-gray-400 transition-colors" title="Edit service link">
+            <IconGear />
+          </button>
+          {showEditor && (
+            <ServiceLinkEditor
+              entityType={pxType} entityId={String(item.vmid)} link={link}
+              onDone={onServiceLinkChange} onClose={() => setShowEditor(false)}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Icon + name */}
+      <div className="flex items-center gap-2.5 mb-3 pr-12">
+        <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0 text-gray-500">
+          <ServiceIcon url={link?.url} fallback={type === 'VM' ? <IconMonitor /> : <IconBox />} />
+        </div>
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-white truncate">{displayName}</h3>
+          <p className="text-[11px] text-gray-600 font-mono">{type}{item.vmid}</p>
+        </div>
+      </div>
+
+      {/* Status + live stats + note badge */}
+      <div className="flex items-center gap-2 flex-wrap mb-3">
+        <StatusPill status={item.status} />
+        {running && (
+          <span className="text-[11px] text-gray-500 tabular-nums">
+            {(item.cpu * 100).toFixed(1)}% · {fmtBytes(item.mem)}
+          </span>
+        )}
+        <BackupBadge backup={backup} />
+        {noteCount > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenNotes(etype, String(item.vmid)) }}
+            title={`${noteCount} note${noteCount !== 1 ? 's' : ''} — open notebook`}
+            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-white/8 text-gray-400 hover:bg-white/15 transition-colors"
+          >
+            <IconNoteSm /> {noteCount}
+          </button>
+        )}
+      </div>
+
+      {/* Power controls */}
+      <div className="mt-auto pt-2 border-t border-white/[0.06] flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+        {isInflight ? (
+          <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
+            <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
             </svg>
-          ) : running ? (
-            <div className="flex items-center gap-1.5 flex-nowrap">
-              <button
-                onClick={() => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action: 'shutdown' })}
-                className="text-[11px] px-2 py-0.5 rounded-md bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors whitespace-nowrap"
-              >
-                Shutdown
-              </button>
-              <button
-                onClick={() => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action: 'reboot' })}
-                className="text-[11px] px-2 py-0.5 rounded-md bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                Reboot
-              </button>
-              <button
-                onClick={() => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action: 'stop' })}
-                className="text-[11px] text-gray-600 hover:text-red-400 transition-colors"
-                title="Force stop — equivalent to pulling the power"
-              >
-                Force stop
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action: 'start' })}
-              className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-            >
-              Start
+            Working…
+          </span>
+        ) : running ? (
+          <>
+            <button onClick={() => act('shutdown')} className="text-[11px] px-2 py-1 rounded-md bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+              Shutdown
             </button>
-          )}
-        </td>
-      </tr>
-      {open && !link && (
-        <tr className="bg-white/[0.015]">
-          <td colSpan={7} className="px-3 pb-3 pt-1">
-            {loading && <p className="text-xs text-gray-600">Loading services…</p>}
-            {svcErr && (
-              <div className="text-xs text-red-400 space-y-1">
-                <p>{svcErr}</p>
-                {type === 'VM' && (
-                  <p className="text-gray-500">Run inside the VM: <code className="bg-white/5 px-1 rounded font-mono text-gray-300">apt install -y qemu-guest-agent && systemctl enable --now qemu-guest-agent</code></p>
-                )}
-              </div>
-            )}
-            {svc && svc.length === 0 && <p className="text-xs text-gray-600">No running services reported.</p>}
-            {svc && svc.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {svc.map(s => (
-                  <span key={s.name} title={s.description} className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono">
-                    {s.name}
-                  </span>
-                ))}
-              </div>
-            )}
-          </td>
-        </tr>
-      )}
-    </>
+            <button onClick={() => act('reboot')} className="text-[11px] px-2 py-1 rounded-md bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+              Reboot
+            </button>
+            <button onClick={() => act('stop')} className="ml-auto text-[11px] text-gray-600 hover:text-red-400 transition-colors" title="Force stop — equivalent to pulling the power">
+              Force stop
+            </button>
+          </>
+        ) : (
+          <button onClick={() => act('start')} className="text-[11px] px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors">
+            Start
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -973,20 +915,47 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
                 : 'No nodes reporting. Proxmox may be unavailable, or credentials are not provisioned yet.'}
             />
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="space-y-6">
               {nodes.map(node => (
-                <NodeCard
-                  key={node.id} node={node}
-                  selfNode={selfNode}
-                  serviceLinks={serviceLinks}
-                  onServiceLinkChange={refreshServiceLinks}
-                  inflight={inflight}
-                  onAction={handleAction}
-                  onInstallAgent={() => setView('nodes')}
-                  backups={backupByVmid}
-                  noteCounts={noteCountByEntity}
-                  onOpenNotes={openNotesFor}
-                />
+                <div key={node.id} className="space-y-3">
+                  <NodeCard
+                    node={node}
+                    selfNode={selfNode}
+                    serviceLinks={serviceLinks}
+                    onServiceLinkChange={refreshServiceLinks}
+                    inflight={inflight}
+                    onAction={handleAction}
+                    onInstallAgent={() => setView('nodes')}
+                  />
+                  {(node.vms.length > 0 || node.lxcs.length > 0) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {node.vms.map(vm => (
+                        <GuestCard
+                          key={`vm-${vm.vmid}`} item={vm} type="VM" nodeName={node.id}
+                          backup={backupByVmid[vm.vmid]}
+                          noteCount={noteCountByEntity[`vm:${vm.vmid}`] || 0}
+                          onOpenNotes={openNotesFor}
+                          link={serviceLinks[`qemu:${vm.vmid}`]}
+                          onServiceLinkChange={refreshServiceLinks}
+                          isInflight={!!inflight[`qemu:${vm.vmid}`]}
+                          onAction={handleAction}
+                        />
+                      ))}
+                      {node.lxcs.map(ct => (
+                        <GuestCard
+                          key={`ct-${ct.vmid}`} item={ct} type="CT" nodeName={node.id}
+                          backup={backupByVmid[ct.vmid]}
+                          noteCount={noteCountByEntity[`lxc:${ct.vmid}`] || 0}
+                          onOpenNotes={openNotesFor}
+                          link={serviceLinks[`lxc:${ct.vmid}`]}
+                          onServiceLinkChange={refreshServiceLinks}
+                          isInflight={!!inflight[`lxc:${ct.vmid}`]}
+                          onAction={handleAction}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
