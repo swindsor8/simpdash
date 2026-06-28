@@ -2,9 +2,14 @@ import { useState, useEffect } from 'react'
 
 export const THEMES = [
   {
+    id: 'nocturne',
+    name: 'Nocturne',
+    description: 'Near-black canvas, indigo→teal brand glow. The default.',
+  },
+  {
     id: 'default',
     name: 'Midnight',
-    description: 'The default dark theme.',
+    description: 'The original untinted dark theme.',
   },
   {
     id: 'retro',
@@ -37,7 +42,7 @@ export function useTheme() {
   const [theme, setThemeState] = useState(() => {
     const saved = localStorage.getItem('sd-theme')
     if (saved === 'fallout') return 'terminal' // renamed; migrate old selection
-    return saved || 'default'
+    return saved || 'nocturne'
   })
 
   useEffect(() => {

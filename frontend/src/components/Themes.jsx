@@ -108,7 +108,34 @@ function GlassPreview() {
   )
 }
 
+// Nocturne preview: near-black canvas with the indigo→teal corner glows and a
+// gradient accent bar — the theme's signature, inline-styled so it's accurate.
+function NocturnePreview() {
+  return (
+    <div className="h-24 relative overflow-hidden flex" style={{ background: '#09090e' }}>
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage:
+          'radial-gradient(60% 50% at 92% 0%, rgba(155,153,254,0.22), transparent 60%),' +
+          'radial-gradient(55% 50% at 0% 100%, rgba(43,200,183,0.18), transparent 60%)',
+      }} />
+      <div className="w-9 shrink-0 relative flex flex-col gap-1.5 p-1.5 pt-2" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <div className="h-1.5 w-4 rounded-full" style={{ background: 'linear-gradient(90deg,#9B99FE,#2BC8B7)' }} />
+        <div className="h-1.5 w-6 rounded-full bg-white/10" />
+        <div className="h-1.5 w-5 rounded-full bg-white/10" />
+      </div>
+      <div className="flex-1 relative p-2 flex flex-col gap-1.5">
+        <div className="flex gap-1.5">
+          <div className="h-8 flex-1 rounded-lg" style={{ background: '#141420', border: '1px solid rgba(255,255,255,0.08)' }} />
+          <div className="h-8 flex-1 rounded-lg" style={{ background: '#141420', border: '1px solid rgba(255,255,255,0.08)' }} />
+        </div>
+        <div className="h-5 w-20 rounded-lg" style={{ background: 'linear-gradient(135deg,#4f46e5,#0d9488)' }} />
+      </div>
+    </div>
+  )
+}
+
 function ThemeCard({ t, active, onSelect }) {
+  const isNocturne = t.id === 'nocturne'
   const isRetro = t.id === 'retro'
   const isMario = t.id === 'mario'
   const isWin98 = t.id === 'win98'
@@ -124,7 +151,11 @@ function ThemeCard({ t, active, onSelect }) {
       onClick={() => onSelect(t.id)}
     >
       {/* Mini preview */}
-      {isGlass ? (
+      {isNocturne ? (
+        <div className="rounded-xl overflow-hidden border border-white/10">
+          <NocturnePreview />
+        </div>
+      ) : isGlass ? (
         <div className="rounded-xl overflow-hidden border border-white/10">
           <GlassPreview />
         </div>

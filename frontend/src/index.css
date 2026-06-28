@@ -1021,6 +1021,76 @@
 }
 
 /* ===========================================================================
+   NOCTURNE THEME (loaded default) — refined near-black canvas carrying the
+   indigo→teal brand gradient (logo: #9B99FE → #2BC8B7), faint corner glows, a
+   frosted top bar and softer radii. Tailark "night" aesthetic. Override-only,
+   like the rest; "Midnight" (id: default) stays the untinted base skin.
+   =========================================================================== */
+[data-theme="nocturne"] { color-scheme: dark; }
+
+/* Canvas: neutral near-black with a faint indigo (top-right) + teal (bottom-
+   left) glow echoing the logo gradient. Fixed so it doesn't scroll. Scoped to
+   the root so terminals/selects on the same bg class stay flat dark. */
+[data-theme="nocturne"] .h-screen.bg-\[\#0c0c14\] {
+  background-color: #09090e;
+  background-image:
+    radial-gradient(55% 45% at 88% 4%, rgba(155,153,254,0.10), transparent 60%),
+    radial-gradient(50% 45% at 4% 98%, rgba(43,200,183,0.08), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Surfaces — neutral, a touch deeper than base */
+[data-theme="nocturne"] .bg-\[\#0c0c14\] { background-color: #09090e; }   /* terminals/selects */
+[data-theme="nocturne"] .bg-\[\#101018\] { background-color: #0c0c12; }   /* sidebar */
+[data-theme="nocturne"] .bg-\[\#13131e\] { background-color: #141420; }   /* cards + inputs */
+
+/* Frosted top bar — the snippet's scrolled nav (translucent + blur) */
+[data-theme="nocturne"] .bg-\[\#0c0c14\]\/90 {
+  background-color: rgba(9,9,14,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Pillowy radii */
+[data-theme="nocturne"] .rounded-2xl { border-radius: 1.25rem; }
+[data-theme="nocturne"] .rounded-xl  { border-radius: 0.9rem; }
+
+/* Hairline borders, a hair brighter than base for the crisp shadcn edge */
+[data-theme="nocturne"] .border-white\/\[0\.04\] { border-color: rgba(255,255,255,0.05); }
+[data-theme="nocturne"] .border-white\/\[0\.06\] { border-color: rgba(255,255,255,0.07); }
+[data-theme="nocturne"] .border-white\/\[0\.07\],
+[data-theme="nocturne"] .border-white\/10,
+[data-theme="nocturne"] .border-white\/20,
+[data-theme="nocturne"] .border-white\/30      { border-color: rgba(255,255,255,0.10); }
+
+/* --- Accent: indigo→teal brand gradient on primary buttons + logo. Deepened
+   from the bright logo hues so the white button text stays legible. --- */
+[data-theme="nocturne"] .bg-blue-600 {
+  background-color: #2f7a99;   /* fallback mid-tone */
+  background-image: linear-gradient(135deg, #4f46e5 0%, #0d9488 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 6px 18px rgba(43,200,183,0.16);
+}
+[data-theme="nocturne"] .hover\:bg-blue-700:hover {
+  background-image: linear-gradient(135deg, #4338ca 0%, #0b7a6f 100%);
+}
+[data-theme="nocturne"] button.bg-blue-600:active { box-shadow: inset 0 2px 6px rgba(0,0,0,0.30); }
+[data-theme="nocturne"] .bg-blue-600\/60 { background-color: rgba(79,70,229,0.55); }
+
+/* Small accents lean teal so both brand hues read across the UI */
+[data-theme="nocturne"] .bg-blue-500     { background-color: #14b8a6; }
+[data-theme="nocturne"] .bg-blue-500\/15 { background-color: rgba(43,200,183,0.16); }
+[data-theme="nocturne"] .text-blue-300   { color: #7dd3c8; }
+[data-theme="nocturne"] .border-blue-500\/60,
+[data-theme="nocturne"] .focus\:border-blue-500\/60:focus { border-color: #2BC8B7; }
+
+/* Active sidebar item → brand-tinted highlight with a teal rail */
+[data-theme="nocturne"] aside .bg-white\/10 {
+  background-color: rgba(99,102,241,0.16);
+  box-shadow: inset 2px 0 0 #2BC8B7;
+}
+
+/* ===========================================================================
    TERMINAL THEME — motion, HUD chrome & retints added on top of the base skin
    above. All decorative motion sits under a prefers-reduced-motion guard; the
    layout/colour treatment stays put when motion is reduced.
@@ -1145,6 +1215,7 @@
 [data-theme="win98"]    .stat-flash-overlay { background: rgba(0,0,128,0.10); }
 [data-theme="glass"]    .stat-flash-overlay { background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(100,180,255,0.15), rgba(200,150,255,0.12)); }
 [data-theme="terminal"] .stat-flash-overlay { background: rgba(26,255,64,0.10); }
+[data-theme="nocturne"] .stat-flash-overlay { background: linear-gradient(135deg, rgba(99,102,241,0.14), rgba(43,200,183,0.12)); }
 
 /* ----- Retro: neobrutalist — card shifts into the shadow on hover, stamps in ----- */
 @keyframes retro-card-enter {
