@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { logout, getNodes, getGuestServices, getBackups, getNoteCounts } from '../lib/api'
+import { logout, getNodes, getGuestServices, getBackups, getNoteCounts, getInfo, entityAction, getServiceLinks, upsertServiceLink, deleteServiceLink } from '../lib/api'
 import logo from '../../assets/logo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
@@ -139,6 +139,130 @@ function IconNoteSm() {
   )
 }
 
+function IconGear() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  )
+}
+
+function IconExternalLink() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+      <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+    </svg>
+  )
+}
+
+// ConfirmModal — generic danger confirmation, reuses the Scripts.jsx pattern.
+function ConfirmModal({ confirm, onConfirm, onCancel }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onCancel])
+
+  const { entityType, entityId, action, isSelf } = confirm
+  const isForceStop = action === 'stop'
+  const isNodeAction = entityType === 'node'
+  const verb = action === 'reboot' ? 'Reboot' : action === 'shutdown' ? 'Shut down' : 'Force stop'
+
+  let title, body, danger = isForceStop
+  if (isForceStop) {
+    title = `Force stop ${entityId}?`
+    body = 'This is the equivalent of pulling the power. The guest will not shut down gracefully and may lose unsaved data or corrupt the filesystem.'
+  } else {
+    title = `${verb} node ${entityId}?`
+    body = `This will ${action} the node and interrupt every VM and container running on it.`
+    if (isSelf) body += ' This is the node SuperDash is running on — this dashboard will disconnect until it comes back up.'
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onCancel}>
+      <div className="bg-[#13131e] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h2 className="text-base font-semibold text-white mb-3">{title}</h2>
+        <p className="text-sm text-gray-400 mb-5">{body}</p>
+        <div className="flex justify-end gap-2">
+          <button onClick={onCancel} className="text-xs px-4 py-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors">
+            Cancel
+          </button>
+          <button onClick={onConfirm} className={`text-xs px-4 py-2 rounded-lg font-medium transition-colors ${danger ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>
+            {verb}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ServiceLinkEditor — popover for adding/editing/removing the URL linked to a card.
+function ServiceLinkEditor({ entityType, entityId, link, onDone, onClose }) {
+  const [url, setUrl] = useState(link?.url ?? '')
+  const [label, setLabel] = useState(link?.label ?? '')
+  const [err, setErr] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    setSaving(true); setErr(null)
+    try {
+      await upsertServiceLink(entityType, entityId, url, label || null)
+      onDone()
+      onClose()
+    } catch (e) {
+      setErr(e.message)
+      setSaving(false)
+    }
+  }
+
+  async function remove() {
+    try {
+      await deleteServiceLink(entityType, entityId)
+      onDone()
+      onClose()
+    } catch (e) {
+      setErr(e.message)
+    }
+  }
+
+  return (
+    <div className="absolute top-6 right-0 z-40 bg-[#13131e] border border-white/20 rounded-xl p-3 shadow-2xl w-64" onClick={e => e.stopPropagation()}>
+      <p className="text-[11px] text-gray-400 font-medium mb-2">Service link</p>
+      <input
+        autoFocus
+        value={url}
+        onChange={e => setUrl(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') save() }}
+        placeholder="http://192.168.1.50:8080"
+        className="w-full bg-[#0c0c14] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50 mb-1.5"
+      />
+      <input
+        value={label}
+        onChange={e => setLabel(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') save() }}
+        placeholder="Label (optional)"
+        className="w-full bg-[#0c0c14] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500/50 mb-2"
+      />
+      {err && <p className="text-[11px] text-red-400 mb-1.5">{err}</p>}
+      <div className="flex gap-1.5">
+        <button onClick={save} disabled={saving || !url} className="flex-1 text-xs px-2 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-40">
+          Save
+        </button>
+        {link && (
+          <button onClick={remove} className="text-xs px-2 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors">
+            Remove
+          </button>
+        )}
+        <button onClick={onClose} className="text-xs px-2 py-1.5 rounded-lg border border-white/10 text-gray-500 hover:text-gray-300 transition-colors">
+          ✕
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // --- sub-components ---
 function NavItem({ icon, label, active, onClick }) {
   return (
@@ -244,11 +368,42 @@ function DegradedNotice({ title, detail }) {
   )
 }
 
-function NodeCard({ node, onInstallAgent, backups, noteCounts, onOpenNotes }) {
+function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight, onAction, onInstallAgent, backups, noteCounts, onOpenNotes }) {
   const monitorOnly = node.managed === false
+  const link = serviceLinks[`node:${node.id}`]
+  const isInflight = !!inflight[`node:${node.id}`]
+  const [showEditor, setShowEditor] = useState(false)
+
+  function handleCardClick() {
+    if (link?.url) window.open(link.url, '_blank', 'noopener noreferrer')
+  }
+
   return (
-    <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
-      <div className="flex items-start justify-between mb-5 gap-2">
+    <div
+      className={`bg-[#13131e] border border-white/[0.07] rounded-2xl p-6 relative ${link ? 'cursor-pointer' : ''}`}
+      onClick={handleCardClick}
+    >
+      {/* Gear + external-link indicators — always visible, never hover-only */}
+      <div className="absolute top-3 right-3 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+        {link && <span className="text-gray-600 opacity-50"><IconExternalLink /></span>}
+        <div className="relative">
+          <button
+            onClick={() => setShowEditor(v => !v)}
+            className="text-gray-600 hover:text-gray-400 transition-colors"
+            title="Edit service link"
+          >
+            <IconGear />
+          </button>
+          {showEditor && (
+            <ServiceLinkEditor
+              entityType="node" entityId={node.id} link={link}
+              onDone={onServiceLinkChange} onClose={() => setShowEditor(false)}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-start justify-between mb-5 gap-2 pr-12">
         <div>
           <h2 className="text-sm font-semibold text-white">{node.id}</h2>
           <p className="text-xs text-gray-600 mt-0.5">up {fmtUptime(node.uptime)}</p>
@@ -288,82 +443,136 @@ function NodeCard({ node, onInstallAgent, backups, noteCounts, onOpenNotes }) {
           <table className="w-full">
             <thead>
               <tr>
-                {['Name', 'Type', 'Status', 'CPU', 'Memory', 'Backup'].map(h => (
+                {['Name', 'Type', 'Status', 'CPU', 'Memory', 'Backup', 'Actions'].map(h => (
                   <th key={h} className="text-left text-xs text-gray-600 font-medium pb-2.5 pr-3">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {node.vms.map(vm => <GuestRow key={vm.vmid} item={vm} type="VM" backup={backups?.[vm.vmid]} noteCounts={noteCounts} onOpenNotes={onOpenNotes} />)}
-              {node.lxcs.map(ct => <GuestRow key={ct.vmid} item={ct} type="CT" backup={backups?.[ct.vmid]} noteCounts={noteCounts} onOpenNotes={onOpenNotes} />)}
+              {node.vms.map(vm => (
+                <GuestRow key={vm.vmid} item={vm} type="VM" nodeName={node.id}
+                  backup={backups?.[vm.vmid]} noteCounts={noteCounts} onOpenNotes={onOpenNotes}
+                  serviceLinks={serviceLinks} onServiceLinkChange={onServiceLinkChange}
+                  inflight={inflight} onAction={onAction} />
+              ))}
+              {node.lxcs.map(ct => (
+                <GuestRow key={ct.vmid} item={ct} type="CT" nodeName={node.id}
+                  backup={backups?.[ct.vmid]} noteCounts={noteCounts} onOpenNotes={onOpenNotes}
+                  serviceLinks={serviceLinks} onServiceLinkChange={onServiceLinkChange}
+                  inflight={inflight} onAction={onAction} />
+              ))}
             </tbody>
           </table>
         </div>
       )}
 
-      {monitorOnly && (
-        <div className="border-t border-white/[0.06] pt-4 mt-1 flex items-center justify-between gap-3">
-          <p className="text-xs text-gray-600">
-            No SuperDash agent here — stats only. Pair an agent for updates &amp; script installs.
-          </p>
+      {/* Node power controls */}
+      <div className="border-t border-white/[0.06] pt-4 mt-1 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+        <button
+          disabled={isInflight}
+          onClick={() => onAction({ entityType: 'node', entityId: node.id, action: 'reboot', isSelf: node.id === selfNode })}
+          className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+        >
+          Reboot
+        </button>
+        <button
+          disabled={isInflight}
+          onClick={() => onAction({ entityType: 'node', entityId: node.id, action: 'shutdown', isSelf: node.id === selfNode })}
+          className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors disabled:opacity-40"
+        >
+          Shutdown
+        </button>
+        {isInflight && (
+          <svg className="animate-spin text-gray-500 ml-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+          </svg>
+        )}
+        {monitorOnly && (
           <button
             onClick={onInstallAgent}
-            className="shrink-0 text-xs px-3 py-1.5 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+            className="ml-auto shrink-0 text-xs px-3 py-1.5 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
           >
             Install agent
           </button>
-        </div>
+        )}
+      </div>
+      {monitorOnly && (
+        <p className="text-xs text-gray-600 mt-2">No SuperDash agent here — stats only.</p>
       )}
     </div>
   )
 }
 
-// GuestRow is a VM/LXC row that expands (when running) to list the services
-// running inside the guest — pct exec for CTs, qm guest exec for VMs.
-function GuestRow({ item, type, backup, noteCounts, onOpenNotes }) {
+// GuestRow is a VM/LXC row with power controls, service-link gear, and click-to-navigate.
+function GuestRow({ item, type, nodeName, backup, noteCounts, onOpenNotes, serviceLinks, onServiceLinkChange, inflight, onAction }) {
   const running = item.status === 'running'
   const etype = type === 'VM' ? 'vm' : 'lxc'
+  const pxType = type === 'VM' ? 'qemu' : 'lxc' // Proxmox API type
   const noteCount = noteCounts?.[`${etype}:${item.vmid}`] || 0
+  const link = serviceLinks[`${pxType}:${item.vmid}`]
+  const isInflight = !!inflight[`${pxType}:${item.vmid}`]
   const [open, setOpen] = useState(false)
-  const [svc, setSvc] = useState(null) // null = not fetched yet
+  const [svc, setSvc] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [err, setErr] = useState(null)
+  const [svcErr, setSvcErr] = useState(null)
+  const [showEditor, setShowEditor] = useState(false)
 
-  async function toggle() {
+  function handleRowClick() {
+    if (link?.url) {
+      window.open(link.url, '_blank', 'noopener noreferrer')
+      return
+    }
     if (!running) return
     const next = !open
     setOpen(next)
     if (next && svc === null && !loading) {
-      setLoading(true)
-      setErr(null)
-      try {
-        setSvc(await getGuestServices(item.vmid, type === 'VM' ? 'qemu' : 'lxc'))
-      } catch (e) {
-        setErr(e.message)
-      } finally {
-        setLoading(false)
-      }
+      setLoading(true); setSvcErr(null)
+      getGuestServices(item.vmid, pxType)
+        .then(d => setSvc(d))
+        .catch(e => setSvcErr(e.message))
+        .finally(() => setLoading(false))
     }
   }
+
+  const rowClickable = link?.url || running
 
   return (
     <>
       <tr
-        className={`border-t border-white/[0.04] ${running ? 'cursor-pointer hover:bg-white/[0.02]' : ''}`}
-        onClick={toggle}
+        className={`border-t border-white/[0.04] ${rowClickable ? 'cursor-pointer hover:bg-white/[0.02]' : ''}`}
+        onClick={handleRowClick}
       >
+        {/* Name cell — gear icon always visible */}
         <td className="py-2 pr-3 text-sm text-gray-300">
-          <span className="inline-block w-3 text-gray-600">{running ? (open ? '▾' : '▸') : ''}</span>
-          {item.name}
-          {noteCount > 0 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onOpenNotes(etype, String(item.vmid)) }}
-              title={`${noteCount} note${noteCount !== 1 ? 's' : ''} — open notebook`}
-              className="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-white/8 text-gray-400 hover:bg-white/15 transition-colors align-middle"
-            >
-              <IconNoteSm /> {noteCount}
-            </button>
-          )}
+          <div className="flex items-center gap-1 min-w-0">
+            {!link && running && <span className="inline-block w-3 text-gray-600 shrink-0">{open ? '▾' : '▸'}</span>}
+            {link && <span className="text-gray-600 opacity-50 shrink-0"><IconExternalLink /></span>}
+            <span className="truncate">{item.name}</span>
+            {noteCount > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onOpenNotes(etype, String(item.vmid)) }}
+                title={`${noteCount} note${noteCount !== 1 ? 's' : ''} — open notebook`}
+                className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-white/8 text-gray-400 hover:bg-white/15 transition-colors align-middle"
+              >
+                <IconNoteSm /> {noteCount}
+              </button>
+            )}
+            <div className="relative shrink-0 ml-0.5" onClick={e => e.stopPropagation()}>
+              <button
+                onClick={() => setShowEditor(v => !v)}
+                className="text-gray-700 hover:text-gray-500 transition-colors leading-none"
+                title="Edit service link"
+              >
+                <IconGear />
+              </button>
+              {showEditor && (
+                <ServiceLinkEditor
+                  entityType={pxType} entityId={String(item.vmid)} link={link}
+                  onDone={onServiceLinkChange} onClose={() => setShowEditor(false)}
+                />
+              )}
+            </div>
+          </div>
         </td>
         <td className="py-2 pr-3">
           <span className="text-xs text-gray-600 font-mono">{type}{item.vmid}</span>
@@ -375,15 +584,52 @@ function GuestRow({ item, type, backup, noteCounts, onOpenNotes }) {
         <td className="py-2 pr-3 text-xs text-gray-500 tabular-nums">
           {running ? fmtBytes(item.mem) : '—'}
         </td>
-        <td className="py-2"><BackupBadge backup={backup} /></td>
+        <td className="py-2 pr-3"><BackupBadge backup={backup} /></td>
+        {/* Actions column */}
+        <td className="py-2" onClick={e => e.stopPropagation()}>
+          {isInflight ? (
+            <svg className="animate-spin text-gray-500" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+          ) : running ? (
+            <div className="flex items-center gap-1.5 flex-nowrap">
+              <button
+                onClick={() => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action: 'shutdown' })}
+                className="text-[11px] px-2 py-0.5 rounded-md bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors whitespace-nowrap"
+              >
+                Shutdown
+              </button>
+              <button
+                onClick={() => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action: 'reboot' })}
+                className="text-[11px] px-2 py-0.5 rounded-md bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Reboot
+              </button>
+              <button
+                onClick={() => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action: 'stop' })}
+                className="text-[11px] text-gray-600 hover:text-red-400 transition-colors"
+                title="Force stop — equivalent to pulling the power"
+              >
+                Force stop
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action: 'start' })}
+              className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+            >
+              Start
+            </button>
+          )}
+        </td>
       </tr>
-      {open && (
+      {open && !link && (
         <tr className="bg-white/[0.015]">
-          <td colSpan={6} className="px-3 pb-3 pt-1">
+          <td colSpan={7} className="px-3 pb-3 pt-1">
             {loading && <p className="text-xs text-gray-600">Loading services…</p>}
-            {err && (
+            {svcErr && (
               <div className="text-xs text-red-400 space-y-1">
-                <p>{err}</p>
+                <p>{svcErr}</p>
                 {type === 'VM' && (
                   <p className="text-gray-500">Run inside the VM: <code className="bg-white/5 px-1 rounded font-mono text-gray-300">apt install -y qemu-guest-agent && systemctl enable --now qemu-guest-agent</code></p>
                 )}
@@ -393,11 +639,7 @@ function GuestRow({ item, type, backup, noteCounts, onOpenNotes }) {
             {svc && svc.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {svc.map(s => (
-                  <span
-                    key={s.name}
-                    title={s.description}
-                    className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono"
-                  >
+                  <span key={s.name} title={s.description} className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono">
                     {s.name}
                   </span>
                 ))}
@@ -412,9 +654,27 @@ function GuestRow({ item, type, backup, noteCounts, onOpenNotes }) {
 
 // --- main ---
 export default function Dashboard({ onLogout, theme, setTheme }) {
-  const [view, setView] = useState('dashboard') // 'dashboard' | 'scripts' | 'themes' | 'nodes'
+  const [view, setView] = useState('dashboard')
   const [pairedNodes, setPairedNodes] = useState([])
-  const [activeNode, setActiveNode] = useState(null) // null = local host
+  const [activeNode, setActiveNode] = useState(null)
+
+  // M10: service links, power action state, self-node detection
+  const [serviceLinks, setServiceLinks] = useState({})
+  const [selfNode, setSelfNode] = useState(null)
+  const [inflight, setInflight] = useState({}) // key -> { prevStatus, timerId }
+  const [confirm, setConfirm] = useState(null) // pending confirmation
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    getInfo().then(d => setSelfNode(d?.self_node ?? null)).catch(() => {})
+    getServiceLinks().then(setServiceLinks).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 5000)
+    return () => clearTimeout(t)
+  }, [toast])
 
   const refreshNodes = useCallback(() => {
     getNodes().then(setPairedNodes).catch(() => setPairedNodes([]))
@@ -428,6 +688,64 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
 
   const { nodes, connected, pulseKey, unreachable } = useResourceStream(activeNode)
   const activeAddr = pairedNodes.find(n => n.id === activeNode)?.address
+
+  // Clear inflight entries when the WS stream reflects a status change.
+  useEffect(() => {
+    if (!nodes || Object.keys(inflight).length === 0) return
+    const statusMap = {}
+    for (const n of nodes) {
+      statusMap[`node:${n.id}`] = n.status
+      for (const vm of n.vms) statusMap[`qemu:${vm.vmid}`] = vm.status
+      for (const ct of n.lxcs) statusMap[`lxc:${ct.vmid}`] = ct.status
+    }
+    setInflight(prev => {
+      const next = { ...prev }
+      let changed = false
+      for (const [key, { prevStatus, timerId }] of Object.entries(prev)) {
+        if (statusMap[key] !== undefined && statusMap[key] !== prevStatus) {
+          clearTimeout(timerId)
+          delete next[key]
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [nodes]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const refreshServiceLinks = useCallback(() => {
+    getServiceLinks().then(setServiceLinks).catch(() => {})
+  }, [])
+
+  function handleAction({ entityType, entityId, entityNode, action, isSelf = false }) {
+    const needsConfirm = entityType === 'node' || action === 'stop'
+    if (needsConfirm) {
+      setConfirm({ entityType, entityId, entityNode, action, isSelf })
+    } else {
+      executeAction({ entityType, entityId, entityNode, action })
+    }
+  }
+
+  async function executeAction({ entityType, entityId, entityNode, action }) {
+    const key = `${entityType}:${entityId}`
+    let prevStatus = null
+    for (const n of nodes ?? []) {
+      if (entityType === 'node' && n.id === entityId) { prevStatus = n.status; break }
+      for (const vm of n.vms) if (String(vm.vmid) === entityId) { prevStatus = vm.status; break }
+      for (const ct of n.lxcs) if (String(ct.vmid) === entityId) { prevStatus = ct.status; break }
+    }
+    const timerId = setTimeout(() => {
+      setInflight(prev => { const next = { ...prev }; delete next[key]; return next })
+      setToast(`Action timed out for ${entityId} — check Proxmox for status.`)
+    }, 30000)
+    setInflight(prev => ({ ...prev, [key]: { prevStatus, timerId } }))
+    try {
+      await entityAction(entityType, entityId, entityNode ?? null, action)
+    } catch (e) {
+      clearTimeout(timerId)
+      setInflight(prev => { const next = { ...prev }; delete next[key]; return next })
+      setToast(e.message)
+    }
+  }
 
   // Backup status for the local cluster, refreshed every 5 min (matches the
   // server-side cache TTL). Only used when viewing the local host — a paired
@@ -656,7 +974,20 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {nodes.map(node => <NodeCard key={node.id} node={node} onInstallAgent={() => setView('nodes')} backups={backupByVmid} noteCounts={noteCountByEntity} onOpenNotes={openNotesFor} />)}
+              {nodes.map(node => (
+                <NodeCard
+                  key={node.id} node={node}
+                  selfNode={selfNode}
+                  serviceLinks={serviceLinks}
+                  onServiceLinkChange={refreshServiceLinks}
+                  inflight={inflight}
+                  onAction={handleAction}
+                  onInstallAgent={() => setView('nodes')}
+                  backups={backupByVmid}
+                  noteCounts={noteCountByEntity}
+                  onOpenNotes={openNotesFor}
+                />
+              ))}
             </div>
           )}
 
@@ -667,6 +998,22 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         </>
       )}
       </div>
+
+      {/* Confirmation modal for destructive power actions */}
+      {confirm && (
+        <ConfirmModal
+          confirm={confirm}
+          onConfirm={() => { const c = confirm; setConfirm(null); executeAction(c) }}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+
+      {/* Error toast */}
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50 bg-[#13131e] border border-red-500/30 text-red-400 text-xs px-4 py-2.5 rounded-xl shadow-2xl max-w-xs">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }

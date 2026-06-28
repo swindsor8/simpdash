@@ -28,15 +28,16 @@ const (
 
 // Server holds shared state for all HTTP handlers.
 type Server struct {
-	cfg     *config.Config
-	cfgPath string
-	px      *proxmox.Client
-	poller  *Poller
-	exec    *executor.Executor
-	db      *store.DB
-	notes   *store.NotesDB
-	catalog *catalog.Catalog
-	update  *update.Checker
+	cfg          *config.Config
+	cfgPath      string
+	px           *proxmox.Client
+	poller       *Poller
+	exec         *executor.Executor
+	db           *store.DB
+	notes        *store.NotesDB
+	serviceLinks *store.ServiceLinksDB
+	catalog      *catalog.Catalog
+	update       *update.Checker
 
 	// secretMu guards cfg.SessionSecret, read on every authenticated request
 	// (validSession) and written by logout (rotateSecret).
@@ -60,7 +61,7 @@ type Server struct {
 	loginLimiter *limiter
 }
 
-func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, notes *store.NotesDB, cat *catalog.Catalog, version string) *Server {
+func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, notes *store.NotesDB, serviceLinks *store.ServiceLinksDB, cat *catalog.Catalog, version string) *Server {
 	host, _ := os.Hostname()
 	s := &Server{
 		cfg:          cfg,
@@ -70,6 +71,7 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		exec:         exec,
 		db:           db,
 		notes:        notes,
+		serviceLinks: serviceLinks,
 		catalog:      cat,
 		update:       update.New(version),
 		agent:        &agentPairing{},
@@ -111,6 +113,7 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/auth/login", methodGate(http.MethodPost, s.Login))
 	mux.HandleFunc("/api/auth/logout", methodGate(http.MethodPost, s.Logout))
 	mux.HandleFunc("/api/auth/me", methodGate(http.MethodGet, s.Me))
+	mux.HandleFunc("/api/info", methodGate(http.MethodGet, s.requireAuth(s.Info)))
 	mux.HandleFunc("/api/version", methodGate(http.MethodGet, s.requireAuth(s.Version)))
 	mux.HandleFunc("/api/update-check", methodGate(http.MethodGet, s.requireAuth(s.UpdateCheck)))
 	mux.HandleFunc("/api/network", methodGate(http.MethodGet, s.requireAuth(s.Network)))
@@ -135,9 +138,20 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/nodes/", s.handleNodesPrefix)
 	// Lab notebook. /api/notes handles GET (list) + POST (create); the counts
 	// exact route shadows the /api/notes/ prefix (PUT/DELETE :id).
+	// Power actions: POST /api/entities/:type/:id/action
+	mux.HandleFunc("/api/entities/", s.handleEntitiesPrefix)
+	// Service links: GET /api/service-links; PUT|DELETE /api/service-links/:type/:id
+	mux.HandleFunc("/api/service-links", s.requireAuth(s.GetServiceLinks))
+	mux.HandleFunc("/api/service-links/", s.handleServiceLinksPrefix)
 	mux.HandleFunc("/api/notes", s.requireAuth(s.handleNotes))
 	mux.HandleFunc("/api/notes/counts", methodGate(http.MethodGet, s.requireAuth(s.NotesCounts)))
 	mux.HandleFunc("/api/notes/", s.requireAuth(s.handleNotesPrefix))
+}
+
+// Info handles GET /api/info — exposes the backend host's Proxmox node name so
+// the frontend can detect when a power action targets the node it's running on.
+func (s *Server) Info(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"self_node": s.selfNode})
 }
 
 // handleCatalogPrefix dispatches POST /api/catalog/:slug/run.

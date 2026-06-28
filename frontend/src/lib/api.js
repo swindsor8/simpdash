@@ -171,6 +171,63 @@ export async function getNoteCounts() {
   return r.json()
 }
 
+// getInfo → { self_node: string } — backend's own Proxmox node name.
+export async function getInfo() {
+  const r = await fetch(`${BASE}/info`, { credentials: 'same-origin' })
+  if (!r.ok) return null
+  return r.json().catch(() => null)
+}
+
+// entityAction — power action on a node, VM, or LXC.
+// type: "node"|"qemu"|"lxc"; id: node name or vmid string; node: PVE node name (required for qemu/lxc)
+export async function entityAction(type, id, node, action) {
+  const r = await fetch(`${BASE}/entities/${encodeURIComponent(type)}/${encodeURIComponent(id)}/action`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...(node ? { node } : {}) }),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+// --- service links ---
+
+export async function getServiceLinks() {
+  const r = await fetch(`${BASE}/service-links`, { credentials: 'same-origin' })
+  if (!r.ok) return {}
+  return r.json().catch(() => ({}))
+}
+
+export async function upsertServiceLink(type, id, url, label) {
+  const r = await fetch(`${BASE}/service-links/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, label: label || null }),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export async function deleteServiceLink(type, id) {
+  const r = await fetch(`${BASE}/service-links/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
 // --- paired secondary nodes (Milestone 5) ---
 
 export async function getNodes() {
