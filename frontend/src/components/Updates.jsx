@@ -2,6 +2,16 @@ import { useState } from 'react'
 import { checkUpdates, applyUpdates } from '../lib/api'
 import { useJobStream } from '../hooks/useJobStream'
 import Terminal from './Terminal'
+import { Card, StatusPill } from './Card'
+
+function IconPackage() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16.5 9.4 7.5 4.21M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+    </svg>
+  )
+}
 
 function IconRefresh({ spinning }) {
   return (
@@ -52,14 +62,12 @@ export default function Updates({ node = null }) {
   const busy = jobState === 'running'
 
   return (
-    <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
-
-      {/* Card header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
-        <div>
-          <h2 className="text-sm font-semibold text-white">System Updates</h2>
-          <p className="text-xs text-gray-500 mt-0.5">apt package upgrades</p>
-        </div>
+    <Card
+      className="overflow-hidden"
+      icon={<IconPackage />}
+      title="System Updates"
+      subtitle="apt package upgrades"
+      action={
         <button
           onClick={handleCheck}
           disabled={checkState === 'checking' || busy}
@@ -68,7 +76,8 @@ export default function Updates({ node = null }) {
           <IconRefresh spinning={checkState === 'checking'} />
           {checkState === 'checking' ? 'Checking…' : 'Check for updates'}
         </button>
-      </div>
+      }
+    >
 
       {/* Check failed — surfaced honestly instead of a false "up to date". */}
       {checkErr && (
@@ -97,16 +106,8 @@ export default function Updates({ node = null }) {
                     Apply updates
                   </button>
                 )}
-                {busy && (
-                  <span className="text-xs px-4 py-1.5 rounded-lg bg-white/8 text-gray-400">
-                    Upgrading…
-                  </span>
-                )}
-                {jobState === 'succeeded' && (
-                  <span className="text-xs px-4 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 font-medium">
-                    Done
-                  </span>
-                )}
+                {busy && <StatusPill variant="neutral">Upgrading…</StatusPill>}
+                {jobState === 'succeeded' && <StatusPill variant="success">Done</StatusPill>}
               </div>
 
               {/* Package table */}
@@ -155,6 +156,6 @@ export default function Updates({ node = null }) {
         </div>
       )}
 
-    </div>
+    </Card>
   )
 }

@@ -10,6 +10,7 @@ import Network from './Network'
 import Backups, { BackupBadge } from './Backups'
 import Notebook from './Notebook'
 import UpdateBanner from './UpdateBanner'
+import { Card, StatCard, StatusPill, statusVariant } from './Card'
 
 // --- helpers ---
 function fmtBytes(n) {
@@ -280,19 +281,6 @@ function NavItem({ icon, label, active, onClick }) {
   )
 }
 
-function StatCard({ title, value, sub, icon, bg, text, iconBg }) {
-  return (
-    <div className={`rounded-2xl p-5 ${bg}`}>
-      <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center mb-6`}>
-        <span className={text}>{icon}</span>
-      </div>
-      <p className={`text-xs font-medium mb-1.5 ${text} opacity-60`}>{title}</p>
-      <p className={`text-2xl font-bold ${text}`}>{value}</p>
-      {sub && <p className={`text-xs mt-1 ${text} opacity-50`}>{sub}</p>}
-    </div>
-  )
-}
-
 function Bar({ value, max }) {
   const p = max > 0 ? Math.min(100, (value / max) * 100) : 0
   const color = p > 90 ? 'bg-red-500' : p > 70 ? 'bg-yellow-500' : 'bg-blue-500'
@@ -300,17 +288,6 @@ function Bar({ value, max }) {
     <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
       <div className={`h-full rounded-full ${color} transition-all duration-700`} style={{ width: `${p}%` }} />
     </div>
-  )
-}
-
-function StatusPill({ status }) {
-  const on = status === 'running' || status === 'online'
-  return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-      on ? 'bg-emerald-500/15 text-emerald-400' : 'bg-white/8 text-gray-500'
-    }`}>
-      {status}
-    </span>
   )
 }
 
@@ -346,10 +323,7 @@ function IconWarnSm() {
 // "online/running" status so it reads as a heads-up, not a healthy node.
 function MonitorOnlyBadge() {
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium bg-amber-500/15 text-amber-400">
-      <IconEye />
-      Monitor only
-    </span>
+    <StatusPill variant="warning"><IconEye /> Monitor only</StatusPill>
   )
 }
 
@@ -379,8 +353,8 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
   }
 
   return (
-    <div
-      className={`bg-[#13131e] border border-white/[0.07] rounded-2xl p-6 relative ${link ? 'cursor-pointer' : ''}`}
+    <Card
+      className={`p-6 relative ${link ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
     >
       {/* Gear + external-link indicators — always visible, never hover-only */}
@@ -410,7 +384,7 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
         </div>
         <div className="flex items-center gap-1.5 flex-wrap justify-end">
           {monitorOnly && <MonitorOnlyBadge />}
-          <StatusPill status={node.status} />
+          <StatusPill variant={statusVariant(node.status)}>{node.status}</StatusPill>
         </div>
       </div>
 
@@ -471,7 +445,7 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
       {monitorOnly && (
         <p className="text-xs text-gray-600 mt-2">No SuperDash agent here — stats only.</p>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -512,8 +486,8 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
   const act = (action) => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action })
 
   return (
-    <div
-      className={`relative bg-[#13131e] border border-white/[0.07] rounded-2xl p-4 flex flex-col transition-colors ${link ? 'cursor-pointer hover:border-white/20' : ''}`}
+    <Card
+      className={`relative p-4 flex flex-col transition-colors ${link ? 'cursor-pointer hover:border-white/20' : ''}`}
       onClick={handleCardClick}
     >
       {/* Gear + external-link indicator — always visible, never hover-only */}
@@ -545,7 +519,7 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
 
       {/* Status + live stats + note badge */}
       <div className="flex items-center gap-2 flex-wrap mb-3">
-        <StatusPill status={item.status} />
+        <StatusPill variant={statusVariant(item.status)}>{item.status}</StatusPill>
         {running && (
           <span className="text-[11px] text-gray-500 tabular-nums">
             {(item.cpu * 100).toFixed(1)}% · {fmtBytes(item.mem)}
@@ -590,7 +564,7 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
           </button>
         )}
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -867,33 +841,30 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
 
         <main className="p-8 space-y-6 max-w-6xl">
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          {/* Stat cards — dark elevated surface; no trend pills (no historical
+              comparison data exists to compare against). */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard
-              title="Nodes Online"
+              label="Nodes Online"
               value={nodes === null ? '—' : `${onlineNodes} / ${totalNodes}`}
               sub={totalNodes > 0 ? `${totalNodes} total` : undefined}
               icon={<IconServer />}
-              bg="bg-[#c6edda]" text="text-[#1a4530]" iconBg="bg-[#a8dfc0]"
             />
             <StatCard
-              title="Virtual Machines"
+              label="Virtual Machines"
               value={nodes === null ? '—' : totalVMs}
               icon={<IconMonitor />}
-              bg="bg-[#e8e8f4]" text="text-[#1a1a3a]" iconBg="bg-[#d0d0ea]"
             />
             <StatCard
-              title="Containers"
+              label="Containers"
               value={nodes === null ? '—' : totalLXCs}
               icon={<IconBox />}
-              bg="bg-[#fef9c3]" text="text-[#3a2e00]" iconBg="bg-[#fef08a]"
             />
             <StatCard
-              title="Avg CPU"
+              label="Avg CPU"
               value={avgCPU === null ? '—' : `${avgCPU}%`}
               sub={nodes?.length ? `across ${nodes.length} node${nodes.length !== 1 ? 's' : ''}` : undefined}
               icon={<IconCpu />}
-              bg="bg-[#e4dcf8]" text="text-[#2d1a4a]" iconBg="bg-[#c4aef0]"
             />
           </div>
 

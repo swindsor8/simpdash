@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getBackups } from '../lib/api'
+import { StatusPill } from './Card'
 
 function fmtAge(unix) {
   if (!unix) return null
@@ -34,21 +35,8 @@ export function jobState(status) {
 // backup success per job, not per guest.
 export function BackupBadge({ backup }) {
   if (!backup) return <span className="text-xs text-gray-700">—</span>
-  if (!backup.last_backup) {
-    return (
-      <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-medium bg-amber-500/15 text-amber-400">
-        no backup
-      </span>
-    )
-  }
-  return (
-    <span
-      title={fmtBytes(backup.size)}
-      className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-500/15 text-emerald-400"
-    >
-      ✓ {fmtAge(backup.last_backup)}
-    </span>
-  )
+  if (!backup.last_backup) return <StatusPill variant="warning">no backup</StatusPill>
+  return <StatusPill variant="success" title={fmtBytes(backup.size)}>✓ {fmtAge(backup.last_backup)}</StatusPill>
 }
 
 function Degraded({ msg }) {
@@ -133,13 +121,9 @@ export default function Backups() {
                   return (
                     <tr key={j.upid} className="border-t border-white/[0.05] first:border-t-0">
                       <td className="px-5 py-3">
-                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                          st === 'ok' ? 'bg-emerald-500/15 text-emerald-400'
-                            : st === 'failed' ? 'bg-red-500/15 text-red-400'
-                              : 'bg-white/8 text-gray-400'
-                        }`}>
+                        <StatusPill variant={st === 'ok' ? 'success' : st === 'failed' ? 'error' : 'neutral'}>
                           {st === 'ok' ? 'OK' : st === 'failed' ? 'failed' : 'running'}
-                        </span>
+                        </StatusPill>
                       </td>
                       <td className="px-5 py-3 text-gray-500">{j.node}</td>
                       <td className="px-5 py-3 text-gray-400">{fmtAge(j.starttime)}</td>
