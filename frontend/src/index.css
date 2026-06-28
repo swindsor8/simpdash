@@ -2,6 +2,109 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   MOTION LANGUAGE — centralized tokens + the app-wide animation primitives.
+   Brand tone is "calm, technical, trustworthy": ease-out / ease-in-out only,
+   no bounce/spring. Decorative motion lives under a prefers-reduced-motion
+   guard; functional state (colour, label, dim) is always shown. Every duration
+   below pulls from these tokens — JS tweens parse them too (see motion.jsx).
+   =========================================================================== */
+:root {
+  --motion-fast: 150ms ease-out;
+  --motion-medium: 300ms ease-out;
+  --motion-slow: 500ms ease-out;
+  --pulse-duration: 2.4s;
+  --pulse-easing: ease-in-out;
+}
+
+/* Usage bars (CPU/RAM/disk) animate their fill width, never snap. */
+.bar-fill { transition: width var(--motion-medium), background-color var(--motion-medium); }
+
+/* Disconnected cards dim + slightly desaturate (functional staleness cue, kept
+   even under reduced motion); the transition reverses it on reconnect. */
+.cards-region { transition: opacity var(--motion-medium), filter var(--motion-medium); }
+.cards-region.dimmed { opacity: 0.55; filter: grayscale(0.35); }
+
+/* Skeleton placeholder shown only before the first data frame. */
+.skeleton { background-color: rgba(255,255,255,0.05); border-radius: 0.5rem; }
+
+/* Accent tint overlay for the stat update flash (animation added under the
+   reduced-motion guard below; here just its box). */
+.stat-flash-overlay {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: rgba(59,130,246,0.12); opacity: 0;
+}
+
+@keyframes breathe { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.7; } }
+@keyframes card-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes flash-fade { from { opacity: 1; } to { opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes skeleton-shimmer { from { background-position: -150% 0; } to { background-position: 250% 0; } }
+@keyframes glow-success { from { box-shadow: 0 0 0 1px rgba(16,185,129,0.85), 0 0 16px 2px rgba(16,185,129,0.45); } to { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+@keyframes glow-neutral { from { box-shadow: 0 0 0 1px rgba(148,163,184,0.85), 0 0 16px 2px rgba(148,163,184,0.35); } to { box-shadow: 0 0 0 0 rgba(148,163,184,0); } }
+@keyframes reconnect-pulse { from { box-shadow: 0 0 0 2px rgba(59,130,246,0.45), 0 0 24px rgba(59,130,246,0.22); } to { box-shadow: 0 0 0 0 rgba(59,130,246,0); } }
+
+/* Functional: a spinner that doesn't spin under reduced motion still reads as
+   "working" via its adjacent label. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin { animation: none; }
+}
+
+/* All decorative motion — disabled wholesale under reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Card hover lift (acknowledge the cursor, don't jump at it). */
+  .card-lift { transition: transform var(--motion-fast), border-color var(--motion-fast), box-shadow var(--motion-fast); }
+  .card-lift:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+
+  /* Button press — subtle, no overshoot. Theme-specific :active transforms on
+     .bg-blue-600 buttons are more specific and keep their own press. */
+  button { transition: transform var(--motion-fast); }
+  button:active { transform: scale(0.97); }
+
+  /* Live indicator dot: slow breathing pulse while connected. */
+  .animate-breathe { animation: breathe var(--pulse-duration) var(--pulse-easing) infinite; }
+
+  /* Stat update flash — a low-opacity accent tint that fades over the card.
+     Rendered as a re-keyed overlay element so each change restarts the fade. */
+  .stat-flash-overlay { animation: flash-fade var(--motion-medium) ease-out forwards; }
+
+  /* Staggered first-mount entrance for a group: each direct child slides in
+     with a small index delay (total window < 400ms). Plays once because the
+     elements persist across WS re-renders; only fresh mounts animate. The
+     `backwards` fill hides pre-delay cards but releases the element to its
+     normal styles afterwards, so the :hover lift still works. */
+  .stagger > * { animation: card-enter var(--motion-medium) backwards; }
+  .stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .stagger > *:nth-child(3) { animation-delay: 120ms; }
+  .stagger > *:nth-child(4) { animation-delay: 180ms; }
+  .stagger > *:nth-child(5) { animation-delay: 240ms; }
+  .stagger > *:nth-child(6) { animation-delay: 300ms; }
+  .stagger > *:nth-child(n+7) { animation-delay: 360ms; }
+
+  /* State-change border glow (running ↔ stopped), fired by the WS update itself. */
+  .glow-success { animation: glow-success var(--motion-slow) ease-out; }
+  .glow-neutral { animation: glow-neutral var(--motion-slow) ease-out; }
+
+  /* One-time "we're back" pulse across the reconnected cards. */
+  .reconnect-pulse { animation: reconnect-pulse var(--motion-slow) ease-out; }
+
+  /* Power-action icon cross-fades (idle → loading → success). */
+  .animate-fade-in { animation: fade-in var(--motion-fast) ease-out; }
+
+  /* Settings gear rotates a touch on hover; external-link cue nudges outward. */
+  .gear-btn svg { transition: transform var(--motion-fast); }
+  .gear-btn:hover svg { transform: rotate(18deg); }
+  .ext-cue { transition: transform var(--motion-fast); }
+  .card-lift:hover .ext-cue { transform: translate(2px, -2px); }
+
+  /* Skeleton shimmer (static placeholder under reduced motion). */
+  .skeleton {
+    background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
+    background-size: 200% 100%; background-repeat: no-repeat;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+}
+
 /* One-shot ping (Tailwind's animate-ping loops forever; we want a single
    pulse per resource update, re-fired by re-keying the element on pulseKey). */
 @keyframes ping-once {

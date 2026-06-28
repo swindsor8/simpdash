@@ -16,8 +16,18 @@ export function useResourceStream(node) {
   const [nodes, setNodes] = useState(null) // null = haven't received first frame
   const [connected, setConnected] = useState(false)
   const [unreachable, setUnreachable] = useState(false)
+  const [disconnected, setDisconnected] = useState(false) // debounced: down > 3s
   const [pulseKey, setPulseKey] = useState(0)
   const wsRef = useRef(null)
+
+  // Debounce the visual "disconnected" state so a brief reconnect blip (the WS
+  // backs off ~2s) doesn't flicker the whole dashboard. Only flag it after the
+  // connection has been down for >3s; clear it the instant we're back.
+  useEffect(() => {
+    if (connected) { setDisconnected(false); return }
+    const t = setTimeout(() => setDisconnected(true), 3000)
+    return () => clearTimeout(t)
+  }, [connected])
 
   useEffect(() => {
     setNodes(null)
@@ -81,5 +91,5 @@ export function useResourceStream(node) {
     }
   }, [node])
 
-  return { nodes, connected, pulseKey, unreachable }
+  return { nodes, connected, pulseKey, unreachable, disconnected }
 }

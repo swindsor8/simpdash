@@ -6,6 +6,8 @@
 // glass) override those class names by name in index.css, so reusing them keeps
 // every theme working with zero extra CSS. Don't swap in raw hex or new colors.
 
+import { AnimatedNumber, useChangeFlash } from './motion'
+
 // Card — the one elevated dark surface used across the dashboard. Pass
 // icon/title/subtitle/action to get the standard header row; omit them and it's
 // just chrome around `children` (used by the bespoke node/guest cards).
@@ -67,9 +69,15 @@ export function TrendPill({ dir, pct }) {
 
 // StatCard — icon+label header (optional kebab `action`), large number, optional
 // sub line, optional trend pill. Dark surface, not the old light-pastel tiles.
-export function StatCard({ icon, label, value, sub, trend, action }) {
+// A numeric `value` tweens between values (--motion-medium) and flashes the card
+// on change; a string `value` (e.g. "3 / 4") renders as-is. `format` styles the
+// tweened number; `loading` shows a shimmer skeleton before the first frame.
+export function StatCard({ icon, label, value, format, sub, trend, action, loading }) {
+  const numeric = typeof value === 'number'
+  const flashKey = useChangeFlash(numeric ? value : null)
   return (
-    <Card className="p-5 transition-colors hover:border-white/20">
+    <Card className="relative p-5 card-lift hover:border-white/20">
+      {flashKey && <span key={flashKey} className="stat-flash-overlay" />}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 min-w-0">
           <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 text-gray-500">{icon}</span>
@@ -78,7 +86,13 @@ export function StatCard({ icon, label, value, sub, trend, action }) {
         {action}
       </div>
       <div className="flex items-end gap-2">
-        <p className="text-2xl font-bold text-white tabular-nums">{value}</p>
+        {loading ? (
+          <span className="skeleton block h-7 w-20 my-0.5" />
+        ) : (
+          <p className="text-2xl font-bold text-white tabular-nums">
+            {numeric ? <AnimatedNumber value={value} format={format} /> : value}
+          </p>
+        )}
         {trend && <TrendPill {...trend} />}
       </div>
       {sub && <p className="text-xs text-gray-600 mt-1">{sub}</p>}

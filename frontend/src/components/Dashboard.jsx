@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { logout, getNodes, getBackups, getNoteCounts, getInfo, entityAction, getServiceLinks, upsertServiceLink, deleteServiceLink } from '../lib/api'
 import logo from '../../assets/logo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
@@ -11,6 +11,7 @@ import Backups, { BackupBadge } from './Backups'
 import Notebook from './Notebook'
 import UpdateBanner from './UpdateBanner'
 import { Card, StatCard, StatusPill, statusVariant } from './Card'
+import { AnimatedNumber, usePowerMorph, useStatusGlow } from './motion'
 
 // --- helpers ---
 function fmtBytes(n) {
@@ -286,18 +287,21 @@ function Bar({ value, max }) {
   const color = p > 90 ? 'bg-red-500' : p > 70 ? 'bg-yellow-500' : 'bg-blue-500'
   return (
     <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-      <div className={`h-full rounded-full ${color} transition-all duration-700`} style={{ width: `${p}%` }} />
+      <div className={`h-full rounded-full ${color} bar-fill`} style={{ width: `${p}%` }} />
     </div>
   )
 }
 
-function StatusDot({ pulseKey, connected }) {
+// StatusDot — emerald + slow breathing pulse while live, one-shot ring ping on
+// each fresh frame; switches to a static amber dot once disconnected (debounced).
+function StatusDot({ pulseKey, connected, disconnected }) {
+  const live = !disconnected
   return (
     <span className="relative inline-flex h-2 w-2">
-      {connected && (
+      {connected && live && (
         <span key={pulseKey} className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping-once" />
       )}
-      <span className={`relative inline-flex rounded-full h-2 w-2 ${connected ? 'bg-emerald-400' : 'bg-gray-600'}`} />
+      <span className={`relative inline-flex rounded-full h-2 w-2 ${live ? 'bg-emerald-400 animate-breathe' : 'bg-amber-400'}`} />
     </span>
   )
 }
@@ -346,6 +350,8 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
   const monitorOnly = node.managed === false
   const link = serviceLinks[`node:${node.id}`]
   const isInflight = !!inflight[`node:${node.id}`]
+  const justDone = usePowerMorph(isInflight)
+  const glow = useStatusGlow(node.status)
   const [showEditor, setShowEditor] = useState(false)
 
   function handleCardClick() {
@@ -354,16 +360,16 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
 
   return (
     <Card
-      className={`p-6 relative ${link ? 'cursor-pointer' : ''}`}
+      className={`p-6 relative card-lift hover:border-white/20 ${glow || ''} ${link ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
     >
       {/* Gear + external-link indicators — always visible, never hover-only */}
       <div className="absolute top-3 right-3 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-        {link && <span className="text-gray-600 opacity-50"><IconExternalLink /></span>}
+        {link && <span className="ext-cue text-gray-600 opacity-50"><IconExternalLink /></span>}
         <div className="relative">
           <button
             onClick={() => setShowEditor(v => !v)}
-            className="text-gray-600 hover:text-gray-400 transition-colors"
+            className="gear-btn text-gray-600 hover:text-gray-400 transition-colors"
             title="Edit service link"
           >
             <IconGear />
@@ -392,7 +398,7 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
         <div>
           <div className="flex justify-between text-xs mb-1.5">
             <span className="text-gray-500">CPU</span>
-            <span className="text-gray-400">{(node.cpu * 100).toFixed(1)}% of {node.maxcpu} cores</span>
+            <span className="text-gray-400"><AnimatedNumber value={node.cpu * 100} format={n => n.toFixed(1)} />% of {node.maxcpu} cores</span>
           </div>
           <Bar value={node.cpu} max={1} />
         </div>
@@ -428,11 +434,15 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
         >
           Shutdown
         </button>
-        {isInflight && (
+        {isInflight ? (
           <svg className="animate-spin text-gray-500 ml-1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
           </svg>
-        )}
+        ) : justDone ? (
+          <span className="ml-1 text-emerald-400 animate-fade-in" title="Done">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+        ) : null}
         {monitorOnly && (
           <button
             onClick={onInstallAgent}
@@ -476,6 +486,8 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
   const running = item.status === 'running'
   const etype = type === 'VM' ? 'vm' : 'lxc'
   const pxType = type === 'VM' ? 'qemu' : 'lxc' // Proxmox API type
+  const justDone = usePowerMorph(isInflight)
+  const glow = useStatusGlow(item.status)
   const [showEditor, setShowEditor] = useState(false)
   const displayName = link?.label || item.name
 
@@ -487,14 +499,14 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
 
   return (
     <Card
-      className={`relative p-4 flex flex-col transition-colors ${link ? 'cursor-pointer hover:border-white/20' : ''}`}
+      className={`relative p-4 flex flex-col card-lift hover:border-white/20 ${glow || ''} ${link ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
     >
       {/* Gear + external-link indicator — always visible, never hover-only */}
       <div className="absolute top-3 right-3 flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
-        {link && <span className="text-gray-600 opacity-60" title="Has a service link"><IconExternalLink /></span>}
+        {link && <span className="ext-cue text-gray-600 opacity-60" title="Has a service link"><IconExternalLink /></span>}
         <div className="relative">
-          <button onClick={() => setShowEditor(v => !v)} className="text-gray-600 hover:text-gray-400 transition-colors" title="Edit service link">
+          <button onClick={() => setShowEditor(v => !v)} className="gear-btn text-gray-600 hover:text-gray-400 transition-colors" title="Edit service link">
             <IconGear />
           </button>
           {showEditor && (
@@ -540,11 +552,16 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
       {/* Power controls */}
       <div className="mt-auto pt-2 border-t border-white/[0.06] flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
         {isInflight ? (
-          <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
+          <span className="flex items-center gap-1.5 text-[11px] text-gray-500 animate-fade-in">
             <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
             </svg>
             Working…
+          </span>
+        ) : justDone ? (
+          <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 animate-fade-in">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Done
           </span>
         ) : running ? (
           <>
@@ -602,8 +619,23 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
     if (activeNode && !pairedNodes.some(n => n.id === activeNode)) setActiveNode(null)
   }, [pairedNodes, activeNode])
 
-  const { nodes, connected, pulseKey, unreachable } = useResourceStream(activeNode)
+  const { nodes, connected, pulseKey, unreachable, disconnected } = useResourceStream(activeNode)
   const activeAddr = pairedNodes.find(n => n.id === activeNode)?.address
+
+  // One-time "we're back" glow across the cards when the debounced disconnect
+  // clears. Toggling the class off→on restarts the CSS animation each reconnect.
+  const [reconnecting, setReconnecting] = useState(false)
+  const prevDisc = useRef(disconnected)
+  useEffect(() => {
+    if (prevDisc.current && !disconnected) {
+      setReconnecting(true)
+      const t = setTimeout(() => setReconnecting(false), 600)
+      prevDisc.current = disconnected
+      return () => clearTimeout(t)
+    }
+    prevDisc.current = disconnected
+  }, [disconnected])
+  const dimmed = disconnected && nodes !== null
 
   // Clear inflight entries when the WS stream reflects a status change.
   useEffect(() => {
@@ -714,7 +746,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
   const totalVMs = nodes?.reduce((s, n) => s + n.vms.length, 0) ?? 0
   const totalLXCs = nodes?.reduce((s, n) => s + n.lxcs.length, 0) ?? 0
   const avgCPU = nodes?.length
-    ? (nodes.reduce((s, n) => s + n.cpu, 0) / nodes.length * 100).toFixed(1)
+    ? nodes.reduce((s, n) => s + n.cpu, 0) / nodes.length * 100
     : null
 
   async function handleLogout() {
@@ -832,37 +864,42 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             </p>
           </div>
           <div className="flex items-center gap-2.5">
-            <StatusDot pulseKey={pulseKey} connected={connected} />
+            <StatusDot pulseKey={pulseKey} connected={connected} disconnected={disconnected || unreachable} />
             <span className="text-xs text-gray-500">
-              {unreachable ? 'Unreachable' : connected ? 'Live' : 'Reconnecting…'}
+              {unreachable ? 'Unreachable' : disconnected ? 'Reconnecting…' : 'Live'}
             </span>
           </div>
         </header>
 
-        <main className="p-8 space-y-6 max-w-6xl">
+        <main className={`p-8 space-y-6 max-w-6xl cards-region ${dimmed ? 'dimmed' : ''} ${reconnecting ? 'reconnect-pulse' : ''}`}>
 
           {/* Stat cards — dark elevated surface; no trend pills (no historical
               comparison data exists to compare against). */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 stagger">
             <StatCard
               label="Nodes Online"
-              value={nodes === null ? '—' : `${onlineNodes} / ${totalNodes}`}
+              loading={nodes === null}
+              value={`${onlineNodes} / ${totalNodes}`}
               sub={totalNodes > 0 ? `${totalNodes} total` : undefined}
               icon={<IconServer />}
             />
             <StatCard
               label="Virtual Machines"
-              value={nodes === null ? '—' : totalVMs}
+              loading={nodes === null}
+              value={totalVMs}
               icon={<IconMonitor />}
             />
             <StatCard
               label="Containers"
-              value={nodes === null ? '—' : totalLXCs}
+              loading={nodes === null}
+              value={totalLXCs}
               icon={<IconBox />}
             />
             <StatCard
               label="Avg CPU"
-              value={avgCPU === null ? '—' : `${avgCPU}%`}
+              loading={nodes === null}
+              value={avgCPU === null ? '—' : avgCPU}
+              format={(n) => `${n.toFixed(1)}%`}
               sub={nodes?.length ? `across ${nodes.length} node${nodes.length !== 1 ? 's' : ''}` : undefined}
               icon={<IconCpu />}
             />
@@ -875,8 +912,29 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               detail={`Can't reach ${activeAddr || 'the node'} — the agent may be down or the network is interrupted. Retrying every 3 seconds.`}
             />
           ) : nodes === null ? (
-            <div className="text-center py-16 text-gray-600 text-sm">
-              {activeAddr ? `Connecting to ${activeAddr}…` : 'Connecting to Proxmox…'}
+            // First-paint skeletons — shimmer placeholders shaped like a node
+            // card + its guests, shown only until the first WS frame arrives.
+            <div className="space-y-6" aria-busy="true">
+              <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6 space-y-4">
+                <div className="skeleton h-4 w-40" />
+                <div className="skeleton h-1.5 w-full" />
+                <div className="skeleton h-1.5 w-full" />
+                <div className="skeleton h-1.5 w-full" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="skeleton w-9 h-9 rounded-lg" />
+                      <div className="space-y-1.5">
+                        <div className="skeleton h-3 w-24" />
+                        <div className="skeleton h-2.5 w-12" />
+                      </div>
+                    </div>
+                    <div className="skeleton h-5 w-40" />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : nodes.length === 0 ? (
             <DegradedNotice
@@ -899,7 +957,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
                     onInstallAgent={() => setView('nodes')}
                   />
                   {(node.vms.length > 0 || node.lxcs.length > 0) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 stagger">
                       {node.vms.map(vm => (
                         <GuestCard
                           key={`vm-${vm.vmid}`} item={vm} type="VM" nodeName={node.id}
