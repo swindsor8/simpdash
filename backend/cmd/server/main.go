@@ -58,6 +58,11 @@ func main() {
 		log.Fatalf("open db %s: %v", cfg.DBPath, err)
 	}
 
+	notes, err := store.OpenNotes(filepath.Join(filepath.Dir(cfg.DBPath), "notes.json"))
+	if err != nil {
+		log.Fatalf("open notes store: %v", err)
+	}
+
 	px := proxmox.NewClient()
 	if cfg.Proxmox != nil && cfg.Proxmox.TokenID != "" {
 		px.SetCreds(cfg.Proxmox.Host, cfg.Proxmox.TokenID, cfg.Proxmox.Secret)
@@ -70,7 +75,7 @@ func main() {
 	}
 
 	exec := executor.New()
-	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, cat, version)
+	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, notes, cat, version)
 	mux := http.NewServeMux()
 
 	// Secondary (agent) mode: no UI, no sessions — just the bearer-gated agent

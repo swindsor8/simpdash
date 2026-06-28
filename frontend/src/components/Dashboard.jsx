@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { logout, getNodes, getGuestServices, getBackups } from '../lib/api'
+import { logout, getNodes, getGuestServices, getBackups, getNoteCounts } from '../lib/api'
 import logo from '../../assets/logo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
 import Updates from './Updates'
@@ -8,6 +8,7 @@ import Themes from './Themes'
 import Nodes from './Nodes'
 import Network from './Network'
 import Backups, { BackupBadge } from './Backups'
+import Notebook from './Notebook'
 import UpdateBanner from './UpdateBanner'
 
 // --- helpers ---
@@ -122,6 +123,22 @@ function IconArchive() {
   )
 }
 
+function IconNote() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/>
+    </svg>
+  )
+}
+
+function IconNoteSm() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/>
+    </svg>
+  )
+}
+
 // --- sub-components ---
 function NavItem({ icon, label, active, onClick }) {
   return (
@@ -227,7 +244,7 @@ function DegradedNotice({ title, detail }) {
   )
 }
 
-function NodeCard({ node, onInstallAgent, backups }) {
+function NodeCard({ node, onInstallAgent, backups, noteCounts, onOpenNotes }) {
   const monitorOnly = node.managed === false
   return (
     <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
@@ -277,8 +294,8 @@ function NodeCard({ node, onInstallAgent, backups }) {
               </tr>
             </thead>
             <tbody>
-              {node.vms.map(vm => <GuestRow key={vm.vmid} item={vm} type="VM" backup={backups?.[vm.vmid]} />)}
-              {node.lxcs.map(ct => <GuestRow key={ct.vmid} item={ct} type="CT" backup={backups?.[ct.vmid]} />)}
+              {node.vms.map(vm => <GuestRow key={vm.vmid} item={vm} type="VM" backup={backups?.[vm.vmid]} noteCounts={noteCounts} onOpenNotes={onOpenNotes} />)}
+              {node.lxcs.map(ct => <GuestRow key={ct.vmid} item={ct} type="CT" backup={backups?.[ct.vmid]} noteCounts={noteCounts} onOpenNotes={onOpenNotes} />)}
             </tbody>
           </table>
         </div>
@@ -303,8 +320,10 @@ function NodeCard({ node, onInstallAgent, backups }) {
 
 // GuestRow is a VM/LXC row that expands (when running) to list the services
 // running inside the guest — pct exec for CTs, qm guest exec for VMs.
-function GuestRow({ item, type, backup }) {
+function GuestRow({ item, type, backup, noteCounts, onOpenNotes }) {
   const running = item.status === 'running'
+  const etype = type === 'VM' ? 'vm' : 'lxc'
+  const noteCount = noteCounts?.[`${etype}:${item.vmid}`] || 0
   const [open, setOpen] = useState(false)
   const [svc, setSvc] = useState(null) // null = not fetched yet
   const [loading, setLoading] = useState(false)
@@ -336,6 +355,15 @@ function GuestRow({ item, type, backup }) {
         <td className="py-2 pr-3 text-sm text-gray-300">
           <span className="inline-block w-3 text-gray-600">{running ? (open ? '▾' : '▸') : ''}</span>
           {item.name}
+          {noteCount > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onOpenNotes(etype, String(item.vmid)) }}
+              title={`${noteCount} note${noteCount !== 1 ? 's' : ''} — open notebook`}
+              className="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-white/8 text-gray-400 hover:bg-white/15 transition-colors align-middle"
+            >
+              <IconNoteSm /> {noteCount}
+            </button>
+          )}
         </td>
         <td className="py-2 pr-3">
           <span className="text-xs text-gray-600 font-mono">{type}{item.vmid}</span>
@@ -419,6 +447,34 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
     return m
   }, [backups, activeNode])
 
+  // Note counts per entity → small badge on VM/CT rows. Refreshed live when
+  // notes are created/deleted in the Notebook, plus on mount.
+  const [noteCounts, setNoteCounts] = useState([])
+  const [notebookFilter, setNotebookFilter] = useState(null)
+  const refreshCounts = useCallback(() => {
+    getNoteCounts().then(setNoteCounts).catch(() => setNoteCounts([]))
+  }, [])
+  useEffect(() => { refreshCounts() }, [refreshCounts])
+  const noteCountByEntity = useMemo(() => {
+    const m = {}
+    for (const c of noteCounts) m[`${c.entity_type}:${c.entity_id}`] = c.count
+    return m
+  }, [noteCounts])
+  // Flat entity list (local cluster only) for the Notebook's entity pickers.
+  const entities = useMemo(() => {
+    const out = []
+    for (const n of nodes ?? []) {
+      out.push({ type: 'node', id: n.id, label: n.id })
+      for (const vm of n.vms) out.push({ type: 'vm', id: String(vm.vmid), label: `VM ${vm.vmid} · ${vm.name}` })
+      for (const ct of n.lxcs) out.push({ type: 'lxc', id: String(ct.vmid), label: `CT ${ct.vmid} · ${ct.name}` })
+    }
+    return out
+  }, [nodes])
+  const openNotesFor = useCallback((entity_type, entity_id) => {
+    setNotebookFilter({ entity_type, entity_id })
+    setView('notebook')
+  }, [])
+
   const totalNodes = nodes?.length ?? 0
   const onlineNodes = nodes?.filter(n => n.status === 'online').length ?? 0
   const totalVMs = nodes?.reduce((s, n) => s + n.vms.length, 0) ?? 0
@@ -463,6 +519,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         <nav className="flex-1 px-2 space-y-0.5">
           <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
           <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => setView('scripts')} />
+          <NavItem icon={<IconNote />} label="Notebook" active={view === 'notebook'} onClick={() => { setNotebookFilter(null); setView('notebook') }} />
           <NavItem icon={<IconWifi />} label="Network" active={view === 'network'} onClick={() => setView('network')} />
           <NavItem icon={<IconArchive />} label="Backups" active={view === 'backups'} onClick={() => setView('backups')} />
           <NavItem icon={<IconNetwork />} label="Nodes" active={view === 'nodes'} onClick={() => setView('nodes')} />
@@ -520,6 +577,14 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             </p>
           </header>
           <Scripts node={activeNode} />
+        </>
+      ) : view === 'notebook' ? (
+        <>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
+            <h1 className="text-base font-semibold">Notebook</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Timestamped notes — jot down the why, pin what matters</p>
+          </header>
+          <Notebook entities={entities} filter={notebookFilter} onCountsChanged={refreshCounts} />
         </>
       ) : (
         <>
@@ -591,7 +656,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {nodes.map(node => <NodeCard key={node.id} node={node} onInstallAgent={() => setView('nodes')} backups={backupByVmid} />)}
+              {nodes.map(node => <NodeCard key={node.id} node={node} onInstallAgent={() => setView('nodes')} backups={backupByVmid} noteCounts={noteCountByEntity} onOpenNotes={openNotesFor} />)}
             </div>
           )}
 

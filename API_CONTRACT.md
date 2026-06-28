@@ -193,3 +193,20 @@ local builds report `"dev"`.
 | GET    | `/api/version`      | `{ "version": string }` — the running build's version. |
 | GET    | `/api/update-check` | `{ "current_version": string, "latest_version": string, "update_available": bool }`. Compares the embedded version against the latest GitHub release (`tag_name`), cached ~24h. On any GitHub error it returns the current version with `latest_version: ""` and `update_available: false` — an update check never breaks the dashboard. A `"dev"` (non-release) build never reports an update available. |
 
+## Lab Notebook (Milestone 9)
+
+Freeform timestamped notes, optionally pinned to a node/VM/CT. Session-gated
+like the rest of `/api`. Persisted to a JSON flat file (`notes.json`, beside the
+job store) — the same store pattern M3 uses, **not** SQLite (despite older
+"SQLite" comments elsewhere in the tree).
+
+A **note**: `{ "id": int, "content": string, "entity_type": "node"|"vm"|"lxc"|"", "entity_id": string, "color": "yellow"|"teal"|"pink"|"blue", "pinned": bool, "created_at": RFC3339, "updated_at": RFC3339 }`. `entity_type`/`entity_id` are both empty for a general note.
+
+| Method | Path                | Body | Notes |
+|--------|---------------------|------|-------|
+| GET    | `/api/notes`        | —    | All notes, pinned first then newest. Optional query: `?entity_type=&entity_id=` (filter to one entity), `?q=` (case-insensitive `content` substring). |
+| POST   | `/api/notes`        | `{ "content", "entity_type"?, "entity_id"?, "color"? }` | Creates a note (201). `content` required, ≤2000 chars. `entity_type` (if set) must be `node`/`vm`/`lxc` and requires `entity_id` (and vice-versa). `color` defaults `yellow`. 400 on validation failure. |
+| PUT    | `/api/notes/:id`    | `{ "content"?, "color"?, "pinned"? }` | Partial update; bumps `updated_at`. Entity link is not re-editable in v1. 404 if missing. |
+| DELETE | `/api/notes/:id`    | —    | Hard delete. `{ "ok": true }`, or 404 if missing. |
+| GET    | `/api/notes/counts` | —    | `[{ "entity_type", "entity_id", "count" }]` for every linked entity with ≥1 note (general notes excluded) — drives the note badge on VM/CT tiles. |
+

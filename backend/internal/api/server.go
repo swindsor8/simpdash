@@ -34,6 +34,7 @@ type Server struct {
 	poller  *Poller
 	exec    *executor.Executor
 	db      *store.DB
+	notes   *store.NotesDB
 	catalog *catalog.Catalog
 	update  *update.Checker
 
@@ -59,7 +60,7 @@ type Server struct {
 	loginLimiter *limiter
 }
 
-func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, cat *catalog.Catalog, version string) *Server {
+func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, notes *store.NotesDB, cat *catalog.Catalog, version string) *Server {
 	host, _ := os.Hostname()
 	s := &Server{
 		cfg:          cfg,
@@ -68,6 +69,7 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		poller:       poller,
 		exec:         exec,
 		db:           db,
+		notes:        notes,
 		catalog:      cat,
 		update:       update.New(version),
 		agent:        &agentPairing{},
@@ -131,6 +133,11 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	// unpair, and per-node proxy (resources/updates/catalog/jobs + WS relay).
 	mux.HandleFunc("/api/nodes", methodGate(http.MethodGet, s.requireAuth(s.ListNodes)))
 	mux.HandleFunc("/api/nodes/", s.handleNodesPrefix)
+	// Lab notebook. /api/notes handles GET (list) + POST (create); the counts
+	// exact route shadows the /api/notes/ prefix (PUT/DELETE :id).
+	mux.HandleFunc("/api/notes", s.requireAuth(s.handleNotes))
+	mux.HandleFunc("/api/notes/counts", methodGate(http.MethodGet, s.requireAuth(s.NotesCounts)))
+	mux.HandleFunc("/api/notes/", s.requireAuth(s.handleNotesPrefix))
 }
 
 // handleCatalogPrefix dispatches POST /api/catalog/:slug/run.

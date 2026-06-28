@@ -124,6 +124,53 @@ export async function getGuestServices(vmid, type) {
   return r.json()
 }
 
+// --- lab notebook ---
+
+// getNotes → Note[]. Optional { entityType, entityId, q } narrow server-side;
+// the Notebook also filters client-side, so these are optional.
+export async function getNotes({ entityType, entityId, q } = {}) {
+  const p = new URLSearchParams()
+  if (entityType) p.set('entity_type', entityType)
+  if (entityId) p.set('entity_id', entityId)
+  if (q) p.set('q', q)
+  const qs = p.toString()
+  const r = await fetch(`${BASE}/notes${qs ? `?${qs}` : ''}`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+export const createNote = (note) => post('/notes', note)
+
+export async function updateNote(id, patch) {
+  const r = await fetch(`${BASE}/notes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export async function deleteNote(id) {
+  const r = await fetch(`${BASE}/notes/${id}`, { method: 'DELETE', credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+// getNoteCounts → { entity_type, entity_id, count }[] for tile badges.
+export async function getNoteCounts() {
+  const r = await fetch(`${BASE}/notes/counts`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
 // --- paired secondary nodes (Milestone 5) ---
 
 export async function getNodes() {

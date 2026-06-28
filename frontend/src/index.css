@@ -11,6 +11,17 @@
   animation: ping-once 0.8s cubic-bezier(0, 0, 0.2, 1) 1;
 }
 
+/* Notebook: a new sticky note drops/fades in. Animates opacity + Y only, so it
+   never fights the per-note rotation (a static transform on the wrapping
+   element). Deletes fade out via a Tailwind opacity transition. */
+@keyframes note-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-note-in {
+  animation: note-in 0.22s ease-out both;
+}
+
 /* ===========================================================================
    RETRO THEME — neobrutalist skin (thick ink outlines, hard offset shadows,
    flat cream surfaces, burnt-orange accents). Applied entirely by overriding
