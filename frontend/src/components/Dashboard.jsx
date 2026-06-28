@@ -14,6 +14,7 @@ import Notebook from './Notebook'
 import UpdateBanner from './UpdateBanner'
 import { Card, StatCard, StatusPill, statusVariant } from './Card'
 import { AnimatedNumber, usePowerMorph, useStatusGlow } from './motion'
+import { copy } from '../lib/copy'
 
 // --- helpers ---
 function fmtBytes(n) {
@@ -211,11 +212,11 @@ function ConfirmModal({ confirm, onConfirm, onCancel }) {
     body = 'Runs apt-get update && apt-get -y upgrade inside the container. It must be running; the upgrade can restart services inside it.'
   } else if (isForceStop) {
     title = `Force stop ${entityId}?`
-    body = 'This is the equivalent of pulling the power. The guest will not shut down gracefully and may lose unsaved data or corrupt the filesystem.'
+    body = copy('confirm.forceStop', 'This is the equivalent of pulling the power. The guest will not shut down gracefully and may lose unsaved data or corrupt the filesystem.')
   } else {
     title = `${verb} node ${entityId}?`
-    body = `This will ${action} the node and interrupt every VM and container running on it.`
-    if (isSelf) body += ' This is the node SuperDash is running on — this dashboard will disconnect until it comes back up.'
+    body = copy('confirm.node', `This will ${action} the node and interrupt every VM and container running on it.`)
+    if (isSelf) body += ' ' + copy('confirm.selfNode', 'This is the node SuperDash is running on — this dashboard will disconnect until it comes back up.')
   }
 
   return (
@@ -363,7 +364,7 @@ function IconWarnSm() {
 // "online/running" status so it reads as a heads-up, not a healthy node.
 function MonitorOnlyBadge() {
   return (
-    <StatusPill variant="warning"><IconEye /> Monitor only</StatusPill>
+    <StatusPill variant="warning"><IconEye /> {copy('badge.monitor', 'Monitor only')}</StatusPill>
   )
 }
 
@@ -525,13 +526,14 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
   const justDone = usePowerMorph(isInflight)
   const glow = useStatusGlow(item.status)
   const [showEditor, setShowEditor] = useState(false)
+  const [pending, setPending] = useState(null) // last action fired — drives the themed in-flight label
   const displayName = link?.label || item.name
 
   function handleCardClick() {
     if (link?.url) window.open(link.url, '_blank', 'noopener noreferrer')
   }
 
-  const act = (action) => onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action })
+  const act = (action) => { setPending(action); onAction({ entityType: pxType, entityId: String(item.vmid), entityNode: nodeName, action }) }
 
   return (
     <Card
@@ -592,7 +594,7 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
             <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
             </svg>
-            Working…
+            {copy(pending ? `action.${pending}` : 'action.working', 'Working…')}
           </span>
         ) : justDone ? (
           <span className="flex items-center gap-1.5 text-[11px] text-emerald-400 animate-fade-in">
@@ -629,6 +631,10 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
 // --- main ---
 export default function Dashboard({ onLogout, theme, setTheme }) {
   const [view, setView] = useState('dashboard')
+  const [blip, setBlip] = useState(0) // bump → restarts the channel-tune static overlay (terminal theme)
+  // Sidebar navigation: switch view and, under the terminal theme, fire a brief
+  // static "channel-tune" blip. `extra` runs any per-view side effect first.
+  const go = (v, extra) => { if (extra) extra(); setView(v); if (theme === 'terminal') setBlip(b => b + 1) }
   const [pairedNodes, setPairedNodes] = useState([])
   const [activeNode, setActiveNode] = useState(null)
 
@@ -840,13 +846,13 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         </div>
 
         <nav className="flex-1 px-2 space-y-0.5">
-          <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => setView('dashboard')} />
-          <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => setView('scripts')} />
-          <NavItem icon={<IconNote />} label="Notebook" active={view === 'notebook'} onClick={() => { setNotebookFilter(null); setView('notebook') }} />
-          <NavItem icon={<IconWifi />} label="Network" active={view === 'network'} onClick={() => setView('network')} />
-          <NavItem icon={<IconArchive />} label="Backups" active={view === 'backups'} onClick={() => setView('backups')} />
-          <NavItem icon={<IconNetwork />} label="Nodes" active={view === 'nodes'} onClick={() => setView('nodes')} />
-          <NavItem icon={<IconPalette />} label="Themes" active={view === 'themes'} onClick={() => setView('themes')} />
+          <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => go('dashboard')} />
+          <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => go('scripts')} />
+          <NavItem icon={<IconNote />} label="Notebook" active={view === 'notebook'} onClick={() => go('notebook', () => setNotebookFilter(null))} />
+          <NavItem icon={<IconWifi />} label="Network" active={view === 'network'} onClick={() => go('network')} />
+          <NavItem icon={<IconArchive />} label="Backups" active={view === 'backups'} onClick={() => go('backups')} />
+          <NavItem icon={<IconNetwork />} label="Nodes" active={view === 'nodes'} onClick={() => go('nodes')} />
+          <NavItem icon={<IconPalette />} label="Themes" active={view === 'themes'} onClick={() => go('themes')} />
         </nav>
 
         <div className="px-2 pt-3 border-t border-white/[0.06]">
@@ -923,7 +929,9 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           <div className="flex items-center gap-2.5">
             <StatusDot pulseKey={pulseKey} connected={connected} disconnected={disconnected || unreachable} />
             <span className="text-xs text-gray-500">
-              {unreachable ? 'Unreachable' : disconnected ? 'Reconnecting…' : 'Live'}
+              {unreachable ? copy('status.lost', 'Unreachable')
+                : disconnected ? copy('status.reconnecting', 'Reconnecting…')
+                : copy('status.live', 'Live')}
             </span>
           </div>
         </header>
@@ -1069,10 +1077,13 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         <JobModal jobId={updateJob.jobId} title={updateJob.title} onClose={() => setUpdateJob(null)} />
       )}
 
+      {/* Section-transition static blip (terminal theme only; keyed so it replays) */}
+      {theme === 'terminal' && blip > 0 && <div key={blip} className="crt-static run" />}
+
       {/* Error toast */}
       {toast && (
         <div className="fixed bottom-4 right-4 z-50 bg-[#13131e] border border-red-500/30 text-red-400 text-xs px-4 py-2.5 rounded-xl shadow-2xl max-w-xs">
-          {toast}
+          {copy('toast.fail', toast)}
         </div>
       )}
     </div>

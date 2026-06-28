@@ -66,21 +66,21 @@ function Win98Preview() {
   )
 }
 
-// A tiny Pip-Boy screen (phosphor green on black + scanlines) for the Fallout
-// theme preview. Inline-styled so it always reads Fallout regardless of theme.
-function FalloutPreview() {
+// A tiny CRT screen (phosphor green on black + scanlines) for the Terminal
+// theme preview. Inline-styled so it always reads terminal regardless of theme.
+function TerminalPreview() {
   const pip = '#1aff40'
   return (
     <div className="h-24 relative overflow-hidden p-2"
       style={{ background: '#020a02', color: pip, fontFamily: "'Courier New', monospace",
         textShadow: '0 0 4px rgba(26,255,64,0.6)', fontSize: 10, letterSpacing: 1 }}>
       <div className="flex justify-between font-bold">
-        <span>STAT</span><span>HP 348/450</span>
+        <span>NODE</span><span>CPU 34%</span>
       </div>
       <div className="mt-1.5 h-2 w-full" style={{ border: `1px solid ${pip}` }}>
         <div className="h-full" style={{ width: '77%', background: pip }} />
       </div>
-      <div className="mt-2 text-[16px] font-bold tracking-widest">VAULT-TEC</div>
+      <div className="mt-2 text-[16px] font-bold tracking-widest">TERMINAL OS</div>
       {/* scanlines */}
       <div className="absolute inset-0 pointer-events-none"
         style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.3) 50%)', backgroundSize: '100% 3px' }} />
@@ -112,7 +112,7 @@ function ThemeCard({ t, active, onSelect }) {
   const isRetro = t.id === 'retro'
   const isMario = t.id === 'mario'
   const isWin98 = t.id === 'win98'
-  const isFallout = t.id === 'fallout'
+  const isTerminal = t.id === 'terminal'
   const isGlass = t.id === 'glass'
   return (
     <div
@@ -128,9 +128,9 @@ function ThemeCard({ t, active, onSelect }) {
         <div className="rounded-xl overflow-hidden border border-white/10">
           <GlassPreview />
         </div>
-      ) : isFallout ? (
+      ) : isTerminal ? (
         <div className="rounded-xl overflow-hidden border border-white/10">
-          <FalloutPreview />
+          <TerminalPreview />
         </div>
       ) : isWin98 ? (
         <div className="rounded-xl overflow-hidden border border-white/10">

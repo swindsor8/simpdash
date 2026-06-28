@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getNetwork, getNetworkStats, runSpeedtest } from '../lib/api'
+import { loadingText } from '../lib/copy'
 
 const TYPE_ORDER = ['bridge', 'bond', 'eth', 'vlan', 'OVSBridge', 'OVSBond', 'OVSPort', 'OVSIntPort', 'alias', 'loopback']
 
@@ -68,6 +69,7 @@ function SpeedMetric({ icon, label, value, unit, color, glow }) {
 }
 
 export default function Network() {
+  const loadingMsg = useMemo(() => loadingText('Loading…'), [])
   const [ifaces, setIfaces] = useState(null)
   const [rates, setRates] = useState({})       // iface → {rx, tx} bytes/s
   const [guestRates, setGuestRates] = useState([]) // [{vmid,name,type,status,rx,tx}]
@@ -148,7 +150,7 @@ export default function Network() {
   }
 
   if (err) return <div className="p-8 text-sm text-red-400">{err}</div>
-  if (!ifaces) return <div className="p-8 text-sm text-gray-600">Loading…</div>
+  if (!ifaces) return <div className="p-8 text-sm text-gray-600">{loadingMsg}</div>
 
   const sorted = [...ifaces].sort((a, b) => {
     const ai = TYPE_ORDER.indexOf(a.type), bi = TYPE_ORDER.indexOf(b.type)

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useDeferredValue, useCallback } from 'react'
 import { getNotes, createNote, updateNote, deleteNote } from '../lib/api'
+import { copy, loadingText } from '../lib/copy'
 
 const COLORS = ['yellow', 'teal', 'pink', 'blue']
 // Muted, desaturated sticky tones that read against the #0a0b0f background —
@@ -239,6 +240,7 @@ export default function Notebook({ entities = [], filter, onCountsChanged = () =
   const [query, setQuery] = useState('')
   const [entityFilter, setEntityFilter] = useState('__all') // '__all' | '' (general) | 'type:id'
   const deferredQuery = useDeferredValue(query)
+  const loadingMsg = useMemo(() => loadingText('Loading notes…'), [])
 
   const load = useCallback(() => {
     getNotes().then(setNotes).catch(() => setNotes([]))
@@ -285,11 +287,11 @@ export default function Notebook({ entities = [], filter, onCountsChanged = () =
       )}
 
       {notes === null ? (
-        <p className="text-sm text-gray-600 py-10 text-center">Loading notes…</p>
+        <p className="text-sm text-gray-600 py-10 text-center">{loadingMsg}</p>
       ) : notes.length === 0 ? (
         <div className="text-center py-20">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/5 text-gray-600 mb-4"><IconNotebook /></div>
-          <p className="text-sm text-gray-300 font-medium">Nothing here yet.</p>
+          <p className="text-sm text-gray-300 font-medium">{copy('empty.notebook', 'Nothing here yet.')}</p>
           <p className="text-xs text-gray-600 mt-1 max-w-sm mx-auto">Future-you will thank present-you for jotting down why you made that change.</p>
         </div>
       ) : filtered.length === 0 ? (

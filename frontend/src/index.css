@@ -687,16 +687,27 @@
 [data-theme="win98"] .font-mono .text-gray-700 { color: #707070; }
 
 /* ===========================================================================
-   FALLOUT THEME — Pip-Boy CRT skin (phosphor-green text on near-black, mono
-   uppercase labels, green glow, scanline overlay). Aesthetic ported from the
-   Pip-Boy card: pip-green #1aff40 · glow rgba(26,255,64,.6) · bg #020a02.
-   Same override-only approach; default theme untouched.
+   TERMINAL THEME — original green-phosphor CRT skin (phosphor-green text on
+   near-black, mono uppercase labels, green glow, scanline overlay). Monochrome
+   green family: phosphor #1aff40 · glow rgba(26,255,64,.6) · bg #020a02.
+   Self-hosted retro mono (Share Tech Mono, OFL — public/fonts/). Same
+   override-only approach; default theme untouched. Motion tokens are this
+   theme's own (--crt-*), distinct from the calm default language above.
    =========================================================================== */
-[data-theme="fallout"] {
+@font-face {
+  font-family: 'Share Tech Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/share-tech-mono.woff2') format('woff2');
+}
+[data-theme="terminal"] {
   color-scheme: dark;
-  font-family: 'Courier New', ui-monospace, monospace;
+  font-family: 'Share Tech Mono', ui-monospace, 'Courier New', monospace;
   --pip: #1aff40;
   --pip-glow: rgba(26, 255, 64, 0.6);
+  --crt-fast: 90ms ease-out;
+  --crt-pulse: 1.1s ease-in-out;
   /* Plastic chassis the CRT screen sits in (shows in the margin gap below) */
   background-image:
     radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
@@ -705,9 +716,9 @@
   background-attachment: fixed;
 }
 
-/* The whole app (sidebar = Pip-Boy menu, main = readout) becomes the CRT screen:
+/* The whole app (sidebar = menu, main = readout) becomes the CRT screen:
    thick dark bezel floating in the plastic chassis, rounded glass, inner glow. */
-[data-theme="fallout"] .h-screen.bg-\[\#0c0c14\] {
+[data-theme="terminal"] .h-screen.bg-\[\#0c0c14\] {
   position: relative;
   height: calc(100vh - 2.5rem);
   margin: 1.25rem;
@@ -720,7 +731,7 @@
     0 20px 50px rgba(0,0,0,0.8);
 }
 /* Four bezel screws painted at the screen corners (one layer, no markup) */
-[data-theme="fallout"] .h-screen.bg-\[\#0c0c14\]::before {
+[data-theme="terminal"] .h-screen.bg-\[\#0c0c14\]::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -736,7 +747,7 @@
 
 /* CRT scanlines + vignette over the whole viewport (html carries data-theme).
    pointer-events:none keeps everything underneath clickable. */
-[data-theme="fallout"]::after {
+[data-theme="terminal"]::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -749,93 +760,93 @@
 }
 
 /* Uppercase the showpiece labels, like a terminal readout */
-[data-theme="fallout"] h1,
-[data-theme="fallout"] h2,
-[data-theme="fallout"] aside .tracking-tight,
-[data-theme="fallout"] nav,
-[data-theme="fallout"] .text-2xl {
+[data-theme="terminal"] h1,
+[data-theme="terminal"] h2,
+[data-theme="terminal"] aside .tracking-tight,
+[data-theme="terminal"] nav,
+[data-theme="terminal"] .text-2xl {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 /* --- Surfaces --- */
-[data-theme="fallout"] .bg-\[\#0c0c14\]     { background-color: #020a02; }   /* canvas */
-[data-theme="fallout"] .bg-\[\#0c0c14\]\/90 { background-color: rgba(2,10,2,0.92); }
-[data-theme="fallout"] .bg-\[\#101018\]     { background-color: #04140a; }   /* sidebar */
-[data-theme="fallout"] .bg-\[\#13131e\]     { background-color: #04130a; }   /* cards + inputs */
+[data-theme="terminal"] .bg-\[\#0c0c14\]     { background-color: #020a02; }   /* canvas */
+[data-theme="terminal"] .bg-\[\#0c0c14\]\/90 { background-color: rgba(2,10,2,0.92); }
+[data-theme="terminal"] .bg-\[\#101018\]     { background-color: #04140a; }   /* sidebar */
+[data-theme="terminal"] .bg-\[\#13131e\]     { background-color: #04130a; }   /* cards + inputs */
 
 /* --- Borders → phosphor green --- */
-[data-theme="fallout"] .border-white\/\[0\.04\] { border-color: rgba(26,255,64,0.15); }
-[data-theme="fallout"] .border-white\/\[0\.06\] { border-color: rgba(26,255,64,0.25); }
-[data-theme="fallout"] .border-white\/\[0\.07\],
-[data-theme="fallout"] .border-white\/10,
-[data-theme="fallout"] .border-white\/20,
-[data-theme="fallout"] .border-white\/30      { border-color: rgba(26,255,64,0.4); }
+[data-theme="terminal"] .border-white\/\[0\.04\] { border-color: rgba(26,255,64,0.15); }
+[data-theme="terminal"] .border-white\/\[0\.06\] { border-color: rgba(26,255,64,0.25); }
+[data-theme="terminal"] .border-white\/\[0\.07\],
+[data-theme="terminal"] .border-white\/10,
+[data-theme="terminal"] .border-white\/20,
+[data-theme="terminal"] .border-white\/30      { border-color: rgba(26,255,64,0.4); }
 
 /* Cards & stat tiles → green-edged terminal panels with a soft glow */
-[data-theme="fallout"] .bg-\[\#13131e\].rounded-2xl,
-[data-theme="fallout"] .bg-\[\#c6edda\], [data-theme="fallout"] .bg-\[\#e8e8f4\],
-[data-theme="fallout"] .bg-\[\#fef9c3\], [data-theme="fallout"] .bg-\[\#e4dcf8\] {
+[data-theme="terminal"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="terminal"] .bg-\[\#c6edda\], [data-theme="terminal"] .bg-\[\#e8e8f4\],
+[data-theme="terminal"] .bg-\[\#fef9c3\], [data-theme="terminal"] .bg-\[\#e4dcf8\] {
   border: 1px solid rgba(26,255,64,0.4);
   box-shadow: inset 0 0 20px rgba(26,255,64,0.06), 0 0 8px rgba(26,255,64,0.08);
 }
-[data-theme="fallout"] .bg-\[\#c6edda\], [data-theme="fallout"] .bg-\[\#e8e8f4\],
-[data-theme="fallout"] .bg-\[\#fef9c3\], [data-theme="fallout"] .bg-\[\#e4dcf8\] {
+[data-theme="terminal"] .bg-\[\#c6edda\], [data-theme="terminal"] .bg-\[\#e8e8f4\],
+[data-theme="terminal"] .bg-\[\#fef9c3\], [data-theme="terminal"] .bg-\[\#e4dcf8\] {
   background-color: #06180c;   /* flatten pastel stat tiles to dark green */
 }
 
 /* --- Translucent fills → green tints --- */
-[data-theme="fallout"] .bg-white\/10 { background-color: rgba(26,255,64,0.12); }
-[data-theme="fallout"] .bg-white\/8  { background-color: rgba(26,255,64,0.10); }
-[data-theme="fallout"] .bg-white\/5  { background-color: rgba(26,255,64,0.06); }
+[data-theme="terminal"] .bg-white\/10 { background-color: rgba(26,255,64,0.12); }
+[data-theme="terminal"] .bg-white\/8  { background-color: rgba(26,255,64,0.10); }
+[data-theme="terminal"] .bg-white\/5  { background-color: rgba(26,255,64,0.06); }
 
 /* --- Text → phosphor-green scale, with a subtle glow on headings/values --- */
-[data-theme="fallout"] .text-white    { color: #2bff52; text-shadow: 0 0 4px var(--pip-glow); }
-[data-theme="fallout"] .text-gray-300 { color: #2bd94a; }
-[data-theme="fallout"] .text-gray-400 { color: #1fb53c; }
-[data-theme="fallout"] .text-gray-500 { color: #169a30; }
-[data-theme="fallout"] .text-gray-600 { color: #117a26; }
+[data-theme="terminal"] .text-white    { color: #2bff52; text-shadow: 0 0 4px var(--pip-glow); }
+[data-theme="terminal"] .text-gray-300 { color: #2bd94a; }
+[data-theme="terminal"] .text-gray-400 { color: #1fb53c; }
+[data-theme="terminal"] .text-gray-500 { color: #169a30; }
+[data-theme="terminal"] .text-gray-600 { color: #117a26; }
 
 /* Semantic — keep red/amber legible for warnings, healthy stays green */
-[data-theme="fallout"] .text-emerald-400 { color: #1aff40; }
-[data-theme="fallout"] .text-red-400     { color: #ff5a3c; }
-[data-theme="fallout"] .text-amber-400   { color: #ffb03a; }
-[data-theme="fallout"] .text-amber-300   { color: #ffc966; }
+[data-theme="terminal"] .text-emerald-400 { color: #1aff40; }
+[data-theme="terminal"] .text-red-400     { color: #ff5a3c; }
+[data-theme="terminal"] .text-amber-400   { color: #ffb03a; }
+[data-theme="terminal"] .text-amber-300   { color: #ffc966; }
 
 /* --- Accent: buttons/logo → outlined green terminal keys, fill on hover --- */
-[data-theme="fallout"] .bg-blue-600 {
+[data-theme="terminal"] .bg-blue-600 {
   background-color: rgba(26,255,64,0.10);
   border: 1px solid var(--pip);
   color: #2bff52;
   box-shadow: inset 0 0 10px rgba(26,255,64,0.15), 0 0 8px rgba(26,255,64,0.10);
 }
-[data-theme="fallout"] .bg-blue-600\/60 { background-color: rgba(26,255,64,0.45); }
-[data-theme="fallout"] .hover\:bg-blue-700:hover { background-color: var(--pip); color: #020a02; }
-[data-theme="fallout"] button.bg-blue-600:active { box-shadow: inset 0 0 14px rgba(26,255,64,0.3); }
+[data-theme="terminal"] .bg-blue-600\/60 { background-color: rgba(26,255,64,0.45); }
+[data-theme="terminal"] .hover\:bg-blue-700:hover { background-color: var(--pip); color: #020a02; }
+[data-theme="terminal"] button.bg-blue-600:active { box-shadow: inset 0 0 14px rgba(26,255,64,0.3); }
 
 /* Bars → green fill; category badges → green chip */
-[data-theme="fallout"] .bg-blue-500     { background-color: var(--pip); }
-[data-theme="fallout"] .bg-blue-500\/15 { background-color: rgba(26,255,64,0.15); }
-[data-theme="fallout"] .text-blue-300   { color: #2bff52; }
-[data-theme="fallout"] .border-blue-500\/60,
-[data-theme="fallout"] .focus\:border-blue-500\/60:focus { border-color: var(--pip); }
+[data-theme="terminal"] .bg-blue-500     { background-color: var(--pip); }
+[data-theme="terminal"] .bg-blue-500\/15 { background-color: rgba(26,255,64,0.15); }
+[data-theme="terminal"] .text-blue-300   { color: #2bff52; }
+[data-theme="terminal"] .border-blue-500\/60,
+[data-theme="terminal"] .focus\:border-blue-500\/60:focus { border-color: var(--pip); }
 
-/* Active sidebar item → solid phosphor highlight with dark text (Pip-Boy nav) */
-[data-theme="fallout"] aside .bg-white\/10 {
+/* Active sidebar item → solid phosphor highlight with dark text (HUD nav) */
+[data-theme="terminal"] aside .bg-white\/10 {
   background-color: var(--pip);
   color: #020a02;
   box-shadow: 0 0 10px var(--pip-glow);
 }
 
 /* Terminal → deep-green phosphor console */
-[data-theme="fallout"] .font-mono.bg-\[\#0c0c14\] {
+[data-theme="terminal"] .font-mono.bg-\[\#0c0c14\] {
   background-color: #010801;
   border-color: rgba(26,255,64,0.4);
   box-shadow: inset 0 0 30px rgba(26,255,64,0.06);
 }
-[data-theme="fallout"] .font-mono .text-gray-400 { color: #2bff52; }
-[data-theme="fallout"] .font-mono .text-gray-600 { color: #1aa030; }
-[data-theme="fallout"] .font-mono .text-gray-700 { color: #137322; }
+[data-theme="terminal"] .font-mono .text-gray-400 { color: #2bff52; }
+[data-theme="terminal"] .font-mono .text-gray-600 { color: #1aa030; }
+[data-theme="terminal"] .font-mono .text-gray-700 { color: #137322; }
 
 /* Indeterminate sliding bar for the network speed test in progress. */
 @keyframes speedbar {
@@ -941,3 +952,151 @@
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+
+/* ===========================================================================
+   TERMINAL THEME — motion, HUD chrome & retints added on top of the base skin
+   above. All decorative motion sits under a prefers-reduced-motion guard; the
+   layout/colour treatment stays put when motion is reduced.
+   =========================================================================== */
+
+/* (3) Subtle CRT flicker — animates ONLY the scanline/vignette overlay's opacity,
+   never the content beneath it, so text never wavers. Reads as "this is a CRT". */
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="terminal"]::after { animation: crt-flicker 4.5s steps(48) infinite; }
+}
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  47% { opacity: 0.98; }
+  49% { opacity: 0.9; }
+  51% { opacity: 0.97; }
+  80% { opacity: 0.94; }
+}
+
+/* (5) Card chrome — L-shaped corner brackets at each card corner, drawn as eight
+   thin gradient segments on one decorative pseudo-element (no markup, a common
+   HUD technique). Section dividers already recolour green via the border rules. */
+[data-theme="terminal"] .bg-\[\#13131e\].rounded-2xl { position: relative; }
+[data-theme="terminal"] .bg-\[\#13131e\].rounded-2xl::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  --b: rgba(26, 255, 64, 0.55);
+  --len: 11px;
+  --thick: 1.5px;
+  background:
+    linear-gradient(var(--b), var(--b)) left top / var(--thick) var(--len) no-repeat,
+    linear-gradient(var(--b), var(--b)) left top / var(--len) var(--thick) no-repeat,
+    linear-gradient(var(--b), var(--b)) right top / var(--thick) var(--len) no-repeat,
+    linear-gradient(var(--b), var(--b)) right top / var(--len) var(--thick) no-repeat,
+    linear-gradient(var(--b), var(--b)) left bottom / var(--thick) var(--len) no-repeat,
+    linear-gradient(var(--b), var(--b)) left bottom / var(--len) var(--thick) no-repeat,
+    linear-gradient(var(--b), var(--b)) right bottom / var(--thick) var(--len) no-repeat,
+    linear-gradient(var(--b), var(--b)) right bottom / var(--len) var(--thick) no-repeat;
+}
+
+/* (7) Sidebar nav as HUD tabs. Inactive items are already dimmer (text-gray-500).
+   The active item (bg-white/10, restyled to solid phosphor above) gets its own
+   corner brackets; hover gives a one-shot brightness pulse on its own timing. */
+[data-theme="terminal"] nav button { transition: filter var(--crt-fast); }
+[data-theme="terminal"] nav button.bg-white\/10 { position: relative; }
+[data-theme="terminal"] nav button.bg-white\/10::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  --b: #020a02;
+  --len: 7px;
+  --thick: 1.5px;
+  background:
+    linear-gradient(var(--b), var(--b)) left top / var(--thick) var(--len) no-repeat,
+    linear-gradient(var(--b), var(--b)) left top / var(--len) var(--thick) no-repeat,
+    linear-gradient(var(--b), var(--b)) right bottom / var(--thick) var(--len) no-repeat,
+    linear-gradient(var(--b), var(--b)) right bottom / var(--len) var(--thick) no-repeat;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="terminal"] nav button:hover { animation: crt-navpulse var(--crt-pulse) 1; }
+}
+@keyframes crt-navpulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.55); }
+}
+
+/* (6) Icon retint — recolour service favicons (inside cards only; the sidebar
+   logo is left alone) to the green palette via a filter recipe, keeping them
+   distinguishable rather than uniformly washed out. ponytail: tune these values
+   if a particular favicon reads flat — it's one declaration. */
+[data-theme="terminal"] .bg-\[\#13131e\] img {
+  filter: grayscale(1) sepia(1) hue-rotate(65deg) saturate(3) brightness(1.1) contrast(1.1);
+}
+
+/* (9) Block-cursor accent on focused inputs/terminal-like fields. caret-shape is
+   progressive — browsers without it keep the green caret colour. ponytail: a true
+   cross-browser blinking block needs a fake-caret JS hack; not worth it. */
+[data-theme="terminal"] input:focus,
+[data-theme="terminal"] textarea:focus,
+[data-theme="terminal"] select:focus {
+  caret-color: var(--pip);
+  caret-shape: block;
+  outline-color: var(--pip);
+}
+
+/* (8) Section-transition static blip + (4) boot-sequence static burst share one
+   noise overlay. Base opacity 0 → under reduced-motion it stays invisible, so the
+   transition is instant; the animation only flashes it under no-preference. */
+.crt-static {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(26,255,64,0.13) 0 1px, transparent 1px 2px),
+    repeating-linear-gradient(90deg, rgba(26,255,64,0.06) 0 1px, transparent 1px 3px),
+    rgba(0, 0, 0, 0.22);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .crt-static.run { animation: crt-tune 180ms steps(3) 1; }
+}
+@keyframes crt-tune {
+  0% { opacity: 0; background-position: 0 0; }
+  30% { opacity: 0.9; background-position: 3px -4px; }
+  60% { opacity: 0.7; background-position: -2px 3px; }
+  100% { opacity: 0; background-position: 0 0; }
+}
+
+/* (4) Boot sequence — full-screen phosphor readout shown once per session before
+   the dashboard reveals. Skippable; styling only, the reveal/typewriter is in
+   BootSequence.jsx. Its own scanlines so it reads as a CRT even over the bezel. */
+.crt-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #020a02;
+  color: #2bff52;
+  font-family: 'Share Tech Mono', ui-monospace, 'Courier New', monospace;
+  text-shadow: 0 0 5px rgba(26, 255, 64, 0.6);
+  padding: 8vh 7vw;
+  font-size: 14px;
+  line-height: 1.95;
+  letter-spacing: 1px;
+  overflow: hidden;
+  white-space: pre;
+}
+.crt-boot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.3) 50%),
+    radial-gradient(circle at 50% 50%, rgba(26,255,64,0.03), rgba(0,0,0,0.55) 95%);
+  background-size: 100% 3px, 100% 100%;
+}
+.crt-boot.fading { animation: crt-bootfade 350ms ease-out forwards; }
+@keyframes crt-bootfade { to { opacity: 0; visibility: hidden; } }
+.crt-boot .cursor { background: #2bff52; color: #2bff52; }
+@media (prefers-reduced-motion: no-preference) {
+  .crt-boot .cursor { animation: crt-blink 1s steps(1) infinite; }
+}
+@keyframes crt-blink { 50% { opacity: 0; } }

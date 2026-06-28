@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getBackups } from '../lib/api'
 import { StatusPill } from './Card'
+import { loadingText } from '../lib/copy'
 
 function fmtAge(unix) {
   if (!unix) return null
@@ -49,6 +50,7 @@ function Degraded({ msg }) {
 }
 
 export default function Backups() {
+  const loadingMsg = useMemo(() => loadingText('Loading backups…'), [])
   const [data, setData] = useState(null) // null = loading
   const [err, setErr] = useState(null)
 
@@ -61,7 +63,7 @@ export default function Backups() {
   }, [])
 
   if (err) return <div className="p-8"><Degraded msg={err} /></div>
-  if (!data) return <div className="p-8 text-sm text-gray-600">Loading backups…</div>
+  if (!data) return <div className="p-8 text-sm text-gray-600">{loadingMsg}</div>
 
   // Most concerning first: never-backed-up, then oldest backups.
   const guests = [...data.guests].sort((a, b) => (a.last_backup || 0) - (b.last_backup || 0))

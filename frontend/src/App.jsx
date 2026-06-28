@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import SetupPassword from './components/SetupPassword'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
+import BootSequence from './components/BootSequence'
 import { getSetupStatus, getMe } from './lib/api'
 import { useTheme } from './hooks/useTheme'
+import { loadingText } from './lib/copy'
 
 export default function App() {
   const { theme, setTheme } = useTheme()
@@ -18,14 +20,25 @@ export default function App() {
       .catch(() => setScreen('login'))
   }, [])
 
+  let screenEl
   if (screen === 'loading') {
-    return (
+    screenEl = (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <span className="text-gray-600 text-sm">Loading…</span>
+        <span className="text-gray-600 text-sm">{loadingText('Loading…')}</span>
       </div>
     )
+  } else if (screen === 'setup') {
+    screenEl = <SetupPassword onDone={() => setScreen('login')} />
+  } else if (screen === 'login') {
+    screenEl = <Login onDone={() => setScreen('dashboard')} />
+  } else {
+    screenEl = <Dashboard onLogout={() => setScreen('login')} theme={theme} setTheme={setTheme} />
   }
-  if (screen === 'setup') return <SetupPassword onDone={() => setScreen('login')} />
-  if (screen === 'login') return <Login onDone={() => setScreen('dashboard')} />
-  return <Dashboard onLogout={() => setScreen('login')} theme={theme} setTheme={setTheme} />
+
+  return (
+    <>
+      {screenEl}
+      <BootSequence theme={theme} />
+    </>
+  )
 }

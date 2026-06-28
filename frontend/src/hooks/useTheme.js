@@ -22,9 +22,9 @@ export const THEMES = [
     description: 'Silver bevels, teal desktop, navy title bars.',
   },
   {
-    id: 'fallout',
-    name: 'Vault-Tec',
-    description: 'Pip-Boy CRT: phosphor green on black, scanlines, glow.',
+    id: 'terminal',
+    name: 'Terminal',
+    description: 'Green-phosphor CRT: scanlines, glow, boot sequence.',
   },
   {
     id: 'glass',
@@ -34,7 +34,11 @@ export const THEMES = [
 ]
 
 export function useTheme() {
-  const [theme, setThemeState] = useState(() => localStorage.getItem('sd-theme') || 'default')
+  const [theme, setThemeState] = useState(() => {
+    const saved = localStorage.getItem('sd-theme')
+    if (saved === 'fallout') return 'terminal' // renamed; migrate old selection
+    return saved || 'default'
+  })
 
   useEffect(() => {
     if (theme === 'default') {

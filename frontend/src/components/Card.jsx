@@ -2,7 +2,7 @@
 //
 // IMPORTANT: every surface here emits the literal classes the theme system keys
 // on — `bg-[#13131e]` + `rounded-2xl` for the card, and `text-emerald/amber/red-400`
-// + `bg-white/8` for pills. The 5 alternate themes (retro/mario/win98/fallout/
+// + `bg-white/8` for pills. The 5 alternate themes (retro/mario/win98/terminal/
 // glass) override those class names by name in index.css, so reusing them keeps
 // every theme working with zero extra CSS. Don't swap in raw hex or new colors.
 
