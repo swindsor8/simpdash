@@ -108,25 +108,35 @@ function GlassPreview() {
   )
 }
 
-// Nocturne preview: near-black canvas with the indigo→teal corner glows and a
-// gradient accent bar — the theme's signature, inline-styled so it's accurate.
-function NocturnePreview() {
+// Brand preview shared by Nocturne (dark) and Midnight (light): the indigo→teal
+// corner glows, a gradient logo pip and a gradient accent bar. Inline-styled
+// with a per-theme palette so each reads accurately.
+const BRAND_PALETTES = {
+  nocturne: { canvas: '#09090e', panel: 'rgba(255,255,255,0.02)', card: '#141420',
+    cardBorder: 'rgba(255,255,255,0.08)', bar: 'rgba(255,255,255,0.10)',
+    glowA: 'rgba(155,153,254,0.22)', glowB: 'rgba(43,200,183,0.18)' },
+  default: { canvas: '#f5f6fb', panel: '#ffffff', card: '#ffffff',
+    cardBorder: 'rgba(20,22,45,0.10)', bar: 'rgba(20,22,45,0.10)',
+    glowA: 'rgba(124,122,246,0.20)', glowB: 'rgba(20,184,166,0.18)' },
+}
+function BrandPreview({ id }) {
+  const p = BRAND_PALETTES[id]
   return (
-    <div className="h-24 relative overflow-hidden flex" style={{ background: '#09090e' }}>
+    <div className="h-24 relative overflow-hidden flex" style={{ background: p.canvas }}>
       <div className="absolute inset-0 pointer-events-none" style={{
         backgroundImage:
-          'radial-gradient(60% 50% at 92% 0%, rgba(155,153,254,0.22), transparent 60%),' +
-          'radial-gradient(55% 50% at 0% 100%, rgba(43,200,183,0.18), transparent 60%)',
+          `radial-gradient(60% 50% at 92% 0%, ${p.glowA}, transparent 60%),` +
+          `radial-gradient(55% 50% at 0% 100%, ${p.glowB}, transparent 60%)`,
       }} />
-      <div className="w-9 shrink-0 relative flex flex-col gap-1.5 p-1.5 pt-2" style={{ background: 'rgba(255,255,255,0.02)' }}>
+      <div className="w-9 shrink-0 relative flex flex-col gap-1.5 p-1.5 pt-2" style={{ background: p.panel }}>
         <div className="h-1.5 w-4 rounded-full" style={{ background: 'linear-gradient(90deg,#9B99FE,#2BC8B7)' }} />
-        <div className="h-1.5 w-6 rounded-full bg-white/10" />
-        <div className="h-1.5 w-5 rounded-full bg-white/10" />
+        <div className="h-1.5 w-6 rounded-full" style={{ background: p.bar }} />
+        <div className="h-1.5 w-5 rounded-full" style={{ background: p.bar }} />
       </div>
       <div className="flex-1 relative p-2 flex flex-col gap-1.5">
         <div className="flex gap-1.5">
-          <div className="h-8 flex-1 rounded-lg" style={{ background: '#141420', border: '1px solid rgba(255,255,255,0.08)' }} />
-          <div className="h-8 flex-1 rounded-lg" style={{ background: '#141420', border: '1px solid rgba(255,255,255,0.08)' }} />
+          <div className="h-8 flex-1 rounded-lg" style={{ background: p.card, border: `1px solid ${p.cardBorder}` }} />
+          <div className="h-8 flex-1 rounded-lg" style={{ background: p.card, border: `1px solid ${p.cardBorder}` }} />
         </div>
         <div className="h-5 w-20 rounded-lg" style={{ background: 'linear-gradient(135deg,#4f46e5,#0d9488)' }} />
       </div>
@@ -135,7 +145,7 @@ function NocturnePreview() {
 }
 
 function ThemeCard({ t, active, onSelect }) {
-  const isNocturne = t.id === 'nocturne'
+  const isBrand = t.id === 'nocturne' || t.id === 'default'
   const isRetro = t.id === 'retro'
   const isMario = t.id === 'mario'
   const isWin98 = t.id === 'win98'
@@ -151,9 +161,9 @@ function ThemeCard({ t, active, onSelect }) {
       onClick={() => onSelect(t.id)}
     >
       {/* Mini preview */}
-      {isNocturne ? (
+      {isBrand ? (
         <div className="rounded-xl overflow-hidden border border-white/10">
-          <NocturnePreview />
+          <BrandPreview id={t.id} />
         </div>
       ) : isGlass ? (
         <div className="rounded-xl overflow-hidden border border-white/10">

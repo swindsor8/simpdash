@@ -9,7 +9,7 @@ export const THEMES = [
   {
     id: 'default',
     name: 'Midnight',
-    description: 'The original untinted dark theme.',
+    description: 'Light counterpart to Nocturne — same brand, bright canvas.',
   },
   {
     id: 'retro',
@@ -46,11 +46,9 @@ export function useTheme() {
   })
 
   useEffect(() => {
-    if (theme === 'default') {
-      document.documentElement.removeAttribute('data-theme')
-    } else {
-      document.documentElement.setAttribute('data-theme', theme)
-    }
+    // Every theme (including 'default'/Midnight, now a light skin) is a
+    // [data-theme] override block; the raw un-themed base is only the pre-JS state.
+    document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('sd-theme', theme)
   }, [theme])
 

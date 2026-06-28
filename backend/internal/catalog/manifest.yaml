@@ -97,6 +97,316 @@
   warnings:
     - Creates a new VM
 
+# ── Operating Systems — base OS LXC templates & VMs ─────────────────────────
+# Mirrors the "Operating Systems" category on community-scripts.org. ct = LXC,
+# vm = QEMU VM. Resource defaults from each script's var_cpu/var_ram/var_disk.
+
+- id: alpine
+  name: Alpine
+  type: ct
+  description: Minimal, security-oriented Linux based on musl and BusyBox.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/alpine.sh
+  resources:
+    cpu: 1
+    ram_mb: 512
+    disk_gb: 1
+  warnings:
+    - Creates a new LXC
+
+- id: debian
+  name: Debian
+  type: ct
+  description: Minimal Debian LXC — a clean base for building your own services.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/debian.sh
+  resources:
+    cpu: 1
+    ram_mb: 512
+    disk_gb: 2
+  warnings:
+    - Creates a new LXC
+
+- id: ubuntu
+  name: Ubuntu
+  type: ct
+  description: Minimal Ubuntu LXC — Debian-based with regular releases.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/ubuntu.sh
+  resources:
+    cpu: 1
+    ram_mb: 512
+    disk_gb: 2
+  warnings:
+    - Creates a new LXC
+
+- id: casaos
+  name: CasaOS
+  type: ct
+  description: Simple home-cloud OS with a Docker-based app store and web UI.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/casaos.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 8
+  warnings:
+    - Creates a new LXC
+
+- id: cosmos
+  name: Cosmos
+  type: ct
+  description: Self-hosting platform with an app marketplace, reverse proxy, and security.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/cosmos.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 8
+  warnings:
+    - Creates a new LXC
+
+- id: nextcloudpi
+  name: NextcloudPi
+  type: ct
+  description: Pre-configured Nextcloud file sync and collaboration server.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/nextcloudpi.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 8
+  warnings:
+    - Creates a new LXC
+
+- id: omv
+  name: OpenMediaVault
+  type: ct
+  description: Debian-based NAS with a web management UI.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/omv.sh
+  resources:
+    cpu: 2
+    ram_mb: 1024
+    disk_gb: 4
+  warnings:
+    - Creates a new LXC
+
+- id: yunohost
+  name: YunoHost
+  type: ct
+  description: Self-hosting OS that simplifies running your own server and apps.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/yunohost.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 20
+  warnings:
+    - Creates a new LXC
+
+- id: turnkey
+  name: TurnKey
+  type: ct
+  description: Menu to deploy any TurnKey Linux appliance as an LXC.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/turnkey/turnkey.sh
+  warnings:
+    - Creates a new LXC
+    - Interactive appliance menu
+
+- id: archlinux-vm
+  name: Arch Linux
+  type: vm
+  description: Arch Linux VM — a rolling-release, fully customizable distro.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/archlinux-vm.sh
+  resources:
+    cpu: 1
+    ram_mb: 1024
+    disk_gb: 4
+  warnings:
+    - Creates a new VM
+
+- id: debian-vm
+  name: Debian 12
+  type: vm
+  description: Debian 12 (Bookworm) VM.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/debian-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 4
+  warnings:
+    - Creates a new VM
+
+- id: debian-13-vm
+  name: Debian 13
+  type: vm
+  description: Debian 13 (Trixie) VM.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/debian-13-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 4
+  warnings:
+    - Creates a new VM
+
+- id: ubuntu2204-vm
+  name: Ubuntu 22.04
+  type: vm
+  description: Ubuntu 22.04 LTS VM.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/ubuntu2204-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 5
+  warnings:
+    - Creates a new VM
+
+- id: ubuntu2404-vm
+  name: Ubuntu 24.04
+  type: vm
+  description: Ubuntu 24.04 LTS VM.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/ubuntu2404-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 7
+  warnings:
+    - Creates a new VM
+
+- id: ubuntu2504-vm
+  name: Ubuntu 25.04
+  type: vm
+  description: Ubuntu 25.04 VM.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/ubuntu2504-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 8
+  warnings:
+    - Creates a new VM
+
+- id: docker-vm
+  name: Docker
+  type: vm
+  description: Debian VM with Docker Engine pre-installed.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/docker-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 4096
+    disk_gb: 10
+  warnings:
+    - Creates a new VM
+
+- id: mikrotik-routeros
+  name: Mikrotik RouterOS CHR
+  type: vm
+  description: MikroTik RouterOS CHR — turns a VM into a full-featured router.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/mikrotik-routeros.sh
+  resources:
+    cpu: 2
+    ram_mb: 512
+    disk_gb: 1
+  warnings:
+    - Creates a new VM
+
+- id: openwrt-vm
+  name: OpenWrt
+  type: vm
+  description: OpenWrt VM — customizable open-source router/firewall firmware.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/openwrt-vm.sh
+  resources:
+    cpu: 1
+    ram_mb: 256
+    disk_gb: 1
+  warnings:
+    - Creates a new VM
+
+- id: opnsense-vm
+  name: OPNsense
+  type: vm
+  description: OPNsense VM — FreeBSD-based firewall and routing platform.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/opnsense-vm.sh
+  resources:
+    cpu: 4
+    ram_mb: 8192
+    disk_gb: 10
+  warnings:
+    - Creates a new VM
+
+- id: truenas-vm
+  name: TrueNAS Community Edition
+  type: vm
+  description: TrueNAS Community Edition — OpenZFS storage with Docker.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/truenas-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 8192
+    disk_gb: 16
+  warnings:
+    - Creates a new VM
+
+- id: nextcloud-vm
+  name: Nextcloud
+  type: vm
+  description: TurnKey Nextcloud VM — file sharing and collaboration server.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/nextcloud-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 12
+  warnings:
+    - Creates a new VM
+
+- id: owncloud-vm
+  name: ownCloud
+  type: vm
+  description: TurnKey ownCloud VM — self-hosted file sharing and collaboration.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/owncloud-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 2048
+    disk_gb: 12
+  warnings:
+    - Creates a new VM
+
+- id: umbrel-os-vm
+  name: Umbrel OS
+  type: vm
+  description: Umbrel OS VM — private personal server for self-hosting apps.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/umbrel-os-vm.sh
+  resources:
+    cpu: 2
+    ram_mb: 4096
+    disk_gb: 32
+  warnings:
+    - Creates a new VM
+
+- id: runtipi
+  name: Runtipi
+  type: pve
+  description: One-click self-hosted app platform. Addon — installs onto an existing Debian/Alpine system, not a new LXC.
+  category: Operating Systems
+  script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/runtipi.sh
+  warnings:
+    - Installs onto the target system (not a new LXC)
+    - Runs as root
+
 # ── Proxmox & Virtualization — PVE host management tools ────────────────────
 
 - id: post-pve-install
