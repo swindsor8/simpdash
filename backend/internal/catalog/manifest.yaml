@@ -10,7 +10,7 @@
   name: Pi-hole
   type: ct
   description: Network-wide ad blocking via a local DNS sinkhole.
-  category: Networking
+  category: Adblock & DNS
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/pihole.sh
   resources:
     cpu: 1
@@ -23,7 +23,7 @@
   name: AdGuard Home
   type: ct
   description: Network-wide ad & tracker blocking DNS server with a web UI.
-  category: Networking
+  category: Adblock & DNS
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/adguard.sh
   resources:
     cpu: 1
@@ -36,7 +36,7 @@
   name: Nginx Proxy Manager
   type: ct
   description: Reverse proxy with a web UI and free Let's Encrypt certificates.
-  category: Networking
+  category: Webservers & Proxies
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/nginxproxymanager.sh
   resources:
     cpu: 2
@@ -49,7 +49,7 @@
   name: Uptime Kuma
   type: ct
   description: Self-hosted uptime monitoring with status pages and alerts.
-  category: Monitoring
+  category: Monitoring & Analytics
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/uptimekuma.sh
   resources:
     cpu: 1
@@ -62,7 +62,7 @@
   name: Jellyfin
   type: ct
   description: Free software media server for streaming your own movies and shows.
-  category: Media
+  category: Media & Streaming
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/jellyfin.sh
   resources:
     cpu: 2
@@ -75,7 +75,7 @@
   name: Docker
   type: ct
   description: Docker Engine LXC, optionally with Portainer for container management.
-  category: Management
+  category: Containers & Docker
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/docker.sh
   resources:
     cpu: 2
@@ -88,7 +88,7 @@
   name: Home Assistant OS
   type: vm
   description: Full Home Assistant OS appliance for smart-home automation.
-  category: Home Automation
+  category: IoT & Smart Home
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/vm/haos-vm.sh
   resources:
     cpu: 2

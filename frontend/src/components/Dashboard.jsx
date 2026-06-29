@@ -904,15 +904,15 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           <Nodes nodes={pairedNodes} onChange={refreshNodes} />
         </>
       ) : view === 'scripts' ? (
-        <>
-          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
+        <div className="flex flex-col h-full">
+          <header className="shrink-0 bg-[#0c0c14]/90 border-b border-white/[0.06] px-8 py-4">
             <h1 className="text-base font-semibold">Script Catalog</h1>
             <p className="text-xs text-gray-500 mt-0.5">
               {activeAddr ? `Running on ${activeAddr}` : 'One-click community-scripts installs'}
             </p>
           </header>
           <Scripts node={activeNode} />
-        </>
+        </div>
       ) : view === 'notebook' ? (
         <>
           <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-8 py-4">
