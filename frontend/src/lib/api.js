@@ -121,6 +121,20 @@ export async function runSpeedtest() {
   return r.json()
 }
 
+// getSpeedtestHistory → last ~50 stored speed-test results.
+export async function getSpeedtestHistory() {
+  const r = await fetch(`${BASE}/network/speedtest/history`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// getConnectivity → WAN IP, DNS servers, gateway + internet reachability.
+export async function getConnectivity() {
+  const r = await fetch(`${BASE}/network/connectivity`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
 // getBackups → { guests: [...], jobs: [...] } — per-guest last-backup status
 // and recent vzdump job results for the local PVE cluster.
 export async function getBackups() {
