@@ -54,36 +54,36 @@ function ScriptCard({ script, disabled, onRun }) {
   const res = script.resources
   return (
     <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-5 flex flex-col">
-      <div className="flex items-start justify-between mb-2 gap-3">
-        <h3 className="text-sm font-semibold text-white flex items-center gap-1.5 min-w-0">
-          <span className="truncate">{script.name}</span>
+      <div className="flex items-start justify-between gap-2 mb-1.5">
+        <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 min-w-0">{script.name}</h3>
+        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
           {script.verified && <VerifiedTick />}
-        </h3>
-        <div className="flex items-center gap-1.5 shrink-0">
           {script.type && <TypeBadge type={script.type} />}
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/8 text-gray-400 font-medium">
-            {script.category}
-          </span>
         </div>
       </div>
-      <p className="text-xs text-gray-500 leading-relaxed mb-2 flex-1">{script.description}</p>
+      <p className="text-xs text-gray-500 leading-relaxed mb-2 flex-1 line-clamp-3">{script.description}</p>
       {res && (res.cpu || res.ram_mb || res.disk_gb) && (
-        <p className="text-[11px] text-gray-700 mb-3 font-mono">
+        <p className="text-[11px] text-gray-700 mb-2 font-mono">
           {res.cpu} CPU · {fmtRam(res.ram_mb)} RAM · {res.disk_gb} GB disk
         </p>
       )}
       {script.warnings?.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap gap-1.5 mb-3">
           {script.warnings.map(w => <WarningPill key={w} text={w} />)}
         </div>
       )}
-      <button
-        onClick={() => onRun(script)}
-        disabled={disabled}
-        className="text-xs px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed self-start"
-      >
-        {script.type === 'pve' ? 'Run' : 'Install'}
-      </button>
+      <div className="flex items-center justify-between gap-2 mt-auto">
+        <span className="text-[10px] uppercase tracking-wide text-gray-600 truncate" title={script.category}>
+          {script.category}
+        </span>
+        <button
+          onClick={() => onRun(script)}
+          disabled={disabled}
+          className="text-xs px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+        >
+          {script.type === 'pve' ? 'Run' : 'Install'}
+        </button>
+      </div>
     </div>
   )
 }
@@ -345,7 +345,7 @@ export default function Scripts({ node = null }) {
   return (
     <div className="flex flex-1 min-h-0">
       {/* In-tab category sidebar */}
-      <aside className="w-60 shrink-0 border-r border-white/[0.06] flex flex-col p-3 overflow-hidden">
+      <aside className="w-72 shrink-0 border-r border-white/[0.06] flex flex-col p-3 overflow-hidden">
         <div className="relative mb-3">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"><IconSearch /></span>
           <input
@@ -414,7 +414,7 @@ export default function Scripts({ node = null }) {
                 {shown.length}
               </span>
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {shown.map(s => (
                 <ScriptCard key={s.id} script={s} disabled={busy} onRun={setPending} />
               ))}
