@@ -9,9 +9,21 @@ import (
 	"simpdash/internal/executor"
 )
 
-// Catalog handles GET /api/catalog — the curated script list for the UI.
+// Catalog handles GET /api/catalog — the full script list for the UI.
 func (s *Server) Catalog(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.catalog.All())
+}
+
+// CatalogSync handles POST /api/catalog/sync — pulls the repo's current file
+// list and adds any installer not already known (as a "Miscellaneous" community
+// entry). Idempotent: re-running only adds what's newly upstream.
+func (s *Server) CatalogSync(w http.ResponseWriter, r *http.Request) {
+	added, total, err := s.catalog.Sync(r.Context())
+	if err != nil {
+		writeErr(w, http.StatusBadGateway, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]int{"added": added, "total": total})
 }
 
 // CatalogRun handles POST /api/catalog/:slug/run.

@@ -84,6 +84,10 @@ export async function getCatalog(node) {
   return r.json()
 }
 
+// syncCatalog pulls scripts added upstream into the catalog. Main-node only —
+// the overlay it writes lives on the main host.
+export const syncCatalog = () => post('/catalog/sync')
+
 export function runScript(node, slug) {
   // post() prepends BASE (/api); nodeBase(node) without that prefix is '' (local)
   // or '/nodes/:id' (secondary).

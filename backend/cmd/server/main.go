@@ -83,6 +83,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("load script catalog: %v", err)
 	}
+	// Sync-discovered scripts persist next to the DB so they survive restarts.
+	cat.SetOverlay(filepath.Join(filepath.Dir(cfg.DBPath), "catalog_overlay.json"))
 
 	exec := executor.New()
 	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, notes, serviceLinks, cat, version)

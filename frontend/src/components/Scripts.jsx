@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getCatalog, runScript } from '../lib/api'
+import { getCatalog, runScript, syncCatalog } from '../lib/api'
 import { useJobStream } from '../hooks/useJobStream'
 import Terminal from './Terminal'
 
@@ -55,7 +55,10 @@ function ScriptCard({ script, disabled, onRun }) {
   return (
     <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-5 flex flex-col">
       <div className="flex items-start justify-between mb-2 gap-3">
-        <h3 className="text-sm font-semibold text-white">{script.name}</h3>
+        <h3 className="text-sm font-semibold text-white flex items-center gap-1.5 min-w-0">
+          <span className="truncate">{script.name}</span>
+          {script.verified && <VerifiedTick />}
+        </h3>
         <div className="flex items-center gap-1.5 shrink-0">
           {script.type && <TypeBadge type={script.type} />}
           <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/8 text-gray-400 font-medium">
@@ -253,6 +256,30 @@ function IconSearch() {
   )
 }
 
+function IconSync({ spin }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className={`shrink-0 ${spin ? 'animate-spin' : ''}`}>
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/>
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>
+    </svg>
+  )
+}
+
+// A verified script comes from the hand-vetted manifest; community ones are
+// pulled from the upstream catalog and run as-is.
+function VerifiedTick() {
+  return (
+    <span title="Verified — from the curated list" className="text-emerald-400 shrink-0">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 6 9 17l-5-5"/>
+      </svg>
+    </span>
+  )
+}
+
 export default function Scripts({ node = null }) {
   const [scripts, setScripts] = useState(null)
   const [loadErr, setLoadErr] = useState(null)
@@ -263,6 +290,8 @@ export default function Scripts({ node = null }) {
   const [showTerm, setShowTerm] = useState(false)
   const [query, setQuery] = useState('')
   const [activeCat, setActiveCat] = useState(null) // null = All
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState(null)
   const { output, state: jobState, sendInput } = useJobStream(jobId, node)
   const busy = jobState === 'running'
 
@@ -271,6 +300,20 @@ export default function Scripts({ node = null }) {
     setLoadErr(null)
     getCatalog(node).then(setScripts).catch(e => setLoadErr(e.message))
   }, [node])
+
+  async function doSync() {
+    setSyncing(true)
+    setSyncMsg(null)
+    try {
+      const { added, total } = await syncCatalog()
+      setScripts(await getCatalog(node))
+      setSyncMsg(added > 0 ? `Added ${added} · ${total} total` : `Up to date · ${total} total`)
+    } catch (e) {
+      setSyncMsg(`Sync failed: ${e.message}`)
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   async function confirmRun() {
     const script = pending
@@ -302,7 +345,7 @@ export default function Scripts({ node = null }) {
   return (
     <div className="flex flex-1 min-h-0">
       {/* In-tab category sidebar */}
-      <aside className="w-60 shrink-0 border-r border-white/[0.06] flex flex-col p-3 overflow-y-auto">
+      <aside className="w-60 shrink-0 border-r border-white/[0.06] flex flex-col p-3 overflow-hidden">
         <div className="relative mb-3">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"><IconSearch /></span>
           <input
@@ -312,17 +355,17 @@ export default function Scripts({ node = null }) {
             className="w-full bg-white/5 border border-white/[0.07] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20"
           />
         </div>
-        <button
-          onClick={() => setActiveCat(null)}
-          className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${
-            selected === null ? 'bg-white/10 text-white font-medium' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-          }`}
-        >
-          <CatIcon category="__all" />
-          <span className="flex-1 text-left">All scripts</span>
-          <span className="text-[11px] text-gray-500">{filtered.length}</span>
-        </button>
-        <div className="space-y-0.5 mt-0.5">
+        <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1 space-y-0.5">
+          <button
+            onClick={() => setActiveCat(null)}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${
+              selected === null ? 'bg-white/10 text-white font-medium' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+            }`}
+          >
+            <CatIcon category="__all" />
+            <span className="flex-1 text-left">All scripts</span>
+            <span className="text-[11px] text-gray-500">{filtered.length}</span>
+          </button>
           {cats.map(c => (
             <button
               key={c.name}
@@ -336,6 +379,19 @@ export default function Scripts({ node = null }) {
               <span className="text-[11px] text-gray-500">{c.count}</span>
             </button>
           ))}
+        </div>
+
+        {/* Pull scripts added upstream into the catalog */}
+        <div className="mt-2 pt-2 border-t border-white/[0.06]">
+          <button
+            onClick={doSync}
+            disabled={syncing}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+          >
+            <IconSync spin={syncing} />
+            {syncing ? 'Syncing…' : 'Sync catalog'}
+          </button>
+          {syncMsg && <p className="text-[11px] text-gray-500 text-center mt-1.5">{syncMsg}</p>}
         </div>
       </aside>
 

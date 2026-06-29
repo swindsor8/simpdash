@@ -128,6 +128,8 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	// /api/jobs/ is a prefix match; the handler parses /:id and /:id/stream.
 	mux.HandleFunc("/api/jobs/", s.handleJobsPrefix)
 	mux.HandleFunc("/api/catalog", methodGate(http.MethodGet, s.requireAuth(s.Catalog)))
+	// Exact route beats the /api/catalog/ prefix below (longest-match wins).
+	mux.HandleFunc("/api/catalog/sync", methodGate(http.MethodPost, s.requireAuth(s.CatalogSync)))
 	// /api/catalog/ is a prefix match; the handler parses /:slug/run.
 	mux.HandleFunc("/api/catalog/", s.handleCatalogPrefix)
 	// /api/guests/:vmid/services — running services inside a local guest.
