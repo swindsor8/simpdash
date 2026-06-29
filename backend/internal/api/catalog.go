@@ -5,9 +5,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
 
 	"simpdash/internal/executor"
 )
+
+// ctidRe bounds an LXC target to digits so it's safe to pass to `pct exec`.
+var ctidRe = regexp.MustCompile(`^[0-9]+$`)
 
 // Catalog handles GET /api/catalog — the full script list for the UI.
 func (s *Server) Catalog(w http.ResponseWriter, r *http.Request) {
@@ -43,9 +47,26 @@ func (s *Server) CatalogRun(w http.ResponseWriter, r *http.Request, slug string)
 		return
 	}
 
+	// Optional install target (addons). Empty/"host" runs on the Proxmox host;
+	// a numeric value runs the script inside that LXC via `pct exec`. The ctid is
+	// validated to digits and passed as its own argv entry, so it can't inject.
+	target := r.URL.Query().Get("target")
+	if target != "" && target != "host" && !ctidRe.MatchString(target) {
+		writeErr(w, http.StatusBadRequest, "invalid target")
+		return
+	}
+
 	// Mirrors the documented community-scripts one-liner
 	// `bash -c "$(curl -fsSL <url>)"`, with the URL as $1 (injection-safe).
-	cmd := exec.Command("bash", "-c", `bash -c "$(curl -fsSL "$1")"`, "simpdash", script.ScriptURL)
+	inner := `bash -c "$(curl -fsSL "$1")"`
+	var cmd *exec.Cmd
+	if target != "" && target != "host" {
+		// Run inside the chosen container. pct/the container validates the ctid;
+		// a non-existent one fails cleanly rather than doing anything.
+		cmd = exec.Command("pct", "exec", target, "--", "bash", "-c", inner, "simpdash", script.ScriptURL)
+	} else {
+		cmd = exec.Command("bash", "-c", inner, "simpdash", script.ScriptURL)
+	}
 	// TERM is required or whiptail/tput-based scripts abort with
 	// "TERM environment variable not set" before doing any work.
 	cmd.Env = append(os.Environ(), "DEBIAN_FRONTEND=noninteractive", "TERM=xterm")

@@ -37,10 +37,11 @@ function fmtRam(mb) {
 
 function TypeBadge({ type }) {
   const styles = {
-    vm:  'bg-purple-500/15 text-purple-300',
-    pve: 'bg-orange-500/15 text-orange-300',
+    vm:    'bg-purple-500/15 text-purple-300',
+    pve:   'bg-orange-500/15 text-orange-300',
+    addon: 'bg-sky-500/15 text-sky-300',
   }
-  const labels = { vm: 'VM', pve: 'PVE' }
+  const labels = { vm: 'VM', pve: 'PVE', addon: 'Add-on' }
   return (
     <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
       styles[type] ?? 'bg-blue-500/15 text-blue-300'
@@ -50,12 +51,30 @@ function TypeBadge({ type }) {
   )
 }
 
+// ScriptLogo shows the selfh.st icon, falling back to a letter avatar when there
+// is no logo or it fails to load (offline, or a sync-discovered script).
+function ScriptLogo({ script }) {
+  const [broken, setBroken] = useState(false)
+  if (!script.logo || broken) {
+    return (
+      <div className="w-9 h-9 rounded-lg bg-white/8 grid place-items-center text-sm font-semibold text-gray-400 shrink-0">
+        {(script.name?.[0] || '?').toUpperCase()}
+      </div>
+    )
+  }
+  return (
+    <img src={script.logo} alt="" loading="lazy" onError={() => setBroken(true)}
+      className="w-9 h-9 rounded-lg object-contain bg-white/5 p-0.5 shrink-0" />
+  )
+}
+
 function ScriptCard({ script, disabled, onRun }) {
   const res = script.resources
   return (
     <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-5 flex flex-col">
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 min-w-0">{script.name}</h3>
+      <div className="flex items-start gap-3 mb-1.5">
+        <ScriptLogo script={script} />
+        <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 min-w-0 flex-1 mt-0.5">{script.name}</h3>
         <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
           {script.verified && <VerifiedTick />}
           {script.type && <TypeBadge type={script.type} />}
@@ -91,7 +110,10 @@ function ScriptCard({ script, disabled, onRun }) {
 // ConfirmDialog is a custom modal (deliberately NOT window.confirm) so the
 // "creates a new LXC/VM, runs as root" warning is impossible to miss before a
 // host-modifying script runs. Dismissible via Cancel, backdrop, or Escape.
-function ConfirmDialog({ script, onCancel, onConfirm }) {
+function ConfirmDialog({ script, lxcs = [], onCancel, onConfirm }) {
+  // Add-ons install into a target; everything else runs on the host (value stays
+  // 'host' and is ignored by non-addon scripts).
+  const [target, setTarget] = useState('host')
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onCancel() }
     window.addEventListener('keydown', onKey)
@@ -128,6 +150,25 @@ function ConfirmDialog({ script, onCancel, onConfirm }) {
           </div>
         )}
 
+        {script.type === 'addon' && (
+          <div className="mb-4">
+            <label className="block text-[11px] uppercase tracking-wide text-gray-500 mb-1.5">Install target</label>
+            <select
+              value={target}
+              onChange={e => setTarget(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white/25"
+            >
+              <option value="host">Proxmox host</option>
+              {lxcs.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+            <p className="text-[11px] text-gray-600 mt-1.5">
+              {target === 'host'
+                ? 'Runs on the Proxmox host.'
+                : 'Runs inside the selected LXC via pct exec.'}
+            </p>
+          </div>
+        )}
+
         {script.resources && (script.resources.cpu || script.resources.ram_mb) && (
           <p className="text-[11px] text-gray-600 font-mono mb-3">
             Allocates: {script.resources.cpu} CPU · {fmtRam(script.resources.ram_mb)} RAM · {script.resources.disk_gb} GB disk
@@ -143,7 +184,7 @@ function ConfirmDialog({ script, onCancel, onConfirm }) {
             Cancel
           </button>
           <button
-            onClick={onConfirm}
+            onClick={() => onConfirm(target)}
             className="text-xs px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
           >
             {script.type === 'pve' ? 'Yes, run' : 'Yes, install'}
@@ -280,7 +321,7 @@ function VerifiedTick() {
   )
 }
 
-export default function Scripts({ node = null }) {
+export default function Scripts({ node = null, lxcs = [] }) {
   const [scripts, setScripts] = useState(null)
   const [loadErr, setLoadErr] = useState(null)
   const [pending, setPending] = useState(null)   // script awaiting confirm
@@ -315,12 +356,12 @@ export default function Scripts({ node = null }) {
     }
   }
 
-  async function confirmRun() {
+  async function confirmRun(target) {
     const script = pending
     setPending(null)
     setStartErr(null)
     try {
-      const data = await runScript(node, script.id)
+      const data = await runScript(node, script.id, target)
       setRunning(script.name)
       setJobId(data.job_id)
       setShowTerm(true)
@@ -438,6 +479,7 @@ export default function Scripts({ node = null }) {
       {pending && (
         <ConfirmDialog
           script={pending}
+          lxcs={lxcs}
           onCancel={() => setPending(null)}
           onConfirm={confirmRun}
         />

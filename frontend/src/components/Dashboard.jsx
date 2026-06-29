@@ -911,7 +911,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               {activeAddr ? `Running on ${activeAddr}` : 'One-click community-scripts installs'}
             </p>
           </header>
-          <Scripts node={activeNode} />
+          <Scripts node={activeNode} lxcs={entities.filter(e => e.type === 'lxc')} />
         </div>
       ) : view === 'notebook' ? (
         <>

@@ -88,11 +88,13 @@ export async function getCatalog(node) {
 // the overlay it writes lives on the main host.
 export const syncCatalog = () => post('/catalog/sync')
 
-export function runScript(node, slug) {
+export function runScript(node, slug, target) {
   // post() prepends BASE (/api); nodeBase(node) without that prefix is '' (local)
-  // or '/nodes/:id' (secondary).
+  // or '/nodes/:id' (secondary). target (an LXC vmid) is for add-on scripts that
+  // install into an existing container; omit/"host" runs on the Proxmox host.
   const rel = nodeBase(node).slice(BASE.length)
-  return post(`${rel}/catalog/${encodeURIComponent(slug)}/run`)
+  const q = target && target !== 'host' ? `?target=${encodeURIComponent(target)}` : ''
+  return post(`${rel}/catalog/${encodeURIComponent(slug)}/run${q}`)
 }
 
 // getNetwork → PVE host network interfaces.

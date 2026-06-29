@@ -14,7 +14,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/2fauth.webp"
  },
  {
   "id": "actualbudget",
@@ -31,7 +32,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/actual-budget.webp"
  },
  {
   "id": "add-iptag",
@@ -44,33 +46,36 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "add-netbird-lxc",
   "name": "NetBird",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "NetBird combines a configuration-free peer-to-peer private network and a centralized access control system in a single platform, making it easy to create secure private networks for your organization ",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/add-netbird-lxc.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/netbird.webp"
  },
  {
   "id": "add-tailscale-lxc",
   "name": "Tailscale",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "Tailscale is a software-defined networking solution that enables secure communication between devices over the internet. It creates a virtual private network (VPN) that enables devices to communicate ",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/add-tailscale-lxc.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tailscale.webp"
  },
  {
   "id": "adguard",
@@ -87,20 +92,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/adguard-home.webp"
  },
  {
   "id": "adguardhome-sync",
   "name": "AdGuardHome-Sync",
-  "type": "pve",
+  "type": "addon",
   "category": "Adblock & DNS",
   "description": "Synchronize AdGuardHome config to one or multiple replica instances. Syncs General Settings, Filters, Rewrites, Services, Clients, DNS Config, DHCP Config and Theme.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/adguardhome-sync.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/adguardhome-sync.webp"
  },
  {
   "id": "adventurelog",
@@ -117,7 +124,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/adventurelog.webp"
  },
  {
   "id": "agentdvr",
@@ -134,20 +142,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/agent-dvr.webp"
  },
  {
   "id": "all-templates",
   "name": "All Templates",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "A script designed to allow for the creation of one of the many free LXC templates. Great for creating system LXCs.\r The script creates a `*.creds` file in the Proxmox root directory with the password ",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/all-templates.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "alpine-it-tools",
@@ -164,7 +174,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/it-tools.webp"
  },
  {
   "id": "alpine",
@@ -181,7 +192,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/alpine-linux.webp"
  },
  {
   "id": "ampache",
@@ -198,7 +210,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ampache.webp"
  },
  {
   "id": "apache-cassandra",
@@ -215,7 +228,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/apache-cassandra.webp"
  },
  {
   "id": "apache-couchdb",
@@ -232,7 +246,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/couchdb.webp"
  },
  {
   "id": "apache-guacamole",
@@ -249,7 +264,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/apache-guacamole.webp"
  },
  {
   "id": "apache-tika",
@@ -266,7 +282,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/apache-tika.webp"
  },
  {
   "id": "apache-tomcat",
@@ -283,7 +300,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/apache-tomcat.webp"
  },
  {
   "id": "apt-cacher-ng",
@@ -300,20 +318,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linux.webp"
  },
  {
   "id": "arcane",
   "name": "Arcane",
-  "type": "pve",
+  "type": "addon",
   "category": "Containers & Docker",
   "description": "Arcane is designed to be an easy and modern Docker management platform, built with everybody in mind. The goal of Arcane is to be built for and by the community to make sure nobody feels left out or b",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/arcane.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/arcane.webp"
  },
  {
   "id": "archivebox",
@@ -330,7 +350,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/archivebox.webp"
  },
  {
   "id": "archlinux-vm",
@@ -347,7 +368,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/arch-linux.webp"
  },
  {
   "id": "argus",
@@ -364,7 +386,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/argus.webp"
  },
  {
   "id": "aria2",
@@ -381,7 +404,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/aria2.webp"
  },
  {
   "id": "asterisk",
@@ -398,7 +422,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/asterisk.webp"
  },
  {
   "id": "audiobookshelf",
@@ -415,7 +440,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/audiobookshelf.webp"
  },
  {
   "id": "authelia",
@@ -432,7 +458,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/authelia.webp"
  },
  {
   "id": "autobrr",
@@ -449,7 +476,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/autobrr.webp"
  },
  {
   "id": "autocaliweb",
@@ -466,7 +494,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/autocaliweb.webp"
  },
  {
   "id": "babybuddy",
@@ -483,7 +512,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/baby-buddy.webp"
  },
  {
   "id": "backrest",
@@ -500,7 +530,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/backrest.webp"
  },
  {
   "id": "baikal",
@@ -517,7 +548,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/baikal.webp"
  },
  {
   "id": "bar-assistant",
@@ -534,7 +566,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bar-assistant.webp"
  },
  {
   "id": "bazarr",
@@ -551,7 +584,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bazarr.webp"
  },
  {
   "id": "bentopdf",
@@ -568,7 +602,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bentopdf.webp"
  },
  {
   "id": "beszel",
@@ -585,7 +620,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/beszel.webp"
  },
  {
   "id": "bichon",
@@ -602,7 +638,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bichon.webp"
  },
  {
   "id": "bitmagnet",
@@ -619,7 +656,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bitmagnet.webp"
  },
  {
   "id": "blocky",
@@ -636,7 +674,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/blocky.webp"
  },
  {
   "id": "booklore",
@@ -653,7 +692,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/booklore.webp"
  },
  {
   "id": "bookstack",
@@ -670,7 +710,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bookstack.webp"
  },
  {
   "id": "bunkerweb",
@@ -687,7 +728,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bunkerweb.webp"
  },
  {
   "id": "byparr",
@@ -704,7 +746,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/byparr.webp"
  },
  {
   "id": "bytestash",
@@ -721,7 +764,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/bytestash.webp"
  },
  {
   "id": "caddy",
@@ -738,7 +782,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/caddy.webp"
  },
  {
   "id": "calibre-web",
@@ -755,7 +800,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/calibre-web.webp"
  },
  {
   "id": "casaos",
@@ -772,7 +818,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/casaos.webp"
  },
  {
   "id": "changedetection",
@@ -789,7 +836,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/changedetection.webp"
  },
  {
   "id": "channels",
@@ -806,7 +854,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/channels-dvr.webp"
  },
  {
   "id": "checkmate",
@@ -823,7 +872,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/checkmate.webp"
  },
  {
   "id": "checkmk",
@@ -840,7 +890,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/checkmk.webp"
  },
  {
   "id": "clean-lxcs",
@@ -853,7 +904,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linuxcontainers.webp"
  },
  {
   "id": "clean-orphaned-lvm",
@@ -866,7 +918,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "cleanuparr",
@@ -883,7 +936,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cleanuparr.webp"
  },
  {
   "id": "cloudflare-ddns",
@@ -900,7 +954,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cloudflare.webp"
  },
  {
   "id": "cloudflared",
@@ -917,7 +972,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cloudflare.webp"
  },
  {
   "id": "cloudreve",
@@ -934,7 +990,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cloudreve.webp"
  },
  {
   "id": "cockpit",
@@ -951,20 +1008,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cockpit.webp"
  },
  {
   "id": "coder-code-server",
   "name": "Coder Code Server",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "Coder Code Server is an open-source project that enables you to run Visual Studio Code (VS Code) on a remote machine, such as a desktop PC or virtual server. It serves a web-based version of VS Code t",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/coder-code-server.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/coder.webp"
  },
  {
   "id": "comfyui",
@@ -981,7 +1040,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/comfyui.webp"
  },
  {
   "id": "commafeed",
@@ -998,7 +1058,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/commafeed.webp"
  },
  {
   "id": "configarr",
@@ -1015,7 +1076,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/configarr.webp"
  },
  {
   "id": "convertx",
@@ -1032,33 +1094,36 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/convertx.webp"
  },
  {
   "id": "coolify",
   "name": "Coolify",
-  "type": "pve",
+  "type": "addon",
   "category": "Containers & Docker",
   "description": "Coolify is an open-source & self-hostable alternative to Heroku, Netlify, and Vercel. It helps you manage your servers, applications, and databases on your own hardware with Docker. Deploy any applica",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/coolify.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/coolify.webp"
  },
  {
   "id": "copyparty",
   "name": "Copyparty",
-  "type": "pve",
+  "type": "addon",
   "category": "Files & Downloads",
   "description": "Copyparty is a lightweight, portable HTTP file server with a browser-based interface. It supports drag-and-drop uploads, downloads, deduplication, media playback, and advanced search, making it ideal ",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/copyparty.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/copyparty.webp"
  },
  {
   "id": "cosmos",
@@ -1075,7 +1140,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cosmos-server.webp"
  },
  {
   "id": "crafty-controller",
@@ -1092,7 +1158,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/crafty-controller.webp"
  },
  {
   "id": "cron-update-lxcs",
@@ -1105,7 +1172,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "cronicle",
@@ -1122,20 +1190,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/chronicle.webp"
  },
  {
   "id": "cronmaster",
   "name": "CR*NMASTER",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "Self-hosted cron job scheduler with web UI, live logs, auth and prebuilt binaries provided upstream.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/cronmaster.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cr-nmaster.webp"
  },
  {
   "id": "cross-seed",
@@ -1152,20 +1222,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cross-seed.webp"
  },
  {
   "id": "crowdsec",
   "name": "CrowdSec",
-  "type": "pve",
+  "type": "addon",
   "category": "Authentication & Security",
   "description": "CrowdSec is a free and open-source intrusion prevention system (IPS) designed to provide network security against malicious traffic. It is a collaborative IPS that analyzes behaviors and responses to ",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/crowdsec.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/crowdsec.webp"
  },
  {
   "id": "cryptpad",
@@ -1182,7 +1254,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cryptpad.webp"
  },
  {
   "id": "databasus",
@@ -1199,7 +1272,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/databasus.webp"
  },
  {
   "id": "dawarich",
@@ -1216,7 +1290,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/dawarich.webp"
  },
  {
   "id": "ddclient",
@@ -1233,7 +1308,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ddclient.webp"
  },
  {
   "id": "debian-13-vm",
@@ -1250,7 +1326,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/debian.webp"
  },
  {
   "id": "debian-vm",
@@ -1267,7 +1344,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/debian.webp"
  },
  {
   "id": "debian",
@@ -1284,7 +1362,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/debian.webp"
  },
  {
   "id": "deconz",
@@ -1301,7 +1380,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/phoscon.webp"
  },
  {
   "id": "deluge",
@@ -1318,7 +1398,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/deluge.webp"
  },
  {
   "id": "discopanel",
@@ -1335,7 +1416,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/discopanel.webp"
  },
  {
   "id": "dispatcharr",
@@ -1352,7 +1434,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/dispatcharr.webp"
  },
  {
   "id": "docker-vm",
@@ -1369,7 +1452,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/docker.webp"
  },
  {
   "id": "docker",
@@ -1386,20 +1470,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/docker.webp"
  },
  {
   "id": "dockge",
   "name": "Dockge",
-  "type": "pve",
+  "type": "addon",
   "category": "Containers & Docker",
   "description": "Dockge is a fancy, easy-to-use and reactive self-hosted docker compose.yaml stack-oriented manager.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/dockge.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/dockge.webp"
  },
  {
   "id": "docmost",
@@ -1416,20 +1502,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/docmost.webp"
  },
  {
   "id": "dokploy",
   "name": "Dokploy",
-  "type": "pve",
+  "type": "addon",
   "category": "Containers & Docker",
   "description": "Dokploy is a free, self-hostable Platform as a Service (PaaS) that simplifies the deployment and management of applications and databases. Built with Docker and Traefik, it offers features like automa",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/dokploy.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons/png/dokploy.png"
  },
  {
   "id": "dolibarr",
@@ -1446,7 +1534,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/dolibarr.webp"
  },
  {
   "id": "domain-locker",
@@ -1463,7 +1552,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/domain-locker.webp"
  },
  {
   "id": "domain-monitor",
@@ -1480,7 +1570,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons/png/domain-monitor.png"
  },
  {
   "id": "donetick",
@@ -1497,7 +1588,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/donetick.webp"
  },
  {
   "id": "dotnetaspwebapi",
@@ -1514,7 +1606,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/asp-net-core.webp"
  },
  {
   "id": "drawio",
@@ -1531,7 +1624,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/draw-io.webp"
  },
  {
   "id": "duplicati",
@@ -1548,7 +1642,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/duplicati.webp"
  },
  {
   "id": "ebusd",
@@ -1565,7 +1660,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ebusd.webp"
  },
  {
   "id": "elementsynapse",
@@ -1582,7 +1678,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/element.webp"
  },
  {
   "id": "emby",
@@ -1599,7 +1696,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/emby.webp"
  },
  {
   "id": "emqx",
@@ -1616,7 +1714,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/emqx.webp"
  },
  {
   "id": "endurain",
@@ -1633,7 +1732,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/endurain.webp"
  },
  {
   "id": "ersatztv",
@@ -1650,7 +1750,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ersatztv.webp"
  },
  {
   "id": "esphome",
@@ -1667,7 +1768,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/esphome.webp"
  },
  {
   "id": "evcc",
@@ -1684,7 +1786,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/evcc.webp"
  },
  {
   "id": "excalidraw",
@@ -1701,7 +1804,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/excalidraw.webp"
  },
  {
   "id": "execute",
@@ -1714,7 +1818,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "fhem",
@@ -1731,33 +1836,36 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/fhem.webp"
  },
  {
   "id": "filebrowser-quantum",
   "name": "FileBrowser Quantum",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "FileBrowser Quantum provides an easy way to access and manage your files from the web. It has has a web page interface that allows you to create secure shared links, users with their own specific perm",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/filebrowser-quantum.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/filebrowser-quantum.webp"
  },
  {
   "id": "filebrowser",
   "name": "File Browser",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "File Browser offers a user-friendly web interface for managing files within a designated directory. It allows you to perform various actions such as uploading, deleting, previewing, renaming, and edit",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/filebrowser.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/file-browser.webp"
  },
  {
   "id": "fileflows",
@@ -1774,7 +1882,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/fileflows.webp"
  },
  {
   "id": "firefly",
@@ -1791,7 +1900,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/firefly-iii.webp"
  },
  {
   "id": "fladder",
@@ -1808,7 +1918,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/fladder.webp"
  },
  {
   "id": "flaresolverr",
@@ -1825,7 +1936,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/flaresolverr.webp"
  },
  {
   "id": "flatnotes",
@@ -1842,7 +1954,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/flatnotes.webp"
  },
  {
   "id": "flowiseai",
@@ -1859,7 +1972,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/flowise.webp"
  },
  {
   "id": "fluid-calendar",
@@ -1876,7 +1990,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/fluidcalendar.webp"
  },
  {
   "id": "forgejo",
@@ -1893,7 +2008,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/forgejo.webp"
  },
  {
   "id": "freepbx",
@@ -1910,7 +2026,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/freepbx.webp"
  },
  {
   "id": "freshrss",
@@ -1927,7 +2044,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/freshrss.webp"
  },
  {
   "id": "frigate",
@@ -1944,7 +2062,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/frigate-light.webp"
  },
  {
   "id": "fstrim",
@@ -1957,7 +2076,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linuxcontainers.webp"
  },
  {
   "id": "fumadocs",
@@ -1974,7 +2094,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/fumadocs.webp"
  },
  {
   "id": "garage",
@@ -1991,7 +2112,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/garage.webp"
  },
  {
   "id": "gatus",
@@ -2008,7 +2130,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/gatus.webp"
  },
  {
   "id": "ghostfolio",
@@ -2025,7 +2148,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ghostfolio.webp"
  },
  {
   "id": "gitea-mirror",
@@ -2042,7 +2166,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/gitea-mirror.webp"
  },
  {
   "id": "gitea",
@@ -2059,7 +2184,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/gitea.webp"
  },
  {
   "id": "glance",
@@ -2076,20 +2202,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/glance.webp"
  },
  {
   "id": "glances",
   "name": "Glances",
-  "type": "pve",
+  "type": "addon",
   "category": "Monitoring & Analytics",
   "description": "Glances is an open-source system cross-platform monitoring tool. It allows real-time monitoring of various aspects of your system such as CPU, memory, disk, network usage etc.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/glances.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/glances.webp"
  },
  {
   "id": "globaleaks",
@@ -2106,7 +2234,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/globaleaks.webp"
  },
  {
   "id": "glpi",
@@ -2123,7 +2252,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/glpi.webp"
  },
  {
   "id": "go2rtc",
@@ -2140,7 +2270,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/go2rtc.webp"
  },
  {
   "id": "gokapi",
@@ -2157,7 +2288,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/gokapi.webp"
  },
  {
   "id": "gotify",
@@ -2174,7 +2306,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/gotify.webp"
  },
  {
   "id": "grafana",
@@ -2191,7 +2324,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/grafana.webp"
  },
  {
   "id": "gramps-web",
@@ -2208,7 +2342,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/gramps.webp"
  },
  {
   "id": "graylog",
@@ -2225,7 +2360,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/graylog.webp"
  },
  {
   "id": "grist",
@@ -2242,7 +2378,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/grist.webp"
  },
  {
   "id": "grocy",
@@ -2259,7 +2396,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/grocy.webp"
  },
  {
   "id": "guardian",
@@ -2276,7 +2414,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/guardian-plex.webp"
  },
  {
   "id": "gwn-manager",
@@ -2293,7 +2432,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/gwn-manager.webp"
  },
  {
   "id": "haos-vm",
@@ -2310,7 +2450,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/home-assistant.webp"
  },
  {
   "id": "headscale",
@@ -2327,7 +2468,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/headscale.webp"
  },
  {
   "id": "healthchecks",
@@ -2344,7 +2486,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/healthchecks.webp"
  },
  {
   "id": "heimdall-dashboard",
@@ -2361,7 +2504,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/heimdall.webp"
  },
  {
   "id": "hev-socks5-server",
@@ -2378,7 +2522,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/hev.webp"
  },
  {
   "id": "hivemq",
@@ -2395,7 +2540,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/hivemq.webp"
  },
  {
   "id": "homarr",
@@ -2412,7 +2558,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/homarr.webp"
  },
  {
   "id": "homeassistant",
@@ -2429,7 +2576,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/home-assistant.webp"
  },
  {
   "id": "homebox",
@@ -2446,7 +2594,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/homebox.webp"
  },
  {
   "id": "homebridge",
@@ -2463,7 +2612,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/homebridge.webp"
  },
  {
   "id": "homepage",
@@ -2480,7 +2630,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/homepage.webp"
  },
  {
   "id": "homer",
@@ -2497,7 +2648,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/homer.webp"
  },
  {
   "id": "hortusfox",
@@ -2514,7 +2666,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/hortusfox.webp"
  },
  {
   "id": "host-backup",
@@ -2527,7 +2680,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "hyperhdr",
@@ -2544,7 +2698,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/hyperhdr.webp"
  },
  {
   "id": "hyperion",
@@ -2561,20 +2716,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/hyperion.webp"
  },
  {
   "id": "immich-public-proxy",
   "name": "Immich Public Proxy",
-  "type": "pve",
+  "type": "addon",
   "category": "Webservers & Proxies",
   "description": "Share your Immich photos and albums in a safe way without exposing your Immich instance to the public.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/immich-public-proxy.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/immich-public-proxy.webp"
  },
  {
   "id": "immich",
@@ -2591,7 +2748,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/immich.webp"
  },
  {
   "id": "immichframe",
@@ -2608,7 +2766,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/immich-frame.webp"
  },
  {
   "id": "infisical",
@@ -2625,7 +2784,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/infisical.webp"
  },
  {
   "id": "influxdb",
@@ -2642,7 +2802,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/influxdb.webp"
  },
  {
   "id": "inspircd",
@@ -2659,7 +2820,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/inspircd.webp"
  },
  {
   "id": "inventree",
@@ -2676,7 +2838,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/inventree.webp"
  },
  {
   "id": "investbrain",
@@ -2693,7 +2856,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/investbrain.webp"
  },
  {
   "id": "invoiceninja",
@@ -2710,7 +2874,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/invoice-ninja.webp"
  },
  {
   "id": "iobroker",
@@ -2727,7 +2892,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/iobroker.webp"
  },
  {
   "id": "itsm-ng",
@@ -2744,7 +2910,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/itsm-ng.webp"
  },
  {
   "id": "jackett",
@@ -2761,7 +2928,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/jackett.webp"
  },
  {
   "id": "jeedom",
@@ -2778,7 +2946,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/jeedom.webp"
  },
  {
   "id": "jellyfin",
@@ -2795,20 +2964,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/jellyfin.webp"
  },
  {
   "id": "jellystat",
   "name": "Jellystat",
-  "type": "pve",
+  "type": "addon",
   "category": "Monitoring & Analytics",
   "description": "A free and open source statistics app for Jellyfin",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/jellystat.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/jellystat.webp"
  },
  {
   "id": "jenkins",
@@ -2825,7 +2996,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/jenkins.webp"
  },
  {
   "id": "joplin-server",
@@ -2842,7 +3014,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/joplin.webp"
  },
  {
   "id": "jotty",
@@ -2859,7 +3032,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/jotty.webp"
  },
  {
   "id": "jupyternotebook",
@@ -2876,7 +3050,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/jupyter.webp"
  },
  {
   "id": "kapowarr",
@@ -2893,7 +3068,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/kapowarr.webp"
  },
  {
   "id": "karakeep",
@@ -2910,7 +3086,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/karakeep.webp"
  },
  {
   "id": "kasm",
@@ -2927,7 +3104,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/kasm-workspaces.webp"
  },
  {
   "id": "kavita",
@@ -2944,7 +3122,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/kavita.webp"
  },
  {
   "id": "kernel-clean",
@@ -2957,7 +3136,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "kernel-pin",
@@ -2970,7 +3150,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "keycloak",
@@ -2987,7 +3168,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/keycloak.webp"
  },
  {
   "id": "kima-hub",
@@ -3004,7 +3186,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/kima-hub.webp"
  },
  {
   "id": "kimai",
@@ -3021,7 +3204,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/kimai.webp"
  },
  {
   "id": "kitchenowl",
@@ -3038,7 +3222,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/kitchenowl.webp"
  },
  {
   "id": "koel",
@@ -3055,7 +3240,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/koel-light.webp"
  },
  {
   "id": "koillection",
@@ -3072,7 +3258,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/koillection.webp"
  },
  {
   "id": "kometa",
@@ -3089,7 +3276,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/kometa.webp"
  },
  {
   "id": "komga",
@@ -3106,20 +3294,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/komga.webp"
  },
  {
   "id": "komodo",
   "name": "Komodo",
-  "type": "pve",
+  "type": "addon",
   "category": "Containers & Docker",
   "description": "Komodo is a build and deployment system that automates the creation of versioned Docker images from Git repositories and facilitates the deployment of Docker containers and Docker Compose setups. It p",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/komodo.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/komodo.webp"
  },
  {
   "id": "kubo",
@@ -3136,7 +3326,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ipfs.webp"
  },
  {
   "id": "kutt",
@@ -3153,7 +3344,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/kutt.webp"
  },
  {
   "id": "languagetool",
@@ -3170,7 +3362,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/languagetool.webp"
  },
  {
   "id": "lazylibrarian",
@@ -3187,7 +3380,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/lazylibrarian.webp"
  },
  {
   "id": "leantime",
@@ -3204,7 +3398,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/leantime.webp"
  },
  {
   "id": "librenms",
@@ -3221,7 +3416,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/librenms.webp"
  },
  {
   "id": "librespeed-rust",
@@ -3238,7 +3434,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/librespeed.webp"
  },
  {
   "id": "libretranslate",
@@ -3255,7 +3452,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/libretranslate.webp"
  },
  {
   "id": "lidarr",
@@ -3272,7 +3470,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/lidarr.webp"
  },
  {
   "id": "limesurvey",
@@ -3289,7 +3488,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/limesurvey.webp"
  },
  {
   "id": "linkding",
@@ -3306,7 +3506,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linkding.webp"
  },
  {
   "id": "linkstack",
@@ -3323,7 +3524,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linkstack.webp"
  },
  {
   "id": "linkwarden",
@@ -3340,7 +3542,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linkwarden.webp"
  },
  {
   "id": "listmonk",
@@ -3357,7 +3560,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/listmonk.webp"
  },
  {
   "id": "litellm",
@@ -3374,7 +3578,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/litellm-light.webp"
  },
  {
   "id": "livebook",
@@ -3391,7 +3596,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/livebook.webp"
  },
  {
   "id": "lldap",
@@ -3408,7 +3614,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/lldap.webp"
  },
  {
   "id": "loki",
@@ -3425,7 +3632,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/loki.webp"
  },
  {
   "id": "lubelogger",
@@ -3442,7 +3650,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/lubelogger.webp"
  },
  {
   "id": "lxc-delete",
@@ -3455,7 +3664,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linuxcontainers.webp"
  },
  {
   "id": "lyrionmusicserver",
@@ -3472,7 +3682,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/lyrion-music-server.webp"
  },
  {
   "id": "mafl",
@@ -3489,7 +3700,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mafl.webp"
  },
  {
   "id": "magicmirror",
@@ -3506,7 +3718,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/magicmirror2.webp"
  },
  {
   "id": "mail-archiver",
@@ -3523,7 +3736,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mail-archiver.webp"
  },
  {
   "id": "managemydamnlife",
@@ -3540,7 +3754,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/manage-my-damn-life.webp"
  },
  {
   "id": "manyfold",
@@ -3557,7 +3772,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/manyfold.webp"
  },
  {
   "id": "mariadb",
@@ -3574,7 +3790,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mariadb.webp"
  },
  {
   "id": "matterbridge",
@@ -3591,7 +3808,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/matterbridge.webp"
  },
  {
   "id": "mattermost",
@@ -3608,7 +3826,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mattermost.webp"
  },
  {
   "id": "mealie",
@@ -3625,7 +3844,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mealie.webp"
  },
  {
   "id": "mediamanager",
@@ -3642,7 +3862,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mediamanager.webp"
  },
  {
   "id": "mediamtx",
@@ -3659,7 +3880,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mediamtx.webp"
  },
  {
   "id": "medusa",
@@ -3676,7 +3898,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/py-medusa.webp"
  },
  {
   "id": "meilisearch",
@@ -3693,7 +3916,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/meilisearch.webp"
  },
  {
   "id": "memos",
@@ -3710,7 +3934,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/memos.webp"
  },
  {
   "id": "meshcentral",
@@ -3727,7 +3952,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/meshcentral.webp"
  },
  {
   "id": "metabase",
@@ -3744,7 +3970,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/metabase.webp"
  },
  {
   "id": "metube",
@@ -3761,7 +3988,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/metube.webp"
  },
  {
   "id": "microcode",
@@ -3774,7 +4002,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "mikrotik-routeros",
@@ -3790,7 +4019,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mikrotik.webp"
  },
  {
   "id": "minarca",
@@ -3807,7 +4037,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/minarca.webp"
  },
  {
   "id": "miniflux",
@@ -3824,7 +4055,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/miniflux-light.webp"
  },
  {
   "id": "minio",
@@ -3841,7 +4073,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/minio.webp"
  },
  {
   "id": "mongodb",
@@ -3858,7 +4091,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mongodb.webp"
  },
  {
   "id": "monica",
@@ -3875,7 +4109,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/monica.webp"
  },
  {
   "id": "monitor-all",
@@ -3888,7 +4123,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "motioneye",
@@ -3905,7 +4141,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/motioneye.webp"
  },
  {
   "id": "mqtt",
@@ -3922,7 +4159,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mqtt.webp"
  },
  {
   "id": "myip",
@@ -3939,7 +4177,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/myip.webp"
  },
  {
   "id": "mylar3",
@@ -3956,7 +4195,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/mylar3.webp"
  },
  {
   "id": "myspeed",
@@ -3973,7 +4213,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/myspeed.webp"
  },
  {
   "id": "n8n",
@@ -3990,7 +4231,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/n8n.webp"
  },
  {
   "id": "navidrome",
@@ -4007,7 +4249,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/navidrome.webp"
  },
  {
   "id": "neo4j",
@@ -4024,7 +4267,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/neo4j.webp"
  },
  {
   "id": "netbird",
@@ -4041,7 +4285,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/netbird.webp"
  },
  {
   "id": "netbox",
@@ -4058,33 +4303,36 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/netbox.webp"
  },
  {
   "id": "netdata",
   "name": "PVE Netdata",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "Netdata is an open-source, real-time performance monitoring tool designed to provide insights into the performance and health of systems and applications. It is often used by system administrators, De",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/netdata.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/netdata.webp"
  },
  {
   "id": "nextcloud-exporter",
   "name": "Nextcloud Exporter",
-  "type": "pve",
+  "type": "addon",
   "category": "Monitoring & Analytics",
   "description": "Prometheus exporter for Nextcloud servers.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/nextcloud-exporter.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nextcloud.webp"
  },
  {
   "id": "nextcloud-vm",
@@ -4101,7 +4349,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nextcloud.webp"
  },
  {
   "id": "nextcloudpi",
@@ -4118,7 +4367,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nextcloud.webp"
  },
  {
   "id": "nextpvr",
@@ -4135,7 +4385,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nextpvr.webp"
  },
  {
   "id": "nginx-ui",
@@ -4152,7 +4403,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nginx-ui.webp"
  },
  {
   "id": "nginxproxymanager",
@@ -4169,7 +4421,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nginx-proxy-manager.webp"
  },
  {
   "id": "nic-offloading-fix",
@@ -4182,7 +4435,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "nightscout",
@@ -4199,7 +4453,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nightscout.webp"
  },
  {
   "id": "nocodb",
@@ -4216,7 +4471,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nocodb.webp"
  },
  {
   "id": "node-red",
@@ -4233,7 +4489,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/node-red.webp"
  },
  {
   "id": "nodebb",
@@ -4250,7 +4507,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nodebb.webp"
  },
  {
   "id": "nodecast-tv",
@@ -4267,7 +4525,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nodecast-tv.webp"
  },
  {
   "id": "notifiarr",
@@ -4284,7 +4543,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/notifiarr.webp"
  },
  {
   "id": "npmplus",
@@ -4301,7 +4561,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nginx-proxy-manager.webp"
  },
  {
   "id": "ntfy",
@@ -4318,7 +4579,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ntfy.webp"
  },
  {
   "id": "nxwitness",
@@ -4335,7 +4597,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nx-witness.webp"
  },
  {
   "id": "nzbget",
@@ -4352,7 +4615,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nzbget.webp"
  },
  {
   "id": "oauth2-proxy",
@@ -4369,7 +4633,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/oauth2-proxy.webp"
  },
  {
   "id": "octoprint",
@@ -4386,7 +4651,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/octoprint.webp"
  },
  {
   "id": "odoo",
@@ -4403,20 +4669,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/odoo.webp"
  },
  {
   "id": "olivetin",
   "name": "OliveTin",
-  "type": "pve",
+  "type": "addon",
   "category": "Dashboards & Frontends",
   "description": "OliveTin provides a secure and straightforward way to execute pre-determined shell commands through a web-based interface.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/olivetin.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/olivetin.webp"
  },
  {
   "id": "ollama",
@@ -4433,7 +4701,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ollama.webp"
  },
  {
   "id": "omada",
@@ -4450,7 +4719,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/omada.webp"
  },
  {
   "id": "ombi",
@@ -4467,7 +4737,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ombi.webp"
  },
  {
   "id": "omv",
@@ -4484,7 +4755,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/openmediavault.webp"
  },
  {
   "id": "onedev",
@@ -4501,7 +4773,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/onedev.webp"
  },
  {
   "id": "onlyoffice",
@@ -4518,7 +4791,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/onlyoffice.webp"
  },
  {
   "id": "open-archiver",
@@ -4535,7 +4809,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/open-archiver.webp"
  },
  {
   "id": "opencloud",
@@ -4552,7 +4827,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/opencloud.webp"
  },
  {
   "id": "opengist",
@@ -4569,7 +4845,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/opengist.webp"
  },
  {
   "id": "openhab",
@@ -4586,7 +4863,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/openhab.webp"
  },
  {
   "id": "openobserve",
@@ -4603,7 +4881,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/openobserve.webp"
  },
  {
   "id": "openproject",
@@ -4620,7 +4899,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/openproject.webp"
  },
  {
   "id": "openwebui",
@@ -4637,7 +4917,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/open-webui.webp"
  },
  {
   "id": "openwrt-vm",
@@ -4654,7 +4935,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/openwrt.webp"
  },
  {
   "id": "openziti-controller",
@@ -4671,7 +4953,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/openziti.webp"
  },
  {
   "id": "openziti-tunnel",
@@ -4688,7 +4971,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/openziti.webp"
  },
  {
   "id": "opnsense-vm",
@@ -4705,7 +4989,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/opnsense.webp"
  },
  {
   "id": "ots",
@@ -4722,7 +5007,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ots.webp"
  },
  {
   "id": "outline",
@@ -4739,7 +5025,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/outline.webp"
  },
  {
   "id": "owncast",
@@ -4756,7 +5043,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/owncast.webp"
  },
  {
   "id": "owncloud-vm",
@@ -4773,7 +5061,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/owncloud.webp"
  },
  {
   "id": "pairdrop",
@@ -4790,7 +5079,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pairdrop.webp"
  },
  {
   "id": "pangolin",
@@ -4807,7 +5097,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pangolin.webp"
  },
  {
   "id": "paperless-ai",
@@ -4824,7 +5115,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/paperless-ai.webp"
  },
  {
   "id": "paperless-gpt",
@@ -4841,7 +5133,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/paperless-ngx-light.webp"
  },
  {
   "id": "paperless-ngx",
@@ -4858,7 +5151,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/paperless-ngx.webp"
  },
  {
   "id": "papra",
@@ -4875,7 +5169,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/papra.webp"
  },
  {
   "id": "part-db",
@@ -4892,7 +5187,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/part-db.webp"
  },
  {
   "id": "passbolt",
@@ -4909,7 +5205,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/passbolt.webp"
  },
  {
   "id": "patchmon",
@@ -4926,7 +5223,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/patchmon.webp"
  },
  {
   "id": "paymenter",
@@ -4943,7 +5241,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/paymenter.webp"
  },
  {
   "id": "pbs4-upgrade",
@@ -4956,7 +5255,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "peanut",
@@ -4973,7 +5273,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/peanut.webp"
  },
  {
   "id": "pelican-panel",
@@ -4990,7 +5291,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pelican-panel.webp"
  },
  {
   "id": "pelican-wings",
@@ -5007,7 +5309,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pelican-panel.webp"
  },
  {
   "id": "photoprism",
@@ -5024,20 +5327,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/photoprism.webp"
  },
  {
   "id": "phpmyadmin",
   "name": "PhpMyAdmin",
-  "type": "pve",
+  "type": "addon",
   "category": "Databases",
   "description": "phpMyAdmin is a free software tool written in PHP, intended to handle the administration of MySQL over the Web. phpMyAdmin supports a wide range of operations on MySQL and MariaDB. Frequently used ope",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/phpmyadmin.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/phpmyadmin.webp"
  },
  {
   "id": "pialert",
@@ -5054,20 +5359,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pi-alert.webp"
  },
  {
   "id": "pihole-exporter",
   "name": "Pi-Hole Exporter",
-  "type": "pve",
+  "type": "addon",
   "category": "Monitoring & Analytics",
   "description": "A Prometheus exporter for PI-Hole's Raspberry PI ad blocker",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/pihole-exporter.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pi-hole.webp"
  },
  {
   "id": "pihole",
@@ -5084,7 +5391,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pi-hole.webp"
  },
  {
   "id": "pimox-haos-vm",
@@ -5101,7 +5409,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/home-assistant.webp"
  },
  {
   "id": "planka",
@@ -5118,7 +5427,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/planka.webp"
  },
  {
   "id": "plant-it",
@@ -5135,7 +5445,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/plant-it.webp"
  },
  {
   "id": "plex",
@@ -5152,7 +5463,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/plex.webp"
  },
  {
   "id": "pocketbase",
@@ -5169,7 +5481,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pocketbase.webp"
  },
  {
   "id": "pocketid",
@@ -5186,7 +5499,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pocket-id.webp"
  },
  {
   "id": "podman-homeassistant",
@@ -5203,7 +5517,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/home-assistant.webp"
  },
  {
   "id": "podman",
@@ -5220,7 +5535,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/podman.webp"
  },
  {
   "id": "post-pbs-install",
@@ -5233,7 +5549,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "post-pmg-install",
@@ -5246,7 +5563,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "post-pve-install",
@@ -5259,7 +5577,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "postgresql",
@@ -5276,7 +5595,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/postgresql.webp"
  },
  {
   "id": "powerdns",
@@ -5293,7 +5613,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/powerdns.webp"
  },
  {
   "id": "privatebin",
@@ -5310,7 +5631,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/privatebin.webp"
  },
  {
   "id": "profilarr",
@@ -5327,7 +5649,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/profilarr.webp"
  },
  {
   "id": "projectsend",
@@ -5344,7 +5667,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/projectsend.webp"
  },
  {
   "id": "prometheus-alertmanager",
@@ -5361,7 +5685,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/prometheus.webp"
  },
  {
   "id": "prometheus-blackbox-exporter",
@@ -5378,20 +5703,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/prometheus.webp"
  },
  {
   "id": "prometheus-paperless-ngx-exporter",
   "name": "Prometheus Paperless NGX Exporter",
-  "type": "pve",
+  "type": "addon",
   "category": "Monitoring & Analytics",
   "description": "Prometheus metrics exporter for Paperless-NGX, a document management system transforming physical documents into a searchable online archive. The exporter relies on Paperless' REST API.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/prometheus-paperless-ngx-exporter.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/paperless-ngx.webp"
  },
  {
   "id": "prometheus-pve-exporter",
@@ -5408,7 +5735,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "prometheus",
@@ -5425,7 +5753,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/prometheus.webp"
  },
  {
   "id": "prowlarr",
@@ -5442,7 +5771,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/prowlarr.webp"
  },
  {
   "id": "proxmox-backup-server",
@@ -5459,7 +5789,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "proxmox-datacenter-manager",
@@ -5476,7 +5807,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "proxmox-mail-gateway",
@@ -5493,7 +5825,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "ps5-mqtt",
@@ -5510,7 +5843,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ps5-mqtt.webp"
  },
  {
   "id": "pterodactyl-panel",
@@ -5527,7 +5861,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pterodactyl.webp"
  },
  {
   "id": "pterodactyl-wings",
@@ -5544,7 +5879,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pterodactyl.webp"
  },
  {
   "id": "pulse",
@@ -5561,7 +5897,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/pulse.webp"
  },
  {
   "id": "pve-privilege-converter",
@@ -5574,7 +5911,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "pve-scripts-local",
@@ -5591,20 +5929,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE-Local/refs/heads/main/.github/logo.png"
  },
  {
   "id": "qbittorrent-exporter",
   "name": "qbittorrent Exporter",
-  "type": "pve",
+  "type": "addon",
   "category": "Monitoring & Analytics",
   "description": "A fast and lightweight prometheus exporter for qBittorrent",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/qbittorrent-exporter.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/qbittorrent.webp"
  },
  {
   "id": "qbittorrent",
@@ -5621,7 +5961,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/qbittorrent.webp"
  },
  {
   "id": "qdrant",
@@ -5638,7 +5979,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/qdrant.webp"
  },
  {
   "id": "qui",
@@ -5655,7 +5997,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/qui.webp"
  },
  {
   "id": "rabbitmq",
@@ -5672,7 +6015,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/rabbitmq.webp"
  },
  {
   "id": "radarr",
@@ -5689,7 +6033,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/radarr.webp"
  },
  {
   "id": "radicale",
@@ -5706,7 +6051,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/radicale.webp"
  },
  {
   "id": "rclone",
@@ -5723,7 +6069,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/rclone.webp"
  },
  {
   "id": "rdtclient",
@@ -5740,7 +6087,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/real-debrid.webp"
  },
  {
   "id": "reactive-resume",
@@ -5757,7 +6105,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/reactive-resume.webp"
  },
  {
   "id": "readeck",
@@ -5774,7 +6123,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/readeck.webp"
  },
  {
   "id": "recyclarr",
@@ -5791,7 +6141,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/recyclarr.webp"
  },
  {
   "id": "redis",
@@ -5808,7 +6159,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/redis.webp"
  },
  {
   "id": "alpine-redlib",
@@ -5825,7 +6177,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/redlib.webp"
  },
  {
   "id": "reitti",
@@ -5842,7 +6195,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/reitti.webp"
  },
  {
   "id": "resiliosync",
@@ -5859,7 +6213,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/resilio-sync.webp"
  },
  {
   "id": "revealjs",
@@ -5876,7 +6231,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/reveal-js.webp"
  },
  {
   "id": "romm",
@@ -5893,20 +6249,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/romm.webp"
  },
  {
   "id": "runtipi",
   "name": "Runtipi",
-  "type": "pve",
+  "type": "addon",
   "category": "Operating Systems",
   "description": "Runtipi lets you install all your favorite self-hosted apps without the hassle of configuring and managing each service. One-click installs and updates for more than 180 popular apps.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/runtipi.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/runtipi.webp"
  },
  {
   "id": "rustdeskserver",
@@ -5923,7 +6281,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/rustdesk.webp"
  },
  {
   "id": "rustypaste",
@@ -5940,7 +6299,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://github.com/orhun/rustypaste/raw/master/img/rustypaste_logo.png"
  },
  {
   "id": "sabnzbd",
@@ -5957,7 +6317,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/sabnzbd.webp"
  },
  {
   "id": "salt",
@@ -5974,7 +6335,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/salt.webp"
  },
  {
   "id": "scaling-governor",
@@ -5987,7 +6349,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "scanopy",
@@ -6004,7 +6367,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/scanopy.webp"
  },
  {
   "id": "scraparr",
@@ -6021,7 +6385,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/scraparr-dark.webp"
  },
  {
   "id": "searxng",
@@ -6038,7 +6403,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/searxng.webp"
  },
  {
   "id": "seaweedfs",
@@ -6055,7 +6421,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/seaweedfs.webp"
  },
  {
   "id": "seelf",
@@ -6072,7 +6439,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/seelf.webp"
  },
  {
   "id": "seerr",
@@ -6089,7 +6457,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/seerr.webp"
  },
  {
   "id": "semaphore",
@@ -6106,7 +6475,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/semaphore-ui.webp"
  },
  {
   "id": "sftpgo",
@@ -6123,7 +6493,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/sftpgo.webp"
  },
  {
   "id": "shelfmark",
@@ -6140,7 +6511,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/shelfmark.webp"
  },
  {
   "id": "shinobi",
@@ -6157,7 +6529,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/shinobi.webp"
  },
  {
   "id": "signoz",
@@ -6174,7 +6547,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/signoz.webp"
  },
  {
   "id": "silverbullet",
@@ -6191,7 +6565,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/silverbullet.webp"
  },
  {
   "id": "slskd",
@@ -6208,7 +6583,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/slskd.webp"
  },
  {
   "id": "smokeping",
@@ -6225,7 +6601,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/smokeping.webp"
  },
  {
   "id": "snipeit",
@@ -6242,7 +6619,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/snipe-it.webp"
  },
  {
   "id": "snowshare",
@@ -6259,7 +6637,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/png/snowshare.png"
  },
  {
   "id": "sonarqube",
@@ -6276,7 +6655,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/sonarqube.webp"
  },
  {
   "id": "sonarr",
@@ -6293,7 +6673,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/sonarr.webp"
  },
  {
   "id": "sonobarr",
@@ -6310,7 +6691,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/sonobarr.webp"
  },
  {
   "id": "sparkyfitness",
@@ -6327,7 +6709,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/sparkyfitness.webp"
  },
  {
   "id": "speedtest-tracker",
@@ -6344,7 +6727,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/speedtest-tracker.webp"
  },
  {
   "id": "splunk-enterprise",
@@ -6361,7 +6745,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/splunk-light.webp"
  },
  {
   "id": "spoolman",
@@ -6378,7 +6763,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/spoolman.webp"
  },
  {
   "id": "sportarr",
@@ -6395,7 +6781,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/sportarr.webp"
  },
  {
   "id": "sqlserver2022",
@@ -6412,7 +6799,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/microsoft-sql-server.webp"
  },
  {
   "id": "sqlserver2025",
@@ -6429,7 +6817,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/microsoft-sql-server.webp"
  },
  {
   "id": "stirling-pdf",
@@ -6446,7 +6835,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/stirling-pdf.webp"
  },
  {
   "id": "strapi",
@@ -6463,7 +6853,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/strapi.webp"
  },
  {
   "id": "streamlink-webui",
@@ -6480,7 +6871,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/streamlink.webp"
  },
  {
   "id": "stylus",
@@ -6497,7 +6889,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/stylus.webp"
  },
  {
   "id": "sure",
@@ -6514,7 +6907,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/sure-finance.webp"
  },
  {
   "id": "swizzin",
@@ -6531,7 +6925,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/swizzin.webp"
  },
  {
   "id": "syncthing",
@@ -6548,7 +6943,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/syncthing.webp"
  },
  {
   "id": "tandoor",
@@ -6565,7 +6961,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tandoor-recipes.webp"
  },
  {
   "id": "tasmoadmin",
@@ -6582,7 +6979,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tasmoadmin.webp"
  },
  {
   "id": "tasmocompiler",
@@ -6599,7 +6997,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tasmocompiler.webp"
  },
  {
   "id": "tautulli",
@@ -6616,7 +7015,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tautulli.webp"
  },
  {
   "id": "tdarr",
@@ -6633,7 +7033,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tdarr.webp"
  },
  {
   "id": "teamspeak-server",
@@ -6650,7 +7051,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/teamspeak-light.webp"
  },
  {
   "id": "technitiumdns",
@@ -6667,7 +7069,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/technitium.webp"
  },
  {
   "id": "teddycloud",
@@ -6684,7 +7087,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/teddycloud.webp"
  },
  {
   "id": "telegraf",
@@ -6701,7 +7105,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/telegraf.webp"
  },
  {
   "id": "termix",
@@ -6718,7 +7123,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/termix.webp"
  },
  {
   "id": "the-lounge",
@@ -6735,7 +7141,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/the-lounge.webp"
  },
  {
   "id": "thingsboard",
@@ -6752,7 +7159,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/thingsboard.webp"
  },
  {
   "id": "threadfin",
@@ -6769,7 +7177,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/threadfin.webp"
  },
  {
   "id": "tianji",
@@ -6786,7 +7195,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tianji.webp"
  },
  {
   "id": "tinyauth",
@@ -6803,7 +7213,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tinyauth.webp"
  },
  {
   "id": "traccar",
@@ -6820,7 +7231,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/traccar.webp"
  },
  {
   "id": "tracearr",
@@ -6837,7 +7249,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tracearr.webp"
  },
  {
   "id": "tracktor",
@@ -6854,7 +7267,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tracktor.webp"
  },
  {
   "id": "traefik",
@@ -6871,7 +7285,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/traefik.webp"
  },
  {
   "id": "transmission",
@@ -6888,7 +7303,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/transmission.webp"
  },
  {
   "id": "trilium",
@@ -6905,7 +7321,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/trilium-notes.webp"
  },
  {
   "id": "trip",
@@ -6922,7 +7339,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/trip.webp"
  },
  {
   "id": "truenas-vm",
@@ -6939,7 +7357,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/truenas-core.webp"
  },
  {
   "id": "tududi",
@@ -6956,7 +7375,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tududi.webp"
  },
  {
   "id": "tunarr",
@@ -6973,7 +7393,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/tunarr.webp"
  },
  {
   "id": "turnkey",
@@ -6986,7 +7407,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/turnkey-linux.webp"
  },
  {
   "id": "twingate-connector",
@@ -7003,7 +7425,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/twingate.webp"
  },
  {
   "id": "ubuntu",
@@ -7020,7 +7443,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ubuntu.webp"
  },
  {
   "id": "ubuntu2204-vm",
@@ -7037,7 +7461,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ubuntu.webp"
  },
  {
   "id": "ubuntu2404-vm",
@@ -7054,7 +7479,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ubuntu.webp"
  },
  {
   "id": "ubuntu2504-vm",
@@ -7071,7 +7497,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ubuntu.webp"
  },
  {
   "id": "uhf",
@@ -7088,7 +7515,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/uhf.webp"
  },
  {
   "id": "umami",
@@ -7105,7 +7533,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/umami.webp"
  },
  {
   "id": "umbrel-os-vm",
@@ -7122,7 +7551,8 @@
   "warnings": [
    "Creates a new VM"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/umbrelos.webp"
  },
  {
   "id": "umlautadaptarr",
@@ -7139,7 +7569,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/refs/heads/main/misc/images/logo.png"
  },
  {
   "id": "unbound",
@@ -7156,7 +7587,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/unbound.webp"
  },
  {
   "id": "unifi-os-server",
@@ -7173,7 +7605,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/ubiquiti-unifi.webp"
  },
  {
   "id": "unmanic",
@@ -7190,7 +7623,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/unmanic.webp"
  },
  {
   "id": "update-apps",
@@ -7203,7 +7637,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/proxmox.webp"
  },
  {
   "id": "update-lxcs",
@@ -7216,7 +7651,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linuxcontainers.webp"
  },
  {
   "id": "update-repo",
@@ -7229,7 +7665,8 @@
   "warnings": [
    "Runs as root on the host"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/linuxcontainers.webp"
  },
  {
   "id": "upgopher",
@@ -7246,7 +7683,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/upgopher.webp"
  },
  {
   "id": "upsnap",
@@ -7263,7 +7701,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/upsnap.webp"
  },
  {
   "id": "uptimekuma",
@@ -7280,7 +7719,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/uptime-kuma.webp"
  },
  {
   "id": "urbackupserver",
@@ -7297,7 +7737,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/urbackup.webp"
  },
  {
   "id": "valkey",
@@ -7314,7 +7755,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/valkey.webp"
  },
  {
   "id": "vaultwarden",
@@ -7331,7 +7773,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/vaultwarden.webp"
  },
  {
   "id": "victoriametrics",
@@ -7348,7 +7791,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/victoriametrics.webp"
  },
  {
   "id": "vikunja",
@@ -7365,7 +7809,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/vikunja.webp"
  },
  {
   "id": "wallabag",
@@ -7382,7 +7827,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wallabag.webp"
  },
  {
   "id": "wallos",
@@ -7399,7 +7845,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wallos.webp"
  },
  {
   "id": "wanderer",
@@ -7416,7 +7863,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wanderer-light.webp"
  },
  {
   "id": "warracker",
@@ -7433,7 +7881,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/warracker.webp"
  },
  {
   "id": "wastebin",
@@ -7450,7 +7899,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wastebin.webp"
  },
  {
   "id": "watcharr",
@@ -7467,7 +7917,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/watcharr.webp"
  },
  {
   "id": "watchyourlan",
@@ -7484,7 +7935,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/watchyourlan.webp"
  },
  {
   "id": "wavelog",
@@ -7501,7 +7953,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wavelog.webp"
  },
  {
   "id": "wazuh",
@@ -7518,7 +7971,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wazuh.webp"
  },
  {
   "id": "wealthfolio",
@@ -7535,7 +7989,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wealthfolio.webp"
  },
  {
   "id": "web-check",
@@ -7552,20 +8007,22 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/web-check.webp"
  },
  {
   "id": "webmin",
   "name": "Webmin System Administration",
-  "type": "pve",
+  "type": "addon",
   "category": "Proxmox & Virtualization",
   "description": "Webmin provides a graphical user interface (GUI) for tasks such as user account management, package management, file system configuration, network configuration, and more.",
   "script_url": "https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/webmin.sh",
   "resources": {},
   "warnings": [
-   "Runs as root on the host"
+   "Runs as root in the selected target"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/webmin.webp"
  },
  {
   "id": "whisparr",
@@ -7582,7 +8039,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/whisparr.webp"
  },
  {
   "id": "wikijs",
@@ -7599,7 +8057,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wiki-js.webp"
  },
  {
   "id": "wireguard",
@@ -7616,7 +8075,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wireguard.webp"
  },
  {
   "id": "wishlist",
@@ -7633,7 +8093,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/cmintey-wishlist.webp"
  },
  {
   "id": "wizarr",
@@ -7650,7 +8111,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wizarr.webp"
  },
  {
   "id": "wordpress",
@@ -7667,7 +8129,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/wordpress.webp"
  },
  {
   "id": "writefreely",
@@ -7684,7 +8147,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/writefreely-light.webp"
  },
  {
   "id": "yt-dlp-webui",
@@ -7701,7 +8165,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/youtube-dl.webp"
  },
  {
   "id": "yubal",
@@ -7718,7 +8183,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/yubal.webp"
  },
  {
   "id": "yunohost",
@@ -7735,7 +8201,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/yunohost.webp"
  },
  {
   "id": "zabbix",
@@ -7752,7 +8219,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zabbix.webp"
  },
  {
   "id": "zammad",
@@ -7769,7 +8237,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zammad.webp"
  },
  {
   "id": "zerobyte",
@@ -7786,7 +8255,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zerobyte.webp"
  },
  {
   "id": "zerotier-one",
@@ -7803,7 +8273,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zerotier.webp"
  },
  {
   "id": "zigbee2mqtt",
@@ -7820,7 +8291,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zigbee2mqtt.webp"
  },
  {
   "id": "zipline",
@@ -7837,7 +8309,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zipline.webp"
  },
  {
   "id": "zitadel",
@@ -7854,7 +8327,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zitadel.webp"
  },
  {
   "id": "zoraxy",
@@ -7871,7 +8345,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zoraxy.webp"
  },
  {
   "id": "zot",
@@ -7888,7 +8363,8 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/zot-registry.webp"
  },
  {
   "id": "zwave-js-ui",
@@ -7905,6 +8381,7 @@
   "warnings": [
    "Creates a new LXC"
   ],
-  "source": "community"
+  "source": "community",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/z-wave-js-ui.webp"
  }
 ]

@@ -399,8 +399,8 @@
 
 - id: runtipi
   name: Runtipi
-  type: pve
-  description: One-click self-hosted app platform. Addon — installs onto an existing Debian/Alpine system, not a new LXC.
+  type: addon
+  description: One-click self-hosted app platform. Addon — installs into the selected LXC (or the host), not a new container.
   category: Operating Systems
   script_url: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/tools/addon/runtipi.sh
   warnings:

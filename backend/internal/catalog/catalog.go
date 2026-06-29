@@ -64,8 +64,9 @@ type Script struct {
 	ScriptURL   string    `yaml:"script_url" json:"script_url"`
 	Resources   Resources `yaml:"resources" json:"resources"`
 	Warnings    []string  `yaml:"warnings" json:"warnings"`
-	Verified    bool      `yaml:"-" json:"verified"`         // from the curated manifest
-	Source      string    `yaml:"-" json:"source,omitempty"` // curated | community
+	Logo        string    `yaml:"logo,omitempty" json:"logo,omitempty"` // selfh.st icon URL, if known
+	Verified    bool      `yaml:"-" json:"verified"`                    // from the curated manifest
+	Source      string    `yaml:"-" json:"source,omitempty"`            // curated | community
 }
 
 // Catalog is the merged catalog plus an id index. Guarded by mu because Sync
@@ -91,6 +92,14 @@ func Load() (*Catalog, error) {
 		return nil, fmt.Errorf("parse catalog snapshot: %w", err)
 	}
 
+	// Index snapshot logos so curated manifest entries inherit an icon for free.
+	snapLogo := map[string]string{}
+	for _, s := range snap {
+		if s.Logo != "" {
+			snapLogo[s.ID] = s.Logo
+		}
+	}
+
 	c := &Catalog{byID: map[string]Script{}}
 	for _, s := range manifest {
 		if s.ID == "" || s.ScriptURL == "" {
@@ -100,6 +109,9 @@ func Load() (*Catalog, error) {
 			return nil, fmt.Errorf("duplicate catalog id: %s", s.ID)
 		}
 		s.Verified, s.Source = true, "curated"
+		if s.Logo == "" {
+			s.Logo = snapLogo[s.ID]
+		}
 		c.put(s)
 	}
 	for _, s := range snap {
@@ -249,7 +261,9 @@ func typeOf(p string) string {
 		return "vm"
 	case strings.HasPrefix(p, "ct/"), strings.HasPrefix(p, "turnkey/"):
 		return "ct"
-	default: // tools/pve, tools/addon
+	case strings.HasPrefix(p, "tools/addon/"):
+		return "addon" // installs into an existing target, not a fresh guest
+	default: // tools/pve
 		return "pve"
 	}
 }
@@ -260,6 +274,8 @@ func warningsFor(t string) []string {
 		return []string{"Creates a new LXC"}
 	case "vm":
 		return []string{"Creates a new VM"}
+	case "addon":
+		return []string{"Runs as root in the selected target"}
 	default:
 		return []string{"Runs as root on the host"}
 	}

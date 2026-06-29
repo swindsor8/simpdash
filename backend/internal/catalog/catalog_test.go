@@ -98,7 +98,7 @@ func TestTypeOf(t *testing.T) {
 	for p, want := range map[string]string{
 		"ct/jellyfin.sh": "ct", "vm/debian-vm.sh": "vm",
 		"turnkey/turnkey.sh": "ct", "tools/pve/post-pve-install.sh": "pve",
-		"tools/addon/runtipi.sh": "pve",
+		"tools/addon/runtipi.sh": "addon",
 	} {
 		if got := typeOf(p); got != want {
 			t.Errorf("typeOf(%q)=%q want %q", p, got, want)
