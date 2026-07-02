@@ -11,13 +11,13 @@ import { useJobStream } from '../hooks/useJobStream'
 import Terminal from './Terminal'
 import Updates from './Updates'
 import Scripts from './Scripts'
-import Themes from './Themes'
 import Nodes from './Nodes'
 import Network from './Network'
 import Backups, { BackupBadge } from './Backups'
 import Notebook from './Notebook'
 import Activity from './Activity'
 import Settings from './Settings'
+import ErrorBoundary from './ErrorBoundary'
 import UpdateBanner from './UpdateBanner'
 import { Card, StatCard, StatusPill, statusVariant } from './Card'
 import RadialGauge from './RadialGauge'
@@ -95,15 +95,6 @@ function IconTerminal() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
-    </svg>
-  )
-}
-function IconPalette() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
-      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
     </svg>
   )
 }
@@ -1324,18 +1315,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           <NavItem icon={<IconSettings />} label="Settings" active={view === 'settings'} onClick={() => go('settings')} />
         </nav>
 
-        <div className="px-2 pt-3 border-t border-white/[0.06] flex items-center">
-          <div className="flex-1 min-w-0">
-            <NavItem icon={<IconLogout />} label="Sign out" onClick={handleLogout} />
-          </div>
-          <button
-            onClick={() => go('themes')}
-            title="Themes"
-            aria-label="Themes"
-            className={`p-2.5 rounded-xl transition-colors shrink-0 ${view === 'themes' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
-          >
-            <IconPalette />
-          </button>
+        <div className="px-2 pt-3 border-t border-white/[0.06]">
+          <NavItem icon={<IconLogout />} label="Sign out" onClick={handleLogout} />
         </div>
       </aside>
 
@@ -1344,15 +1325,9 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
 
       <UpdateBanner />
 
-      {view === 'themes' ? (
-        <>
-          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4">
-            <h1 className="text-base font-semibold">Appearance</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Choose a colour theme</p>
-          </header>
-          <Themes theme={theme} setTheme={setTheme} />
-        </>
-      ) : view === 'network' ? (
+      <ErrorBoundary resetKey={view}>
+
+      {view === 'network' ? (
         <>
           <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4 flex items-center justify-between gap-2">
             <div>
@@ -1389,9 +1364,9 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         <>
           <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4">
             <h1 className="text-base font-semibold">Settings</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Security, notifications, and integrations</p>
+            <p className="text-xs text-gray-500 mt-0.5">Appearance, security, notifications, and integrations</p>
           </header>
-          <Settings />
+          <Settings theme={theme} setTheme={setTheme} />
         </>
       ) : view === 'nodes' ? (
         <>
@@ -1622,6 +1597,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         </main>
         </>
       )}
+      </ErrorBoundary>
       </div>
 
       {/* Confirmation modal for destructive power actions */}

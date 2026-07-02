@@ -101,7 +101,10 @@ export function runScript(node, slug, target) {
 // getNetwork → PVE host network interfaces.
 export async function getNetwork() {
   const r = await fetch(`${BASE}/network`, { credentials: 'same-origin' })
-  if (!r.ok) throw new Error(await r.text())
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
   return r.json()
 }
 

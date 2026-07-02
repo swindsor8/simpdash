@@ -230,14 +230,14 @@ function ThemeCard({ t, active, onSelect }) {
   )
 }
 
-export default function Themes({ theme, setTheme }) {
-  return (
-    <main className="p-8 max-w-3xl">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {THEMES.map(t => (
-          <ThemeCard key={t.id} t={t} active={theme === t.id} onSelect={setTheme} />
-        ))}
-      </div>
-    </main>
+export default function Themes({ theme, setTheme, embedded = false }) {
+  const grid = (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {THEMES.map(t => (
+        <ThemeCard key={t.id} t={t} active={theme === t.id} onSelect={setTheme} />
+      ))}
+    </div>
   )
+  if (embedded) return grid // rendered inside the Settings page
+  return <main className="p-4 sm:p-8 max-w-3xl">{grid}</main>
 }

@@ -3,6 +3,7 @@ import {
   getSettings, putNotifySettings, testNotify, putPBSSettings,
   twoFASetup, twoFAEnable, twoFADisable,
 } from '../lib/api'
+import Themes from './Themes'
 
 const inputCls = 'w-full bg-[#0c0c14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50'
 const labelCls = 'block text-xs text-gray-500 mb-1.5'
@@ -343,7 +344,7 @@ function PBSSection({ initial }) {
   )
 }
 
-export default function Settings() {
+export default function Settings({ theme, setTheme }) {
   const [data, setData] = useState(null)
   const [err, setErr] = useState(null)
 
@@ -356,6 +357,9 @@ export default function Settings() {
 
   return (
     <div className="p-4 sm:p-8 space-y-6 max-w-3xl">
+      <Section title="Appearance" subtitle="Choose a colour theme.">
+        <Themes theme={theme} setTheme={setTheme} embedded />
+      </Section>
       <TwoFASection initial={data.totp} />
       <NotifySection initial={data.notify} />
       <PBSSection initial={data.pbs} />
