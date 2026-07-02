@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -24,17 +23,8 @@ func (s *Server) UpdatesCheck(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
 	defer cancel()
 
-	if out, err := exec.CommandContext(ctx, "apt-get", "update", "-q").CombinedOutput(); err != nil {
-		log.Printf("apt-get update: %v: %s", err, strings.TrimSpace(string(out)))
-	}
-
-	out, err := exec.CommandContext(ctx, "apt", "list", "--upgradable").Output()
-	if err != nil {
-		// apt not present (dev machine) or hard failure — return empty, don't 500.
-		writeJSON(w, http.StatusOK, map[string]any{"count": 0, "packages": []string{}})
-		return
-	}
-	pkgs := parseUpgradable(string(out))
+	pkgs := runAptCheck(ctx)
+	s.recordAptCheck(pkgs) // keep the cached badge count in sync with manual checks
 	writeJSON(w, http.StatusOK, map[string]any{"count": len(pkgs), "packages": pkgs})
 }
 

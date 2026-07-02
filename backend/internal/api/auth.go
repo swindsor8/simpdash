@@ -76,6 +76,7 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	var body struct {
 		Password string `json:"password"`
+		Code     string `json:"code"` // TOTP or recovery code, when 2FA is enabled
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Password == "" {
 		writeErr(w, http.StatusBadRequest, "password required")
@@ -86,6 +87,21 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusUnauthorized, "invalid password")
 		return
 	}
+
+	// Second factor. The step-up response confirms the password was right —
+	// inherent to any 2FA flow; the rate limiter covers code guessing too.
+	if s.cfg.TOTPEnabled {
+		if body.Code == "" {
+			writeJSON(w, http.StatusOK, map[string]any{"totp_required": true})
+			return
+		}
+		if !s.checkSecondFactor(body.Code) {
+			s.loginLimiter.recordFailure(ip)
+			writeErr(w, http.StatusUnauthorized, "invalid code")
+			return
+		}
+	}
+
 	s.loginLimiter.reset(ip)
 	s.setSession(w, r)
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})

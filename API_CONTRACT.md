@@ -9,15 +9,24 @@ exactly. Drift between this doc and reality is the #1 way these projects rot.
 
 Single local admin user, no multi-tenancy. Session via signed cookie (HMAC,
 `SessionSecret` from config). No refresh tokens, no OAuth — see config.go
-comment for reasoning.
+comment for reasoning. Optional TOTP 2FA (RFC 6238, SHA-1/6-digit/30 s) with
+single-use recovery codes (bcrypt-hashed in config; plaintext shown once).
 
 | Method | Path           | Body                          | Notes                              |
 |--------|----------------|--------------------------------|-------------------------------------|
 | GET    | `/api/setup/status` | —                          | `{ "onboarded": bool, "mode": "main"|"secondary" }` |
 | POST   | `/api/setup/password` | `{ "password": string }`  | First-run only. 412 if already onboarded. |
-| POST   | `/api/auth/login`     | `{ "password": string }`  | Sets session cookie.               |
+| POST   | `/api/auth/login`     | `{ "password": string, "code"?: string }` | Sets session cookie. With 2FA enabled and no `code`: 200 `{ "totp_required": true }` (no session) — resubmit with the TOTP or a recovery code. Code failures are rate-limited with password failures; used TOTP steps can't be replayed. |
 | POST   | `/api/auth/logout`    | —                          | Clears session cookie.             |
 | GET    | `/api/auth/me`        | —                          | 200 if session valid, else 401.    |
+
+### 2FA management (session-gated)
+
+| Method | Path                        | Body | Notes |
+|--------|-----------------------------|------|-------|
+| POST   | `/api/settings/2fa/setup`   | —    | `{ "secret", "otpauth_uri" }`. Held in memory only until enabled. |
+| POST   | `/api/settings/2fa/enable`  | `{ "code" }` | Verifies possession, persists, returns `{ "recovery_codes": [...] }` **once**. |
+| POST   | `/api/settings/2fa/disable` | `{ "password", "code" }` | Needs BOTH factors — a stolen session alone can't strip 2FA. |
 
 ## Proxmox / Resource Stats (Milestone 2)
 
@@ -79,6 +88,20 @@ badge + "Install agent" prompt from `managed: false`. Main sets this by
 cross-referencing `/cluster/resources` node names against its own hostname and
 each paired node's reported `node_name`.
 
+M11 additions to the snapshot: each node carries `storage: [{ "id", "status",
+"disk", "maxdisk", "shared" }]` (its storage pools from the same
+`/cluster/resources` call) and each guest carries `tags: ["a","b"]` (PVE guest
+tags, split from PVE's semicolon string; omitted when empty).
+
+### Cluster extras (M11, session-gated, all read-only, cached server-side)
+
+| Method | Path                 | Notes |
+|--------|----------------------|-------|
+| GET    | `/api/rrd?node=X&timeframe=hour\|day\|week` | Node history straight from PVE's RRD (`cf=AVERAGE`), cached 60 s. Node name validated against `[a-zA-Z0-9._-]`. |
+| GET    | `/api/cluster-tasks` | Last 50 cluster tasks (vzdump, starts/stops, migrations…), newest first, cached 30 s. |
+| GET    | `/api/guest-ips`     | `{ "qemu:101": ["192.168.1.50"], "lxc:201": [...] }` — best-effort IPv4s for running local guests (LXC interfaces endpoint / QEMU guest agent), cached 2 min, bounded fan-out. Guests without a readable IP are absent. |
+| POST   | `/api/entities/node/:id/action` `{ "action": "wake" }` | Wake-on-LAN via PVE's `/nodes/{node}/wakeonlan` (an online cluster member sends the packet; target needs its WOL MAC set in PVE node options). |
+
 ## Backups (Milestone 8)
 
 | Method | Path           | Notes |
@@ -117,7 +140,8 @@ failure message.
 
 | Method | Path                  | Notes |
 |--------|-----------------------|-------|
-| GET    | `/api/updates/check`  | Runs `apt update`, returns pending package list. |
+| GET    | `/api/updates/check`  | Runs `apt update`, returns pending package list. Also refreshes the cached badge count. |
+| GET    | `/api/updates/pending`| Cached `{ "count", "checked_at" }` — **never** runs apt. A background ticker refreshes every 12 h; drives the nav badge and the daily "updates available" notification. |
 | POST   | `/api/updates/apply`  | Kicks off `apt upgrade -y` as a job. Returns `{ "job_id": string }` immediately. |
 | WS     | `/api/jobs/:id/stream`| Streams stdout/stderr lines + final exit code for any job (updates or script installs share this). |
 | GET    | `/api/jobs`           | Job history from SQLite (id, type, status, started_at, finished_at, exit_code). |
@@ -209,4 +233,50 @@ A **note**: `{ "id": int, "content": string, "entity_type": "node"|"vm"|"lxc"|""
 | PUT    | `/api/notes/:id`    | `{ "content"?, "color"?, "pinned"? }` | Partial update; bumps `updated_at`. Entity link is not re-editable in v1. 404 if missing. |
 | DELETE | `/api/notes/:id`    | —    | Hard delete. `{ "ok": true }`, or 404 if missing. |
 | GET    | `/api/notes/counts` | —    | `[{ "entity_type", "entity_id", "count" }]` for every linked entity with ≥1 note (general notes excluded) — drives the note badge on VM/CT tiles. |
+
+## Service links, icons & health (M10/M11)
+
+A service link maps an entity key (`node:<name>` / `qemu:<vmid>` / `lxc:<vmid>`)
+to a primary URL (+optional label) and up to 8 `extras: [{ "url", "label" }]`
+for guests hosting several apps. All URLs validated absolute http(s).
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET    | `/api/service-links`          | Full map. |
+| PUT    | `/api/service-links/:t/:id`   | `{ "url", "label"?, "extras"? }`. |
+| DELETE | `/api/service-links/:t/:id`   | Remove. |
+| GET    | `/api/service-links/:t/:id/icon` | Favicon **proxied through the backend** (mixed-content safe). Only stored origins are ever fetched (no open proxy); responses size-capped (512 KB), image-content-type-gated, served with `nosniff` + deny-all CSP + `sandbox` so a hostile SVG can't XSS the dashboard origin; cached 24 h (negative 1 h). |
+| GET    | `/api/service-health`         | `{ "<key>": { "up", "status", "latency_ms", "checked_at" } }` (extras keyed `<key>#<i>`). Backend probes every stored URL every 30 s: GET, ≤3 redirects, 5 s timeout, no credentials, body discarded (metadata only — can't be used to read internal services). `up` = any HTTP answer < 500. TLS unverified (self-signed homelab certs; nothing secret sent). |
+
+## Guest introspection (M11, local host only, session-gated)
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET    | `/api/guests/:vmid/services?type=lxc\|qemu` | Running systemd services (pct exec / qm guest exec; VM path needs the QEMU guest agent). Read-only; vmid validated numeric; fixed argv, no shell. |
+| GET    | `/api/guests/:vmid/docker?type=lxc\|qemu`   | `docker ps --all` inside the guest, same trust boundary. 404 with a clear message when docker isn't installed. |
+
+## Settings & notifications (M11, session-gated)
+
+Secrets are **write-only**: GET returns `has_token`/`has_secret` booleans,
+never values. On PUT, omitting the secret field keeps the stored one; the
+literal `"-"` clears it.
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET    | `/api/settings`             | `{ notify: {...}, pbs: {...}, totp: { enabled, recovery_codes } }`. |
+| PUT    | `/api/settings/notify`      | `{ provider: ntfy\|gotify\|discord\|webhook, url, token?, insecure, job_failed, node_offline, updates_available, backup_failed }`. Empty url disables. |
+| POST   | `/api/settings/notify/test` | Sends a test message; surfaces the provider error on failure. |
+| PUT    | `/api/settings/pbs`         | `{ url, token_id, secret?, fingerprint }`. Validated before persisting. |
+| GET    | `/api/pbs`                  | PBS datastore usage + latest-snapshot/verification per guest, cached 5 min. 204 when unconfigured. |
+
+Notification events: job failed (executor hook), node offline/recovered
+(3 consecutive offline polls ≈ 9 s debounce), apt updates available (daily
+digest), vzdump job failed (12 h sweep, watermarked — no replay of history).
+Messages carry hostnames/job types only, never credentials or command output.
+TLS verification is ON by default for notification endpoints; explicit
+`insecure` flag for self-signed self-hosted servers.
+
+PBS TLS: certificate must chain to a system CA **or** match the pinned SHA-256
+fingerprint (as PBS prints it). There is deliberately no insecure fallback —
+PBS credentials are sent on every request.
 

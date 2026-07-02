@@ -19,12 +19,22 @@ func (s *Server) handleServiceLinksPrefix(w http.ResponseWriter, r *http.Request
 		methodGate(http.MethodGet, s.requireAuth(s.GetServiceLinks))(w, r)
 		return
 	}
-	parts := strings.SplitN(strings.TrimPrefix(tail, "/"), "/", 2)
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+	parts := strings.SplitN(strings.TrimPrefix(tail, "/"), "/", 3)
+	if len(parts) < 2 || parts[0] == "" || parts[1] == "" {
 		http.NotFound(w, r)
 		return
 	}
 	key := parts[0] + ":" + parts[1]
+	if len(parts) == 3 {
+		if parts[2] == "icon" {
+			methodGate(http.MethodGet, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
+				s.ServiceLinkIcon(w, r, key)
+			}))(w, r)
+			return
+		}
+		http.NotFound(w, r)
+		return
+	}
 	switch r.Method {
 	case http.MethodPut:
 		s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
@@ -48,24 +58,47 @@ func (s *Server) GetServiceLinks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, m)
 }
 
+// validLinkURL enforces the only URL shapes we ever store or fetch: absolute
+// http(s) with a host. Everything downstream (favicon proxy, health checker)
+// relies on this gate, so it stays strict.
+func validLinkURL(raw string) bool {
+	u, err := url.Parse(raw)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
+}
+
 func (s *Server) UpsertServiceLink(w http.ResponseWriter, r *http.Request, key string) {
 	var body struct {
-		URL   string  `json:"url"`
-		Label *string `json:"label"`
+		URL    string            `json:"url"`
+		Label  *string           `json:"label"`
+		Extras []store.ExtraLink `json:"extras"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeErr(w, http.StatusBadRequest, "invalid body")
 		return
 	}
-	u, err := url.Parse(body.URL)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+	if !validLinkURL(body.URL) {
 		writeErr(w, http.StatusBadRequest, "url must be a valid http(s):// URL")
 		return
 	}
-	if err := s.serviceLinks.Upsert(key, store.ServiceLink{URL: body.URL, Label: body.Label}); err != nil {
+	if len(body.Extras) > 8 {
+		writeErr(w, http.StatusBadRequest, "at most 8 extra links per guest")
+		return
+	}
+	for _, e := range body.Extras {
+		if !validLinkURL(e.URL) {
+			writeErr(w, http.StatusBadRequest, "every extra link must be a valid http(s):// URL")
+			return
+		}
+		if len(e.Label) > 64 {
+			writeErr(w, http.StatusBadRequest, "extra link labels must be ≤64 characters")
+			return
+		}
+	}
+	if err := s.serviceLinks.Upsert(key, store.ServiceLink{URL: body.URL, Label: body.Label, Extras: body.Extras}); err != nil {
 		writeErr(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	s.health.wake() // re-check links promptly after an edit
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 

@@ -98,6 +98,9 @@ func main() {
 	}
 
 	go poller.Run(context.Background())
+	// Background workers: service health checks, apt auto-check, node-offline
+	// watch, backup-failure sweep (all best-effort, notification-driven).
+	srv.RunBackground(context.Background())
 	srv.Routes(mux)
 
 	sub, err := fs.Sub(web.DistFS, "dist")

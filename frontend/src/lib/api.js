@@ -24,7 +24,8 @@ export async function getSetupStatus() {
 }
 
 export const setupPassword = (password) => post('/setup/password', { password })
-export const login = (password) => post('/auth/login', { password })
+// login → { ok: true } or { totp_required: true } (resubmit with code).
+export const login = (password, code) => post('/auth/login', code ? { password, code } : { password })
 
 export async function logout() {
   await fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'same-origin' })
@@ -233,11 +234,11 @@ export async function getServiceLinks() {
   return r.json().catch(() => ({}))
 }
 
-export async function upsertServiceLink(type, id, url, label) {
+export async function upsertServiceLink(type, id, url, label, extras = []) {
   const r = await fetch(`${BASE}/service-links/${encodeURIComponent(type)}/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url, label: label || null }),
+    body: JSON.stringify({ url, label: label || null, extras }),
     credentials: 'same-origin',
   })
   if (!r.ok) {
@@ -258,6 +259,109 @@ export async function deleteServiceLink(type, id) {
   }
   return r.json()
 }
+
+// serviceIconUrl → backend-proxied favicon for a linked service (mixed-content
+// safe; the backend only ever fetches admin-stored origins).
+export const serviceIconUrl = (type, id) =>
+  `${BASE}/service-links/${encodeURIComponent(type)}/${encodeURIComponent(id)}/icon`
+
+// getServiceHealth → { "<key>": { up, status, latency_ms, checked_at } }
+export async function getServiceHealth() {
+  const r = await fetch(`${BASE}/service-health`, { credentials: 'same-origin' })
+  if (!r.ok) return {}
+  return r.json().catch(() => ({}))
+}
+
+// getGuestIPs → { "qemu:101": ["192.168.1.50"], "lxc:201": [...] } best-effort.
+export async function getGuestIPs() {
+  const r = await fetch(`${BASE}/guest-ips`, { credentials: 'same-origin' })
+  if (!r.ok) return {}
+  return r.json().catch(() => ({}))
+}
+
+// getRRD → node resource history from PVE's own RRD store.
+export async function getRRD(node, timeframe = 'hour') {
+  const r = await fetch(`${BASE}/rrd?node=${encodeURIComponent(node)}&timeframe=${timeframe}`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// getClusterTasks → recent PVE tasks cluster-wide (migrations, backups, …).
+export async function getClusterTasks() {
+  const r = await fetch(`${BASE}/cluster-tasks`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// getGuestDocker → docker containers inside a guest (404 when docker absent).
+export async function getGuestDocker(vmid, type) {
+  const r = await fetch(`${BASE}/guests/${vmid}/docker?type=${type}`, { credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+// getUpdatesPending → cached { count, checked_at } — never triggers apt.
+export async function getUpdatesPending() {
+  const r = await fetch(`${BASE}/updates/pending`, { credentials: 'same-origin' })
+  if (!r.ok) return { count: 0, checked_at: 0 }
+  return r.json().catch(() => ({ count: 0, checked_at: 0 }))
+}
+
+// --- settings (notifications, PBS, 2FA) ---
+
+export async function getSettings() {
+  const r = await fetch(`${BASE}/settings`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+export async function putNotifySettings(body) {
+  const r = await fetch(`${BASE}/settings/notify`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export const testNotify = () => post('/settings/notify/test')
+
+export async function putPBSSettings(body) {
+  const r = await fetch(`${BASE}/settings/pbs`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+// getPBS → PBS datastore usage + per-guest verify state; null if not configured.
+export async function getPBS() {
+  const r = await fetch(`${BASE}/pbs`, { credentials: 'same-origin' })
+  if (r.status === 204) return null
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export const twoFASetup = () => post('/settings/2fa/setup')
+export const twoFAEnable = (code) => post('/settings/2fa/enable', { code })
+export const twoFADisable = (password, code) => post('/settings/2fa/disable', { password, code })
 
 // --- paired secondary nodes (Milestone 5) ---
 

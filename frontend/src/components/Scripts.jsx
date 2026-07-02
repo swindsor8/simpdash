@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getCatalog, runScript, syncCatalog } from '../lib/api'
 import { useJobStream } from '../hooks/useJobStream'
 import Terminal from './Terminal'
+import { useFocusTrap } from '../lib/a11y'
 
 // A warning is "creating" infrastructure (a new LXC/VM) — surfaced loudest in
 // the confirm dialog since it changes the host, not just an app.
@@ -114,6 +115,7 @@ function ConfirmDialog({ script, lxcs = [], onCancel, onConfirm }) {
   // Add-ons install into a target; everything else runs on the host (value stays
   // 'host' and is ignored by non-addon scripts).
   const [target, setTarget] = useState('host')
+  const trap = useFocusTrap()
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onCancel() }
     window.addEventListener('keydown', onKey)
@@ -129,6 +131,7 @@ function ConfirmDialog({ script, lxcs = [], onCancel, onConfirm }) {
       onClick={onCancel}
     >
       <div
+        ref={trap} role="dialog" aria-modal="true"
         className="bg-[#13131e] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >

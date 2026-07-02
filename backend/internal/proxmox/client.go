@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,32 +18,43 @@ type Snapshot struct {
 }
 
 type Node struct {
-	ID      string  `json:"id"`
-	Status  string  `json:"status"`
-	CPU     float64 `json:"cpu"`
-	MaxCPU  int     `json:"maxcpu"`
-	Mem     int64   `json:"mem"`
-	MaxMem  int64   `json:"maxmem"`
-	Disk    int64   `json:"disk"`
-	MaxDisk int64   `json:"maxdisk"`
-	Uptime  int64   `json:"uptime"`
-	Managed bool    `json:"managed"`
-	VMs     []Guest `json:"vms"`
-	LXCs    []Guest `json:"lxcs"`
+	ID      string        `json:"id"`
+	Status  string        `json:"status"`
+	CPU     float64       `json:"cpu"`
+	MaxCPU  int           `json:"maxcpu"`
+	Mem     int64         `json:"mem"`
+	MaxMem  int64         `json:"maxmem"`
+	Disk    int64         `json:"disk"`
+	MaxDisk int64         `json:"maxdisk"`
+	Uptime  int64         `json:"uptime"`
+	Managed bool          `json:"managed"`
+	VMs     []Guest       `json:"vms"`
+	LXCs    []Guest       `json:"lxcs"`
+	Storage []StoragePool `json:"storage"`
+}
+
+// StoragePool is one storage entry from /cluster/resources, attached to its node.
+type StoragePool struct {
+	ID      string `json:"id"` // storage name, e.g. "local-lvm"
+	Status  string `json:"status"`
+	Disk    int64  `json:"disk"`
+	MaxDisk int64  `json:"maxdisk"`
+	Shared  bool   `json:"shared"` // cluster-wide storage appears under every node
 }
 
 type Guest struct {
-	VMID    int     `json:"vmid"`
-	Name    string  `json:"name"`
-	Status  string  `json:"status"`
-	CPU     float64 `json:"cpu"`
-	Mem     int64   `json:"mem"`
-	MaxMem  int64   `json:"maxmem"`
-	Disk    *int64  `json:"disk"`              // null for VMs (cluster/resources doesn't report it)
-	MaxDisk *int64  `json:"maxdisk,omitempty"` // present for LXCs only, per contract
-	Uptime  int64   `json:"uptime"`
-	NetIn   int64   `json:"netin"`  // cumulative bytes received since guest start
-	NetOut  int64   `json:"netout"` // cumulative bytes sent since guest start
+	VMID    int      `json:"vmid"`
+	Name    string   `json:"name"`
+	Status  string   `json:"status"`
+	CPU     float64  `json:"cpu"`
+	Mem     int64    `json:"mem"`
+	MaxMem  int64    `json:"maxmem"`
+	Disk    *int64   `json:"disk"`              // null for VMs (cluster/resources doesn't report it)
+	MaxDisk *int64   `json:"maxdisk,omitempty"` // present for LXCs only, per contract
+	Uptime  int64    `json:"uptime"`
+	NetIn   int64    `json:"netin"`  // cumulative bytes received since guest start
+	NetOut  int64    `json:"netout"` // cumulative bytes sent since guest start
+	Tags    []string `json:"tags,omitempty"`
 }
 
 // NetworkIface is one interface from GET /nodes/{node}/network.
@@ -103,6 +115,17 @@ type rawResource struct {
 	Uptime  int64   `json:"uptime"`
 	NetIn   int64   `json:"netin"`
 	NetOut  int64   `json:"netout"`
+	Tags    string  `json:"tags"`    // semicolon-separated PVE guest tags
+	Storage string  `json:"storage"` // storage name (type == "storage")
+	Shared  int     `json:"shared"`
+}
+
+// parseTags splits PVE's "a;b;c" tag string (empty → nil so omitempty drops it).
+func parseTags(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, ";")
 }
 
 // Client calls the Proxmox VE API. Credentials are set after token
@@ -200,6 +223,7 @@ func reshape(raw []rawResource) Snapshot {
 				Managed: true, // ponytail: hardcoded — monitor-only badging is M5
 				VMs:     []Guest{},
 				LXCs:    []Guest{},
+				Storage: []StoragePool{},
 			}
 			order = append(order, r.Node)
 		}
@@ -223,6 +247,7 @@ func reshape(raw []rawResource) Snapshot {
 				Uptime: r.Uptime,
 				NetIn:  r.NetIn,
 				NetOut: r.NetOut,
+				Tags:   parseTags(r.Tags),
 			})
 		case "lxc":
 			n := nodes[r.Node]
@@ -242,6 +267,19 @@ func reshape(raw []rawResource) Snapshot {
 				Uptime:  r.Uptime,
 				NetIn:   r.NetIn,
 				NetOut:  r.NetOut,
+				Tags:    parseTags(r.Tags),
+			})
+		case "storage":
+			n := nodes[r.Node]
+			if n == nil {
+				continue
+			}
+			n.Storage = append(n.Storage, StoragePool{
+				ID:      r.Storage,
+				Status:  r.Status,
+				Disk:    r.Disk,
+				MaxDisk: r.MaxDisk,
+				Shared:  r.Shared == 1,
 			})
 		}
 	}

@@ -30,6 +30,11 @@ var ErrBusy = errors.New("a job is already running")
 type Executor struct {
 	mu      sync.Mutex
 	current *activeJob
+
+	// OnFinish, when set, is called after every job completes and persists.
+	// Used for failure notifications. Runs on the job goroutine — keep it fast
+	// or dispatch async. Set once at wiring time, before any job starts.
+	OnFinish func(jobType, status string, exitCode int)
 }
 
 type activeJob struct {
@@ -171,6 +176,10 @@ func (e *Executor) run(job *activeJob, cmd *exec.Cmd, db *store.DB, startedAt ti
 		// 3. Close subscriber channels so their range loops terminate.
 		for _, ch := range subs {
 			close(ch)
+		}
+
+		if e.OnFinish != nil {
+			e.OnFinish(job.jobType, status, exitCode)
 		}
 	}()
 

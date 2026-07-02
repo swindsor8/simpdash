@@ -36,8 +36,17 @@ func (s *Server) EntityAction(w http.ResponseWriter, r *http.Request, entityType
 
 	switch entityType {
 	case "node":
+		if body.Action == "wake" {
+			// Wake-on-LAN: PVE sends the magic packet from an online cluster
+			// member. Requires the target node's WOL MAC in its node config.
+			if err := s.px.NodeWake(entityID); err != nil {
+				writeErr(w, http.StatusBadGateway, err.Error())
+				return
+			}
+			break
+		}
 		if body.Action != "reboot" && body.Action != "shutdown" {
-			writeErr(w, http.StatusBadRequest, "nodes only support reboot and shutdown")
+			writeErr(w, http.StatusBadRequest, "nodes only support reboot, shutdown, and wake")
 			return
 		}
 		if err := s.px.NodeAction(entityID, body.Action); err != nil {

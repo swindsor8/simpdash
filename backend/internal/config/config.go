@@ -43,6 +43,44 @@ type Config struct {
 	// on pairing (Milestone 5). Empty until paired; once set, the agent is paired
 	// and stops advertising a pairing code. Secondary mode only.
 	AgentToken string `yaml:"agent_token,omitempty"`
+
+	// Notify configures the outbound notification destination (ntfy/Gotify/
+	// Discord/webhook). Nil = notifications off.
+	Notify *NotifyConfig `yaml:"notify,omitempty"`
+
+	// PBS configures the optional Proxmox Backup Server integration. Nil = off.
+	PBS *PBSConfig `yaml:"pbs,omitempty"`
+
+	// TOTP two-factor auth. Secret is the base32 seed (only meaningful when
+	// Enabled). RecoveryCodes are bcrypt hashes of single-use codes — plaintext
+	// is shown exactly once at enrollment and never stored.
+	TOTPEnabled   bool     `yaml:"totp_enabled,omitempty"`
+	TOTPSecret    string   `yaml:"totp_secret,omitempty"`
+	RecoveryCodes []string `yaml:"recovery_codes,omitempty"`
+}
+
+// NotifyConfig is the outbound notification destination + event toggles.
+type NotifyConfig struct {
+	Provider string `yaml:"provider"` // ntfy | gotify | discord | webhook
+	URL      string `yaml:"url"`
+	Token    string `yaml:"token,omitempty"`    // ntfy bearer / gotify app token
+	Insecure bool   `yaml:"insecure,omitempty"` // skip TLS verify (self-signed self-hosted)
+
+	JobFailed        bool `yaml:"job_failed"`
+	NodeOffline      bool `yaml:"node_offline"`
+	UpdatesAvailable bool `yaml:"updates_available"`
+	BackupFailed     bool `yaml:"backup_failed"`
+}
+
+// PBSConfig holds Proxmox Backup Server API credentials.
+type PBSConfig struct {
+	URL     string `yaml:"url"`      // e.g. https://192.168.1.30:8007
+	TokenID string `yaml:"token_id"` // user@pbs!name
+	Secret  string `yaml:"secret,omitempty"`
+	// Fingerprint pins the server's TLS certificate (sha256, colon-separated
+	// hex as PBS prints it). Required unless the cert chains to a public CA —
+	// credentials are sent on every request, so no insecure fallback exists.
+	Fingerprint string `yaml:"fingerprint,omitempty"`
 }
 
 // ProxmoxConfig holds Proxmox VE API credentials (populated in Milestone 2).

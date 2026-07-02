@@ -16,6 +16,8 @@ import (
 	"simpdash/internal/catalog"
 	"simpdash/internal/config"
 	"simpdash/internal/executor"
+	"simpdash/internal/notify"
+	"simpdash/internal/pbs"
 	"simpdash/internal/proxmox"
 	"simpdash/internal/store"
 	"simpdash/internal/update"
@@ -59,6 +61,24 @@ type Server struct {
 	selfNode string
 
 	loginLimiter *limiter
+
+	// Integrations + caches (all zero-value-ready unless noted).
+	notifier    *notify.Notifier // constructed in NewServer
+	pbs         *pbs.Client      // constructed in NewServer
+	pbsCache    pbsCache
+	health      *healthChecker // constructed in NewServer
+	icons       iconCache
+	rrd         rrdCache
+	tasks       tasksCache
+	ips         ipsCache
+	pending     pendingUpdates
+	notifyState notifyState
+
+	// TOTP: pendingTOTP is an enrollment secret awaiting confirmation
+	// (guarded by cfgMu); totpLastUsed is the anti-replay watermark.
+	pendingTOTP  string
+	totpMu       sync.Mutex
+	totpLastUsed uint64
 }
 
 func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, notes *store.NotesDB, serviceLinks *store.ServiceLinksDB, cat *catalog.Catalog, version string) *Server {
@@ -78,6 +98,18 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		selfNode:     host,
 		loginLimiter: newLimiter(5, time.Minute),
 	}
+	s.notifier = notify.New(notifyConfigOf(cfg))
+	s.pbs = pbs.New()
+	if cfg.PBS != nil {
+		if err := s.pbs.SetConfig(cfg.PBS.URL, cfg.PBS.TokenID, cfg.PBS.Secret, cfg.PBS.Fingerprint); err != nil {
+			// Bad stored PBS config (e.g. malformed fingerprint) — run without it
+			// rather than refusing to start.
+			s.pbs = pbs.New()
+		}
+	}
+	s.health = newHealthChecker(serviceLinks)
+	// Job-failure notifications: executor calls back on every completion.
+	exec.OnFinish = s.JobFinished
 	// The live resource stream is annotated with the same managed/monitor-only
 	// flags as the one-shot view (M6).
 	poller.SetManaged(s.managedNodeNames)
@@ -150,12 +182,33 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/notes", s.requireAuth(s.handleNotes))
 	mux.HandleFunc("/api/notes/counts", methodGate(http.MethodGet, s.requireAuth(s.NotesCounts)))
 	mux.HandleFunc("/api/notes/", s.requireAuth(s.handleNotesPrefix))
+	// Cluster extras: PVE-kept history, task log, guest IPs, service health.
+	mux.HandleFunc("/api/rrd", methodGate(http.MethodGet, s.requireAuth(s.RRD)))
+	mux.HandleFunc("/api/cluster-tasks", methodGate(http.MethodGet, s.requireAuth(s.ClusterTasks)))
+	mux.HandleFunc("/api/guest-ips", methodGate(http.MethodGet, s.requireAuth(s.GuestIPs)))
+	mux.HandleFunc("/api/service-health", methodGate(http.MethodGet, s.requireAuth(s.ServiceHealth)))
+	// Cached apt count (never triggers apt) for the nav badge.
+	mux.HandleFunc("/api/updates/pending", methodGate(http.MethodGet, s.requireAuth(s.UpdatesPending)))
+	// Settings: notifications, PBS, 2FA. Secrets are write-only.
+	mux.HandleFunc("/api/settings", methodGate(http.MethodGet, s.requireAuth(s.GetSettings)))
+	mux.HandleFunc("/api/settings/notify", methodGate(http.MethodPut, s.requireAuth(s.PutNotify)))
+	mux.HandleFunc("/api/settings/notify/test", methodGate(http.MethodPost, s.requireAuth(s.NotifyTest)))
+	mux.HandleFunc("/api/settings/pbs", methodGate(http.MethodPut, s.requireAuth(s.PutPBS)))
+	mux.HandleFunc("/api/settings/2fa/setup", methodGate(http.MethodPost, s.requireAuth(s.TwoFASetup)))
+	mux.HandleFunc("/api/settings/2fa/enable", methodGate(http.MethodPost, s.requireAuth(s.TwoFAEnable)))
+	mux.HandleFunc("/api/settings/2fa/disable", methodGate(http.MethodPost, s.requireAuth(s.TwoFADisable)))
+	mux.HandleFunc("/api/pbs", methodGate(http.MethodGet, s.requireAuth(s.PBSStatus)))
 }
 
 // Info handles GET /api/info — exposes the backend host's Proxmox node name so
-// the frontend can detect when a power action targets the node it's running on.
+// the frontend can detect when a power action targets the node it's running on,
+// and the PVE URL so guest cards can deep-link to the noVNC/xterm console.
 func (s *Server) Info(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{"self_node": s.selfNode})
+	pveURL := ""
+	if s.cfg.Proxmox != nil {
+		pveURL = s.cfg.Proxmox.Host
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"self_node": s.selfNode, "pve_url": pveURL})
 }
 
 // handleCatalogPrefix dispatches POST /api/catalog/:slug/run.
@@ -185,6 +238,10 @@ func (s *Server) handleGuestsPrefix(w http.ResponseWriter, r *http.Request) {
 	case "services":
 		methodGate(http.MethodGet, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
 			s.GuestServices(w, r, vmid)
+		}))(w, r)
+	case "docker":
+		methodGate(http.MethodGet, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
+			s.GuestDocker(w, r, vmid)
 		}))(w, r)
 	case "update":
 		methodGate(http.MethodPost, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {

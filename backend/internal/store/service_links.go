@@ -10,6 +10,15 @@ import (
 type ServiceLink struct {
 	URL   string  `json:"url"`
 	Label *string `json:"label"`
+	// Extras are additional links on the same guest (a docker host running
+	// several apps, a VM exposing UI + admin ports…). The primary URL above
+	// stays the card's click target; extras render as secondary chips.
+	Extras []ExtraLink `json:"extras,omitempty"`
+}
+
+type ExtraLink struct {
+	URL   string `json:"url"`
+	Label string `json:"label"`
 }
 
 type ServiceLinksDB struct {
