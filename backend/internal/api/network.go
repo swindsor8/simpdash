@@ -217,7 +217,7 @@ func (s *Server) speedtestHistPath() string {
 func (s *Server) readSpeedtestHistory() []STHistoryEntry {
 	stHistMu.Lock()
 	defer stHistMu.Unlock()
-	var h []STHistoryEntry
+	h := []STHistoryEntry{} // never nil — nil marshals to JSON null and breaks the client
 	if data, err := os.ReadFile(s.speedtestHistPath()); err == nil {
 		json.Unmarshal(data, &h)
 	}

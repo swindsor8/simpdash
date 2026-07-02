@@ -120,7 +120,7 @@ export default function Network() {
   const [rates, setRates] = useState({})       // iface → {rx, tx} bytes/s
   const [guestRates, setGuestRates] = useState([]) // [{vmid,name,type,status,rx,tx}]
   const [conn, setConn] = useState(null)
-  const [err, setErr] = useState(null)
+  const [ifaceErr, setIfaceErr] = useState(null) // PVE interface list failed — degrade, don't die
   const prev = useRef(null)        // host iface counters: { ifaces, t }
   const gstate = useRef({})        // per-vmid: { netin, netout, t, rx, tx }
   const hist = useRef({ total: { rx: [], tx: [] }, ifaces: {} }) // sparkline buffers
@@ -135,8 +135,11 @@ export default function Network() {
   const [stHist, setStHist] = useState([])
 
   useEffect(() => {
-    getNetwork().then(setIfaces).catch(e => setErr(e.message))
-    getSpeedtestHistory().then(setStHist).catch(() => {})
+    // The interface list comes from the PVE API; without Proxmox the rest of
+    // the tab (live throughput, connectivity, speed test) still works, so a
+    // failure here degrades the table only.
+    getNetwork().then(setIfaces).catch(e => { setIfaceErr(e.message); setIfaces([]) })
+    getSpeedtestHistory().then(d => setStHist(d ?? [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -180,8 +183,14 @@ export default function Network() {
             push(hist.current.ifaces[iface].rx, rate.rx)
             push(hist.current.ifaces[iface].tx, rate.tx)
           }
+          // Total throughput: physical NICs when PVE identified them, else
+          // every non-loopback interface (dev boxes without Proxmox).
           let trx = 0, ttx = 0
-          for (const name of physRef.current) { const r = nr[name]; if (r) { trx += r.rx; ttx += r.tx } }
+          if (physRef.current.length > 0) {
+            for (const name of physRef.current) { const r = nr[name]; if (r) { trx += r.rx; ttx += r.tx } }
+          } else {
+            for (const [name, r] of Object.entries(nr)) { if (name !== 'lo') { trx += r.rx; ttx += r.tx } }
+          }
           push(hist.current.total.rx, trx)
           push(hist.current.total.tx, ttx)
         }
@@ -219,7 +228,7 @@ export default function Network() {
     setStRunning(true); setStErr(null); setStResult(null)
     try {
       setStResult(await runSpeedtest())
-      getSpeedtestHistory().then(setStHist).catch(() => {})
+      getSpeedtestHistory().then(d => setStHist(d ?? [])).catch(() => {})
     } catch (e) {
       setStErr(e.message)
     } finally {
@@ -227,8 +236,7 @@ export default function Network() {
     }
   }
 
-  if (err) return <div className="p-8 text-sm text-red-400">{err}</div>
-  if (!ifaces) return <div className="p-8 text-sm text-gray-600">{loadingMsg}</div>
+  if (!ifaces) return <div className="p-4 sm:p-8 text-sm text-gray-600">{loadingMsg}</div>
 
   const visible = ifaces.filter(i => !hideDown || (i.type !== 'loopback' && i.active))
   const sorted = [...visible].sort((a, b) => {
@@ -260,7 +268,7 @@ export default function Network() {
   const arrow = (key) => sort.key === key ? (sort.dir === 1 ? ' ↓' : ' ↑') : ''
 
   return (
-    <div className="p-8 max-w-5xl space-y-6">
+    <div className="p-4 sm:p-8 max-w-5xl space-y-6">
 
       {/* Live throughput + connectivity */}
       <div className="grid md:grid-cols-2 gap-6">
@@ -359,11 +367,21 @@ export default function Network() {
       <div>
         <div className="flex items-center justify-between mb-3 px-1">
           <h2 className="text-sm font-semibold">Host Interfaces</h2>
-          <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer select-none">
-            <input type="checkbox" checked={hideDown} onChange={e => setHideDown(e.target.checked)} className="accent-blue-500" />
-            Hide down &amp; loopback{hiddenCount > 0 && hideDown ? ` (${hiddenCount})` : ''}
-          </label>
+          {!ifaceErr && (
+            <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer select-none">
+              <input type="checkbox" checked={hideDown} onChange={e => setHideDown(e.target.checked)} className="accent-blue-500" />
+              Hide down &amp; loopback{hiddenCount > 0 && hideDown ? ` (${hiddenCount})` : ''}
+            </label>
+          )}
         </div>
+        {ifaceErr ? (
+          <div className="rounded-2xl border border-amber-500/20 bg-[#13131e] p-6 text-center">
+            <p className="text-sm text-gray-300">Interface details unavailable</p>
+            <p className="text-xs text-gray-600 mt-1">
+              The interface table comes from the Proxmox API — {ifaceErr}. Live throughput above still reads from the host directly.
+            </p>
+          </div>
+        ) : (
         <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -419,6 +437,7 @@ export default function Network() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Guest network */}
