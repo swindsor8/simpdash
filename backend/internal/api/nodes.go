@@ -33,7 +33,7 @@ func (s *Server) ListNodes(w http.ResponseWriter, r *http.Request) {
 	s.cfgMu.Lock()
 	out := make([]map[string]string, 0, len(s.cfg.PairedNodes))
 	for _, n := range s.cfg.PairedNodes {
-		out = append(out, map[string]string{"id": n.ID, "address": n.Address})
+		out = append(out, map[string]string{"id": n.ID, "address": n.Address, "node_name": n.NodeName})
 	}
 	s.cfgMu.Unlock()
 	writeJSON(w, http.StatusOK, out)

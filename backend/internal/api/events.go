@@ -78,6 +78,9 @@ func runAptCheck(ctx context.Context) []string {
 func (s *Server) RunBackground(ctx context.Context) {
 	go s.health.run(ctx)
 	go s.watchNodes(ctx)
+	if s.scheduler != nil {
+		go s.scheduler.Run(ctx)
+	}
 	go func() {
 		select {
 		case <-ctx.Done():
@@ -171,6 +174,10 @@ func (s *Server) watchNodes(ctx context.Context) {
 
 // JobFinished is the executor's completion hook (wired in main.go).
 func (s *Server) JobFinished(jobType, status string, exitCode int) {
+	// Scheduled tasks emit their own notifications with per-schedule policies.
+	if strings.HasPrefix(jobType, "sched_") {
+		return
+	}
 	if status == "succeeded" {
 		return
 	}

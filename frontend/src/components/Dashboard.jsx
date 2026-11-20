@@ -15,6 +15,7 @@ import Scripts from './Scripts'
 import Nodes from './Nodes'
 import Network from './Network'
 import Backups, { BackupBadge } from './Backups'
+import Schedules from './Schedules'
 import Notebook from './Notebook'
 import Activity from './Activity'
 import Settings from './Settings'
@@ -163,6 +164,15 @@ function IconArchive() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><line x1="10" y1="12" x2="14" y2="12"/>
+    </svg>
+  )
+}
+
+function IconCalendarClock() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      <polyline points="12 13 12 16 14.5 17.5"/>
     </svg>
   )
 }
@@ -1322,6 +1332,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           <NavItem icon={<IconNote />} label="Notebook" active={view === 'notebook'} onClick={() => go('notebook', () => setNotebookFilter(null))} />
           <NavItem icon={<IconWifi />} label="Network" active={view === 'network'} onClick={() => go('network')} />
           <NavItem icon={<IconArchive />} label="Backups" active={view === 'backups'} onClick={() => go('backups')} />
+          <NavItem icon={<IconCalendarClock />} label="Schedules" active={view === 'schedules'} onClick={() => go('schedules')} />
           <NavItem icon={<IconActivity />} label="Activity" active={view === 'activity'} onClick={() => go('activity')} />
           <NavItem icon={<IconNetwork />} label="Nodes" active={view === 'nodes'} onClick={() => go('nodes')} />
           <NavItem icon={<IconSettings />} label="Settings" active={view === 'settings'} onClick={() => go('settings')} />
@@ -1370,6 +1381,20 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             </div>
           </header>
           <Backups />
+        </>
+      ) : view === 'schedules' ? (
+        <>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4 flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-base font-semibold">Schedules</h1>
+              <p className="text-xs text-gray-500 mt-0.5">One-time and recurring updates, backups, snapshots, and power tasks</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+              <LocalOnlyNote activeNode={activeNode} />
+            </div>
+          </header>
+          <Schedules nodes={nodes} pairedNodes={pairedNodes} selfNode={selfNode} activeNode={activeNode} />
         </>
       ) : view === 'activity' ? (
         <>

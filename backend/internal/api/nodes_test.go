@@ -39,8 +39,12 @@ func testServer(t *testing.T, cfg *config.Config) *Server {
 	if err != nil {
 		t.Fatalf("open service links: %v", err)
 	}
+	scheds, err := store.OpenSchedules(filepath.Join(dir, "schedules.json"))
+	if err != nil {
+		t.Fatalf("open schedules: %v", err)
+	}
 	px := proxmox.NewClient()
-	return NewServer(cfg, filepath.Join(dir, "config.yaml"), px, NewPoller(px, time.Second), executor.New(), db, notes, links, cat, "dev")
+	return NewServer(cfg, filepath.Join(dir, "config.yaml"), px, NewPoller(px, time.Second), executor.New(), db, notes, links, scheds, cat, "dev")
 }
 
 func postJSON(t *testing.T, url, body string, cookie *http.Cookie) *http.Response {

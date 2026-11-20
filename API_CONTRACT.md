@@ -188,6 +188,8 @@ These run on the **secondary** agent (port 7575 by default):
 | GET    | `/agent/resources`          | Bearer token | Same snapshot shape as `/api/resources`. |
 | GET    | `/agent/updates/check`      | Bearer token | As `/api/updates/check`. |
 | POST   | `/agent/updates/apply`      | Bearer token | As `/api/updates/apply` → `{ "job_id": string }`. |
+| POST   | `/agent/guests/:vmid/update` | Bearer token | As `/api/guests/:vmid/update` → `{ "job_id": string }`. |
+| POST   | `/agent/guests/update-all`  | Bearer token | As `/api/guests/update-all` → `{ "job_id", "queued", "skipped" }`. |
 | GET    | `/agent/catalog`            | Bearer token | As `/api/catalog`. |
 | POST   | `/agent/catalog/:slug/run`  | Bearer token | As `/api/catalog/:slug/run` → `{ "job_id": string }`. |
 | GET    | `/agent/jobs/:id`           | Bearer token | As `/api/jobs/:id`. |
@@ -286,4 +288,26 @@ TLS verification is ON by default for notification endpoints; explicit
 PBS TLS: certificate must chain to a system CA **or** match the pinned SHA-256
 fingerprint (as PBS prints it). There is deliberately no insecure fallback —
 PBS credentials are sent on every request.
+
+## Task Scheduler (v0.4.0, session-gated)
+
+One-time and recurring scheduled tasks persisted to `schedules.json` (beside
+`jobs.json` and `notes.json`). A 15 s background ticker checks due schedules
+and drains a FIFO queue through the single-slot `Executor` (or skips when
+`if_busy: "skip"`), so every run produces a streamable/stored `job_id`.
+Actions: `host_update`, `ct_update`, `lxc_batch_update`, `backup` (Proxmox
+`vzdump`), `snapshot`, `power` (`start`/`shutdown`/`stop`/`reboot`/`wake`),
+and `speedtest`. Frequencies: `once`, `hourly`, `daily`, `weekly`, `monthly`,
+and 5-field `cron` evaluated in the server's local timezone.
+
+| Method | Path                       | Body | Notes |
+|--------|----------------------------|------|-------|
+| GET    | `/api/schedules`           | —    | `{ "schedules": [...], "timezone", "tz_abbr", "server_time", "queue_len", "native_backups": [...] }` (includes read-only PVE `/cluster/backup` jobs). |
+| POST   | `/api/schedules`           | Schedule payload | Validates action/target/timing, computes `next_run_at`, persists, returns 201. |
+| PUT    | `/api/schedules/:id`       | Partial schedule payload | Updates schedule, recomputes `next_run_at` (or clears when disabled), returns 200. |
+| DELETE | `/api/schedules/:id`       | —    | Hard delete. `{ "ok": true }`, or 404 if missing. |
+| POST   | `/api/schedules/:id/run`   | —    | Enqueues an immediate manual run without altering recurring `next_run_at`. Returns `{ "ok": true, "queued": true }`, or 409 if already queued/running. |
+| POST   | `/api/schedules/preview`   | Timing fields | Validates frequency/cron and returns `{ "next_runs": [RFC3339...], "timezone", "tz_abbr" }` (up to 3 upcoming times). |
+| GET    | `/api/schedules/storages?node=X` | — | `{ "storages": string[] }` — active backup-capable Proxmox storages for node `X` (or all nodes). |
+
 

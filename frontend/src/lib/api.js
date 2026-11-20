@@ -441,3 +441,62 @@ export async function unpairNode(id) {
   }
   return r.json()
 }
+
+// getNodeResources fetches a one-shot Proxmox resource snapshot from the local
+// host (node=null) or a paired secondary node (node=id).
+export async function getNodeResources(node = null) {
+  const r = await fetch(`${nodeBase(node)}/resources`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// --- task scheduler ---
+
+// getSchedules → { schedules, timezone, tz_abbr, server_time, queue_len, native_backups }.
+export async function getSchedules() {
+  const r = await fetch(`${BASE}/schedules`, { credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export const createSchedule = (body) => post('/schedules', body)
+
+export async function updateSchedule(id, patch) {
+  const r = await fetch(`${BASE}/schedules/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export async function deleteSchedule(id) {
+  const r = await fetch(`${BASE}/schedules/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export const runScheduleNow = (id) => post(`/schedules/${encodeURIComponent(id)}/run`)
+
+export const previewSchedule = (timing) => post('/schedules/preview', timing)
+
+export async function getBackupStorages(node = '') {
+  const q = node ? `?node=${encodeURIComponent(node)}` : ''
+  const r = await fetch(`${BASE}/schedules/storages${q}`, { credentials: 'same-origin' })
+  if (!r.ok) return { storages: [] }
+  return r.json().catch(() => ({ storages: [] }))
+}

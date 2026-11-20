@@ -73,6 +73,11 @@ func main() {
 		log.Fatalf("open service links store: %v", err)
 	}
 
+	schedules, err := store.OpenSchedules(filepath.Join(filepath.Dir(cfg.DBPath), "schedules.json"))
+	if err != nil {
+		log.Fatalf("open schedules store: %v", err)
+	}
+
 	px := proxmox.NewClient()
 	if cfg.Proxmox != nil && cfg.Proxmox.TokenID != "" {
 		px.SetCreds(cfg.Proxmox.Host, cfg.Proxmox.TokenID, cfg.Proxmox.Secret)
@@ -92,7 +97,7 @@ func main() {
 	cat.SetOverlay(filepath.Join(filepath.Dir(cfg.DBPath), "catalog_overlay.json"))
 
 	exec := executor.New()
-	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, notes, serviceLinks, cat, version)
+	srv := api.NewServer(cfg, *cfgPath, px, poller, exec, db, notes, serviceLinks, schedules, cat, version)
 	mux := http.NewServeMux()
 
 	// Secondary (agent) mode: no UI, no sessions — just the bearer-gated agent

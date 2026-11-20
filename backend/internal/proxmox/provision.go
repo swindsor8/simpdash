@@ -19,13 +19,13 @@ const pveumPath = "/usr/sbin/pveum"
 
 // privs granted to the SimpDash role. The Audit privs are read-only monitoring
 // (VM.Audit lets /cluster/resources list VMs/CTs; Sys.Audit covers nodes,
-// Datastore.Audit covers storage). The PowerMgmt privs are the deliberate,
-// minimal elevation M10's card power controls require — VM.PowerMgmt for
-// guest start/shutdown/stop/reboot, Sys.PowerMgmt for node reboot/shutdown.
+// Datastore.Audit covers storage). The PowerMgmt privs enable card power
+// controls (VM.PowerMgmt, Sys.PowerMgmt), and VM.Backup, Datastore.AllocateSpace,
+// and VM.Snapshot enable scheduled/on-demand backups and snapshots.
 // Nothing here grants config edits, console access, or VM creation/deletion.
 // (VM.Monitor was removed: it grants QEMU-monitor access — not read-only — and
 // isn't a valid priv on PVE 9, where it makes `pveum role add` fail outright.)
-const privs = "VM.Audit,Sys.Audit,Datastore.Audit,VM.PowerMgmt,Sys.PowerMgmt"
+const privs = "VM.Audit,Sys.Audit,Datastore.Audit,Datastore.AllocateSpace,VM.PowerMgmt,Sys.PowerMgmt,VM.Backup,VM.Snapshot"
 
 // HasLocalPVE reports whether this host has Proxmox VE's pveum binary locally
 // (true on a PVE host, false inside an LXC container or standalone host).

@@ -20,6 +20,14 @@ const JOB_LABELS = {
   ct_upgrade: 'Container upgrade',
   lxc_batch_upgrade: 'Batch container upgrade',
   script: 'Script install',
+  catalog_script: 'Script install',
+  sched_host_update: 'Scheduled: Host OS upgrade',
+  sched_ct_update: 'Scheduled: Container upgrade',
+  sched_lxc_batch_update: 'Scheduled: Batch LXC upgrade',
+  sched_backup: 'Scheduled: Backup (vzdump)',
+  sched_snapshot: 'Scheduled: Snapshot',
+  sched_power: 'Scheduled: Power action',
+  sched_speedtest: 'Scheduled: Speedtest',
 }
 
 // Friendly names for the noisiest PVE task types; unknown types show raw.

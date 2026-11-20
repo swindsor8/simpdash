@@ -38,6 +38,8 @@ type Server struct {
 	db           *store.DB
 	notes        *store.NotesDB
 	serviceLinks *store.ServiceLinksDB
+	schedules    *store.SchedulesDB
+	scheduler    *Scheduler
 	catalog      *catalog.Catalog
 	update       *update.Checker
 
@@ -81,7 +83,7 @@ type Server struct {
 	totpLastUsed uint64
 }
 
-func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, notes *store.NotesDB, serviceLinks *store.ServiceLinksDB, cat *catalog.Catalog, version string) *Server {
+func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *Poller, exec *executor.Executor, db *store.DB, notes *store.NotesDB, serviceLinks *store.ServiceLinksDB, schedules *store.SchedulesDB, cat *catalog.Catalog, version string) *Server {
 	host, _ := os.Hostname()
 	s := &Server{
 		cfg:          cfg,
@@ -92,11 +94,15 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		db:           db,
 		notes:        notes,
 		serviceLinks: serviceLinks,
+		schedules:    schedules,
 		catalog:      cat,
 		update:       update.New(version),
 		agent:        &agentPairing{},
 		selfNode:     host,
 		loginLimiter: newLimiter(5, time.Minute),
+	}
+	if schedules != nil {
+		s.scheduler = newScheduler(s)
 	}
 	s.notifier = notify.New(notifyConfigOf(cfg))
 	s.pbs = pbs.New()
@@ -186,6 +192,11 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/notes", s.requireAuth(s.handleNotes))
 	mux.HandleFunc("/api/notes/counts", methodGate(http.MethodGet, s.requireAuth(s.NotesCounts)))
 	mux.HandleFunc("/api/notes/", s.requireAuth(s.handleNotesPrefix))
+	// Task scheduler (updates, backups, snapshots, power, speedtest).
+	mux.HandleFunc("/api/schedules", s.requireAuth(s.handleSchedules))
+	mux.HandleFunc("/api/schedules/preview", methodGate(http.MethodPost, s.requireAuth(s.SchedulesPreview)))
+	mux.HandleFunc("/api/schedules/storages", methodGate(http.MethodGet, s.requireAuth(s.SchedulesStorages)))
+	mux.HandleFunc("/api/schedules/", s.requireAuth(s.handleSchedulesPrefix))
 	// Cluster extras: PVE-kept history, task log, guest IPs, service health.
 	mux.HandleFunc("/api/rrd", methodGate(http.MethodGet, s.requireAuth(s.RRD)))
 	mux.HandleFunc("/api/cluster-tasks", methodGate(http.MethodGet, s.requireAuth(s.ClusterTasks)))

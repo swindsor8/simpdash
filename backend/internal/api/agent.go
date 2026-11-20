@@ -99,9 +99,25 @@ func (s *Server) AgentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/agent/resources", methodGate(http.MethodGet, s.requireAgentToken(s.Resources)))
 	mux.HandleFunc("/agent/updates/check", methodGate(http.MethodGet, s.requireAgentToken(s.UpdatesCheck)))
 	mux.HandleFunc("/agent/updates/apply", methodGate(http.MethodPost, s.requireAgentToken(s.UpdatesApply)))
+	mux.HandleFunc("/agent/guests/update-all", methodGate(http.MethodPost, s.requireAgentToken(s.GuestUpdateAll)))
+	mux.HandleFunc("/agent/guests/", s.agentGuestsPrefix)
 	mux.HandleFunc("/agent/catalog", methodGate(http.MethodGet, s.requireAgentToken(s.Catalog)))
 	mux.HandleFunc("/agent/catalog/", s.agentCatalogPrefix)
 	mux.HandleFunc("/agent/jobs/", s.agentJobsPrefix)
+}
+
+// agentGuestsPrefix dispatches POST /agent/guests/:vmid/update.
+func (s *Server) agentGuestsPrefix(w http.ResponseWriter, r *http.Request) {
+	tail := strings.TrimPrefix(r.URL.Path, "/agent/guests/")
+	parts := strings.SplitN(tail, "/", 2)
+	vmid := parts[0]
+	if vmid == "" || len(parts) != 2 || parts[1] != "update" {
+		http.NotFound(w, r)
+		return
+	}
+	methodGate(http.MethodPost, s.requireAgentToken(func(w http.ResponseWriter, r *http.Request) {
+		s.GuestUpdate(w, r, vmid)
+	}))(w, r)
 }
 
 // agentCatalogPrefix dispatches POST /agent/catalog/:slug/run.
