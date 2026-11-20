@@ -193,8 +193,10 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/service-health", methodGate(http.MethodGet, s.requireAuth(s.ServiceHealth)))
 	// Cached apt count (never triggers apt) for the nav badge.
 	mux.HandleFunc("/api/updates/pending", methodGate(http.MethodGet, s.requireAuth(s.UpdatesPending)))
-	// Settings: notifications, PBS, 2FA. Secrets are write-only.
+	// Settings: Proxmox API, notifications, PBS, 2FA. Secrets are write-only.
 	mux.HandleFunc("/api/settings", methodGate(http.MethodGet, s.requireAuth(s.GetSettings)))
+	mux.HandleFunc("/api/settings/proxmox", methodGate(http.MethodPut, s.requireAuth(s.PutProxmox)))
+	mux.HandleFunc("/api/settings/proxmox/test", methodGate(http.MethodPost, s.requireAuth(s.TestProxmox)))
 	mux.HandleFunc("/api/settings/notify", methodGate(http.MethodPut, s.requireAuth(s.PutNotify)))
 	mux.HandleFunc("/api/settings/notify/test", methodGate(http.MethodPost, s.requireAuth(s.NotifyTest)))
 	mux.HandleFunc("/api/settings/pbs", methodGate(http.MethodPut, s.requireAuth(s.PutPBS)))

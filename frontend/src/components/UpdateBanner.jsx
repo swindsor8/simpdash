@@ -51,7 +51,7 @@ export default function UpdateBanner() {
               <>Downloading &amp; verifying <span className="font-semibold">{updater.targetVersion || info.latest_version}</span>…</>
             )}
             {updater.phase === 'restarting' && (
-              <>Restarting SimpDash — waiting for <span className="font-semibold">{updater.targetVersion || info.latest_version}</span>…</>
+              <>Restarting SuperDash — waiting for <span className="font-semibold">{updater.targetVersion || info.latest_version}</span>…</>
             )}
             {updater.phase === 'reloading' && (
               <>Updated to <span className="font-semibold">{updater.targetVersion || info.latest_version}</span> — reloading…</>
@@ -91,7 +91,7 @@ export default function UpdateBanner() {
           {canAuto && updater.phase === 'confirm' && (
             <>
               <span className="text-xs text-emerald-300/80 hidden sm:inline">
-                SimpDash will briefly restart (~5 s).
+                SuperDash will briefly restart (~5 s).
               </span>
               <button
                 onClick={() => updater.run(info.latest_version, info.current_version)}

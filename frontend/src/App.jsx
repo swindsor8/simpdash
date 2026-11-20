@@ -10,10 +10,12 @@ import { loadingText } from './lib/copy'
 export default function App() {
   const { theme, setTheme } = useTheme()
   const [screen, setScreen] = useState('loading')
+  const [pveLocal, setPveLocal] = useState(true)
 
   useEffect(() => {
     getSetupStatus()
-      .then(({ onboarded }) => {
+      .then(({ onboarded, pve_local }) => {
+        if (typeof pve_local === 'boolean') setPveLocal(pve_local)
         if (!onboarded) return setScreen('setup')
         getMe().then(ok => setScreen(ok ? 'dashboard' : 'login'))
       })
@@ -28,7 +30,7 @@ export default function App() {
       </div>
     )
   } else if (screen === 'setup') {
-    screenEl = <SetupPassword onDone={() => setScreen('login')} />
+    screenEl = <SetupPassword pveLocal={pveLocal} onDone={() => setScreen('login')} />
   } else if (screen === 'login') {
     screenEl = <Login onDone={() => setScreen('dashboard')} />
   } else {

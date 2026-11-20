@@ -27,6 +27,25 @@ const pveumPath = "/usr/sbin/pveum"
 // isn't a valid priv on PVE 9, where it makes `pveum role add` fail outright.)
 const privs = "VM.Audit,Sys.Audit,Datastore.Audit,VM.PowerMgmt,Sys.PowerMgmt"
 
+// HasLocalPVE reports whether this host has Proxmox VE's pveum binary locally
+// (true on a PVE host, false inside an LXC container or standalone host).
+func HasLocalPVE() bool {
+	_, err := os.Stat(pveumPath)
+	return err == nil
+}
+
+// TestCreds verifies that the supplied Proxmox API credentials can reach
+// /cluster/resources and returns the number of nodes discovered.
+func TestCreds(host, tokenID, secret string) (int, error) {
+	c := NewClient()
+	c.SetCreds(host, tokenID, secret)
+	snap, err := c.Fetch()
+	if err != nil {
+		return 0, err
+	}
+	return len(snap.Nodes), nil
+}
+
 // Provision creates a dedicated read-only Proxmox API token by shelling out to
 // pveum, then writes the credentials into cfg and saves. Idempotent for the
 // role/user (tolerates "already exists"); the token is created once.

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
-  getSettings, putNotifySettings, testNotify, putPBSSettings,
+  getSettings, putProxmoxSettings, testProxmoxSettings,
+  putNotifySettings, testNotify, putPBSSettings,
   twoFASetup, twoFAEnable, twoFADisable, getUpdateCheck,
 } from '../lib/api'
 import { useSelfUpdate } from '../hooks/useSelfUpdate'
@@ -278,6 +279,110 @@ function TwoFASection({ initial }) {
   )
 }
 
+// --- Proxmox VE API ---
+
+function ProxmoxSection({ initial }) {
+  const [form, setForm] = useState({
+    host: initial?.host || '',
+    token_id: initial?.token_id || '',
+    secret: '',
+  })
+  const [hasSecret, setHasSecret] = useState(!!initial?.has_secret)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState(null)
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  async function save() {
+    setBusy(true); setMsg(null)
+    try {
+      await putProxmoxSettings({
+        host: form.host.trim(),
+        token_id: form.token_id.trim(),
+        secret: form.secret === '' ? null : form.secret,
+      })
+      if (form.secret && form.secret !== '-') setHasSecret(true)
+      if (form.secret === '-' || !form.host.trim()) setHasSecret(false)
+      set('secret', '')
+      setMsg({
+        ok: true,
+        text: form.host.trim()
+          ? 'Saved — dashboard polling updated immediately.'
+          : 'Proxmox API credentials cleared.',
+      })
+    } catch (e) { setMsg({ ok: false, text: e.message }) }
+    finally { setBusy(false) }
+  }
+
+  async function test() {
+    setBusy(true); setMsg(null)
+    try {
+      const res = await testProxmoxSettings({
+        host: form.host.trim(),
+        token_id: form.token_id.trim(),
+        secret: form.secret === '' ? null : form.secret,
+      })
+      const n = res?.nodes ?? 0
+      setMsg({ ok: true, text: `Connected — ${n} node${n !== 1 ? 's' : ''} discovered.` })
+    } catch (e) { setMsg({ ok: false, text: `Connection failed: ${e.message}` }) }
+    finally { setBusy(false) }
+  }
+
+  return (
+    <Section
+      title="Proxmox VE connection"
+      subtitle={
+        initial?.local_pve
+          ? 'Auto-provisioned via local pveum. Override here to point at another endpoint or token.'
+          : 'Connect SuperDash to your Proxmox VE API using an API token (LXC / standalone mode).'
+      }
+    >
+      <div className="grid sm:grid-cols-2 gap-4 mb-4">
+        <label className="sm:col-span-2">
+          <span className={labelCls}>Proxmox Host URL <span className="text-gray-700">— empty disables</span></span>
+          <input
+            value={form.host}
+            onChange={e => set('host', e.target.value)}
+            placeholder="https://192.168.1.10:8006"
+            className={inputCls}
+          />
+        </label>
+        <label>
+          <span className={labelCls}>API token ID</span>
+          <input
+            value={form.token_id}
+            onChange={e => set('token_id', e.target.value)}
+            placeholder="simpdash@pve!dashtoken"
+            className={`${inputCls} font-mono`}
+          />
+        </label>
+        <label>
+          <span className={labelCls}>
+            Token secret {hasSecret ? <span className="text-emerald-500">— stored</span> : ''}
+          </span>
+          <input
+            type="password"
+            autoComplete="off"
+            value={form.secret}
+            onChange={e => set('secret', e.target.value)}
+            placeholder={hasSecret ? 'Leave empty to keep, "-" to clear' : 'UUID secret'}
+            className={inputCls}
+          />
+        </label>
+      </div>
+      <p className="text-[11px] text-gray-600 mb-5">
+        Recommended role privileges:{' '}
+        <span className="font-mono text-gray-500">VM.Audit, Sys.Audit, Datastore.Audit</span> (add{' '}
+        <span className="font-mono text-gray-500">VM.PowerMgmt, Sys.PowerMgmt</span> for power buttons) with Privilege Separation disabled.
+      </p>
+      <div className="flex gap-2">
+        <button onClick={save} disabled={busy} className={btnPrimary}>Save</button>
+        <button onClick={test} disabled={busy} className={btnGhost}>Test connection</button>
+      </div>
+      <Msg msg={msg} />
+    </Section>
+  )
+}
+
 // --- Proxmox Backup Server ---
 
 function PBSSection({ initial }) {
@@ -386,8 +491,8 @@ function VersionSection() {
 
   return (
     <Section
-      title="SimpDash updates"
-      subtitle="Check for new SimpDash releases and update the dashboard binary in place."
+      title="SuperDash updates"
+      subtitle="Check for new SuperDash releases and update the dashboard binary in place."
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1">
@@ -445,7 +550,7 @@ function VersionSection() {
       {updater.phase === 'confirm' && info && (
         <div className="mt-4 flex flex-wrap items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
           <p className="text-xs text-emerald-200 flex-1">
-            Download &amp; verify <span className="font-semibold">{info.latest_version}</span> and restart SimpDash (~5 s)?
+            Download &amp; verify <span className="font-semibold">{info.latest_version}</span> and restart SuperDash (~5 s)?
           </p>
           <button
             onClick={() => updater.run(info.latest_version, info.current_version)}
@@ -460,7 +565,7 @@ function VersionSection() {
       {updater.busy && (
         <p className="text-xs text-emerald-300 mt-3">
           {updater.phase === 'downloading' && `Downloading & verifying ${updater.targetVersion || info?.latest_version}…`}
-          {updater.phase === 'restarting' && `Restarting SimpDash — waiting for ${updater.targetVersion || info?.latest_version}…`}
+          {updater.phase === 'restarting' && `Restarting SuperDash — waiting for ${updater.targetVersion || info?.latest_version}…`}
           {updater.phase === 'reloading' && `Updated to ${updater.targetVersion || info?.latest_version} — reloading…`}
         </p>
       )}
@@ -520,6 +625,7 @@ export default function Settings({ theme, setTheme }) {
         <Themes theme={theme} setTheme={setTheme} embedded />
       </Section>
       <TwoFASection initial={data.totp} />
+      <ProxmoxSection initial={data.proxmox} />
       <NotifySection initial={data.notify} />
       <PBSSection initial={data.pbs} />
       <VersionSection />

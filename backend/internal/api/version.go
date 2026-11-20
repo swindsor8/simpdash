@@ -31,7 +31,7 @@ func (s *Server) UpdateCheck(w http.ResponseWriter, r *http.Request) {
 // version, and triggers a non-blocking systemd restart.
 func (s *Server) SelfUpdate(w http.ResponseWriter, r *http.Request) {
 	if s.exec.Active() {
-		writeErr(w, http.StatusConflict, "a job is already running — wait for it to finish before updating SimpDash")
+		writeErr(w, http.StatusConflict, "a job is already running — wait for it to finish before updating SuperDash")
 		return
 	}
 

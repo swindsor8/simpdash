@@ -4,23 +4,28 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"simpdash/internal/config"
 	"simpdash/internal/proxmox"
 )
 
 // SetupStatus handles GET /api/setup/status
 func (s *Server) SetupStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"onboarded": s.cfg.Onboarded,
-		"mode":      s.cfg.Mode,
+		"onboarded":          s.cfg.Onboarded,
+		"mode":               s.cfg.Mode,
+		"pve_local":          proxmox.HasLocalPVE(),
+		"proxmox_configured": s.px.Configured(),
 	})
 }
 
 // SetupPassword handles POST /api/setup/password. After the password is set,
-// it provisions the Proxmox token inline so monitoring "just works" with no
-// separate user step. Provisioning failure is non-fatal (degraded mode).
+// it either stores the user-supplied Proxmox API credentials (e.g. when running
+// inside an LXC container where pveum is unavailable) or auto-provisions a
+// local Proxmox token via pveum. Auto-provisioning failure is non-fatal.
 func (s *Server) SetupPassword(w http.ResponseWriter, r *http.Request) {
 	if s.cfg.Onboarded {
 		writeErr(w, http.StatusPreconditionFailed, "already onboarded")
@@ -28,6 +33,11 @@ func (s *Server) SetupPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	var body struct {
 		Password string `json:"password"`
+		Proxmox  *struct {
+			Host    string `json:"host"`
+			TokenID string `json:"token_id"`
+			Secret  string `json:"secret"`
+		} `json:"proxmox"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeErr(w, http.StatusBadRequest, "password required")
@@ -37,23 +47,51 @@ func (s *Server) SetupPassword(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "password must be at least 8 characters")
 		return
 	}
+
+	var manualPX *config.ProxmoxConfig
+	if body.Proxmox != nil {
+		host := strings.TrimRight(strings.TrimSpace(body.Proxmox.Host), "/")
+		tokenID := strings.TrimSpace(body.Proxmox.TokenID)
+		secret := strings.TrimSpace(body.Proxmox.Secret)
+		if host != "" || tokenID != "" || secret != "" {
+			if err := validateProxmoxCreds(host, tokenID, secret); err != nil {
+				writeErr(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			if _, err := proxmox.TestCreds(host, tokenID, secret); err != nil {
+				writeErr(w, http.StatusBadGateway, "Proxmox connection failed: "+err.Error())
+				return
+			}
+			manualPX = &config.ProxmoxConfig{Host: host, TokenID: tokenID, Secret: secret}
+		}
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "internal error")
 		return
 	}
+	s.cfgMu.Lock()
 	s.cfg.PasswordHash = string(hash)
 	s.cfg.Onboarded = true
-	if err := s.cfg.Save(s.cfgPath); err != nil {
+	if manualPX != nil {
+		s.cfg.Proxmox = manualPX
+	}
+	err = s.cfg.Save(s.cfgPath)
+	s.cfgMu.Unlock()
+	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "failed to save config")
 		return
 	}
 
-	// Provision Proxmox token (main mode only). Best-effort: log and continue
-	// so dev/test hosts without PVE still reach the dashboard.
-	if s.cfg.Mode == "main" {
+	if manualPX != nil {
+		s.px.SetCreds(manualPX.Host, manualPX.TokenID, manualPX.Secret)
+		log.Printf("proxmox API configured manually: %s (%s)", manualPX.Host, manualPX.TokenID)
+	} else if s.cfg.Mode == "main" {
+		// Provision Proxmox token (main mode only). Best-effort: log and continue
+		// so LXC/dev hosts without local pveum still reach the dashboard.
 		if err := proxmox.Provision(s.cfg, s.cfgPath); err != nil {
-			log.Printf("proxmox provisioning failed (running degraded): %v", err)
+			log.Printf("proxmox provisioning failed (configure API token in Settings): %v", err)
 		} else if s.cfg.Proxmox != nil {
 			s.px.SetCreds(s.cfg.Proxmox.Host, s.cfg.Proxmox.TokenID, s.cfg.Proxmox.Secret)
 			log.Printf("proxmox token provisioned: %s", s.cfg.Proxmox.TokenID)

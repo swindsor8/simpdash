@@ -87,7 +87,7 @@ export function useSelfUpdate() {
     }
 
     if (cancelledRef.current) return
-    setError('SimpDash did not come back up within 60 seconds. Check `systemctl status simpdash` on the host, or reload the page manually.')
+    setError('SuperDash did not come back up within 60 seconds. Check `systemctl status simpdash` on the host, or reload the page manually.')
     setPhase('error')
   }, [])
 

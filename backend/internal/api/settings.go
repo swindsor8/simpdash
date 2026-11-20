@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
@@ -11,11 +12,13 @@ import (
 	"simpdash/internal/config"
 	"simpdash/internal/notify"
 	"simpdash/internal/pbs"
+	"simpdash/internal/proxmox"
 )
 
-// Settings API. Secrets (notify token, PBS secret) are write-only: GET returns
-// has_token/has_secret booleans, never the values — a hijacked session can
-// reconfigure (visible in the UI) but cannot exfiltrate stored credentials.
+// Settings API. Secrets (notify token, PBS secret, Proxmox secret) are
+// write-only: GET returns has_token/has_secret booleans, never the values — a
+// hijacked session can reconfigure (visible in the UI) but cannot exfiltrate
+// stored credentials.
 
 // GetSettings handles GET /api/settings.
 func (s *Server) GetSettings(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +32,17 @@ func (s *Server) GetSettings(w http.ResponseWriter, r *http.Request) {
 	if p == nil {
 		p = &config.PBSConfig{}
 	}
+	px := s.cfg.Proxmox
+	if px == nil {
+		px = &config.ProxmoxConfig{}
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
+		"proxmox": map[string]any{
+			"host":       px.Host,
+			"token_id":   px.TokenID,
+			"has_secret": px.Secret != "",
+			"local_pve":  proxmox.HasLocalPVE(),
+		},
 		"notify": map[string]any{
 			"provider":          n.Provider,
 			"url":               n.URL,
@@ -211,6 +224,131 @@ func (s *Server) PBSStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusOK, s.pbsCache.data)
+}
+
+// validateProxmoxCreds checks the shape of manual Proxmox VE API credentials.
+func validateProxmoxCreds(host, tokenID, secret string) error {
+	u, err := url.Parse(host)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return errors.New("host must be a valid http(s):// URL (e.g. https://192.168.1.10:8006)")
+	}
+	if tokenID == "" || !strings.Contains(tokenID, "!") {
+		return errors.New("token_id must look like user@realm!tokenname (e.g. simpdash@pve!dashtoken)")
+	}
+	if secret == "" {
+		return errors.New("token secret is required")
+	}
+	return nil
+}
+
+// PutProxmox handles PUT /api/settings/proxmox. Updates the Proxmox VE API
+// endpoint and token credentials live (no restart needed). Empty host clears
+// the stored credentials. Secret semantics match PutPBS: nil keeps, "-" clears.
+func (s *Server) PutProxmox(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Host    string  `json:"host"`
+		TokenID string  `json:"token_id"`
+		Secret  *string `json:"secret"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid body")
+		return
+	}
+
+	host := strings.TrimRight(strings.TrimSpace(body.Host), "/")
+	tokenID := strings.TrimSpace(body.TokenID)
+
+	s.cfgMu.Lock()
+	prev := ""
+	if s.cfg.Proxmox != nil {
+		prev = s.cfg.Proxmox.Secret
+	}
+	secret := prev
+	if body.Secret != nil {
+		secret = strings.TrimSpace(*body.Secret)
+		if secret == "-" {
+			secret = ""
+		}
+	}
+	s.cfgMu.Unlock()
+
+	if host != "" {
+		if err := validateProxmoxCreds(host, tokenID, secret); err != nil {
+			writeErr(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
+	s.cfgMu.Lock()
+	if host == "" {
+		s.cfg.Proxmox = nil
+	} else {
+		s.cfg.Proxmox = &config.ProxmoxConfig{Host: host, TokenID: tokenID, Secret: secret}
+	}
+	err := s.cfg.Save(s.cfgPath)
+	s.cfgMu.Unlock()
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "failed to save config")
+		return
+	}
+
+	if host == "" {
+		s.px.SetCreds("", "", "")
+	} else {
+		s.px.SetCreds(host, tokenID, secret)
+	}
+	// Drop cached cluster views tied to the old credentials.
+	s.backups.mu.Lock()
+	s.backups.at = time.Time{}
+	s.backups.mu.Unlock()
+	s.tasks.mu.Lock()
+	s.tasks.fetched = time.Time{}
+	s.tasks.mu.Unlock()
+
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// TestProxmox handles POST /api/settings/proxmox/test — validates the supplied
+// (or currently stored) Proxmox API credentials against /cluster/resources.
+func (s *Server) TestProxmox(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Host    string  `json:"host"`
+		TokenID string  `json:"token_id"`
+		Secret  *string `json:"secret"`
+	}
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&body)
+	}
+
+	s.cfgMu.Lock()
+	stored := s.cfg.Proxmox
+	host := strings.TrimRight(strings.TrimSpace(body.Host), "/")
+	tokenID := strings.TrimSpace(body.TokenID)
+	secret := ""
+	if stored != nil {
+		if host == "" {
+			host = stored.Host
+		}
+		if tokenID == "" {
+			tokenID = stored.TokenID
+		}
+		secret = stored.Secret
+	}
+	if body.Secret != nil && strings.TrimSpace(*body.Secret) != "" {
+		secret = strings.TrimSpace(*body.Secret)
+	}
+	s.cfgMu.Unlock()
+
+	if err := validateProxmoxCreds(host, tokenID, secret); err != nil {
+		writeErr(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	nodes, err := proxmox.TestCreds(host, tokenID, secret)
+	if err != nil {
+		writeErr(w, http.StatusBadGateway, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "nodes": nodes})
 }
 
 // notifyConfigOf converts config → notifier config (caller holds cfgMu).

@@ -159,7 +159,9 @@ func NewClient() *Client {
 func (c *Client) SetCreds(host, tokenID, secret string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.host, c.tokenID, c.secret = host, tokenID, secret
+	c.host = strings.TrimRight(strings.TrimSpace(host), "/")
+	c.tokenID = strings.TrimSpace(tokenID)
+	c.secret = strings.TrimSpace(secret)
 }
 
 func (c *Client) creds() (host, tokenID, secret string) {

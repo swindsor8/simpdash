@@ -23,7 +23,8 @@ export async function getSetupStatus() {
   return r.json()
 }
 
-export const setupPassword = (password) => post('/setup/password', { password })
+export const setupPassword = (password, proxmox) =>
+  post('/setup/password', proxmox ? { password, proxmox } : { password })
 // login → { ok: true } or { totp_required: true } (resubmit with code).
 export const login = (password, code) => post('/auth/login', code ? { password, code } : { password })
 
@@ -357,6 +358,22 @@ export async function getSettings() {
   if (!r.ok) throw new Error(await r.text())
   return r.json()
 }
+
+export async function putProxmoxSettings(body) {
+  const r = await fetch(`${BASE}/settings/proxmox`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export const testProxmoxSettings = (body) => post('/settings/proxmox/test', body)
 
 export async function putNotifySettings(body) {
   const r = await fetch(`${BASE}/settings/notify`, {

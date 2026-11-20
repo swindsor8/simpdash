@@ -14,8 +14,8 @@ single-use recovery codes (bcrypt-hashed in config; plaintext shown once).
 
 | Method | Path           | Body                          | Notes                              |
 |--------|----------------|--------------------------------|-------------------------------------|
-| GET    | `/api/setup/status` | —                          | `{ "onboarded": bool, "mode": "main"|"secondary" }` |
-| POST   | `/api/setup/password` | `{ "password": string }`  | First-run only. 412 if already onboarded. |
+| GET    | `/api/setup/status` | —                          | `{ "onboarded": bool, "mode": "main"|"secondary", "pve_local": bool, "proxmox_configured": bool }` (`pve_local: false` reveals manual Proxmox API token setup) |
+| POST   | `/api/setup/password` | `{ "password": string, "proxmox"?: { "host", "token_id", "secret" } }`  | First-run only. 412 if already onboarded. Validates supplied `proxmox` creds live before saving; otherwise attempts local `pveum` auto-provisioning. |
 | POST   | `/api/auth/login`     | `{ "password": string, "code"?: string }` | Sets session cookie. With 2FA enabled and no `code`: 200 `{ "totp_required": true }` (no session) — resubmit with the TOTP or a recovery code. Code failures are rate-limited with password failures; used TOTP steps can't be replayed. |
 | POST   | `/api/auth/logout`    | —                          | Clears session cookie.             |
 | GET    | `/api/auth/me`        | —                          | 200 if session valid, else 401.    |
@@ -268,7 +268,9 @@ literal `"-"` clears it.
 
 | Method | Path | Notes |
 |--------|------|-------|
-| GET    | `/api/settings`             | `{ notify: {...}, pbs: {...}, totp: { enabled, recovery_codes } }`. |
+| GET    | `/api/settings`              | `{ proxmox: { host, token_id, has_secret, local_pve }, notify: {...}, pbs: {...}, totp: { enabled, recovery_codes } }`. |
+| PUT    | `/api/settings/proxmox`      | `{ host, token_id, secret? }`. Updates Proxmox VE API credentials live (empty `host` clears). |
+| POST   | `/api/settings/proxmox/test` | `{ host?, token_id?, secret? }`. Tests Proxmox API connectivity against `/cluster/resources`; returns `{ ok: true, nodes }`. |
 | PUT    | `/api/settings/notify`      | `{ provider: ntfy\|gotify\|discord\|webhook, url, token?, insecure, job_failed, node_offline, updates_available, backup_failed }`. Empty url disables. |
 | POST   | `/api/settings/notify/test` | Sends a test message; surfaces the provider error on failure. |
 | PUT    | `/api/settings/pbs`         | `{ url, token_id, secret?, fingerprint }`. Validated before persisting. |
