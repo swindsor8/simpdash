@@ -3,7 +3,7 @@ import {
   logout, getNodes, getBackups, getNoteCounts, getInfo, entityAction, updateContainer,
   getServiceLinks, upsertServiceLink, deleteServiceLink, serviceIconUrl,
   getServiceHealth, getGuestIPs, getUpdatesPending, getRRD,
-  getGuestServices, getGuestDocker,
+  getGuestServices, getGuestDocker, getUpdateCheck,
 } from '../lib/api'
 import logo from '../../assets/logo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
@@ -19,7 +19,7 @@ import Notebook from './Notebook'
 import Activity from './Activity'
 import Settings from './Settings'
 import ErrorBoundary from './ErrorBoundary'
-import UpdateBanner from './UpdateBanner'
+import UpdateBanner, { UpdateHeaderPill } from './UpdateBanner'
 import { Card, StatCard, StatusPill, statusVariant } from './Card'
 import RadialGauge from './RadialGauge'
 import { usePowerMorph, useStatusGlow } from './motion'
@@ -1017,6 +1017,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
   const [serviceLinks, setServiceLinks] = useState({})
   const [selfNode, setSelfNode] = useState(null)
   const [pveURL, setPveURL] = useState('')
+  const [appUpdate, setAppUpdate] = useState(null)
+  const [updateBannerOpen, setUpdateBannerOpen] = useState(false)
   const [inflight, setInflight] = useState({}) // key -> { prevStatus, timerId }
   const [confirm, setConfirm] = useState(null) // pending confirmation
   const [toast, setToast] = useState(null)
@@ -1030,6 +1032,9 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
   useEffect(() => {
     getInfo().then(d => { setSelfNode(d?.self_node ?? null); setPveURL(d?.pve_url ?? '') }).catch(() => {})
     getServiceLinks().then(setServiceLinks).catch(() => {})
+    getUpdateCheck().then(setAppUpdate).catch(() => {})
+    const t = setInterval(() => getUpdateCheck().then(setAppUpdate).catch(() => {}), 6 * 60 * 60 * 1000)
+    return () => clearInterval(t)
   }, [])
 
   // Guest IPs (server-cached, best-effort) — refresh every 2.5 min.
@@ -1262,7 +1267,13 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         </button>
         <img src={logo} alt="" className="w-6 h-6 rounded-lg object-contain" />
         <span className="font-semibold text-sm tracking-tight">SuperDash</span>
-        <span className="ml-auto flex items-center gap-2">
+        <span className="ml-auto flex items-center gap-2.5">
+          <UpdateHeaderPill
+            info={appUpdate}
+            open={updateBannerOpen}
+            onClick={() => setUpdateBannerOpen(v => !v)}
+            compact
+          />
           <StatusDot pulseKey={pulseKey} connected={connected} disconnected={disconnected || unreachable} />
         </span>
       </header>
@@ -1324,7 +1335,11 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
 
-      <UpdateBanner />
+      <UpdateBanner
+        info={appUpdate}
+        open={updateBannerOpen}
+        onClose={() => setUpdateBannerOpen(false)}
+      />
 
       <ErrorBoundary resetKey={view}>
 
@@ -1335,7 +1350,10 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <h1 className="text-base font-semibold">Network</h1>
               <p className="text-xs text-gray-500 mt-0.5">Host network interfaces and bridges</p>
             </div>
-            <LocalOnlyNote activeNode={activeNode} />
+            <div className="flex items-center gap-3">
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+              <LocalOnlyNote activeNode={activeNode} />
+            </div>
           </header>
           <Network />
         </>
@@ -1346,7 +1364,10 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <h1 className="text-base font-semibold">Backups</h1>
               <p className="text-xs text-gray-500 mt-0.5">Last backup per guest and recent vzdump jobs</p>
             </div>
-            <LocalOnlyNote activeNode={activeNode} />
+            <div className="flex items-center gap-3">
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+              <LocalOnlyNote activeNode={activeNode} />
+            </div>
           </header>
           <Backups />
         </>
@@ -1357,33 +1378,45 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <h1 className="text-base font-semibold">Activity</h1>
               <p className="text-xs text-gray-500 mt-0.5">Dashboard jobs and the Proxmox cluster task log</p>
             </div>
-            <LocalOnlyNote activeNode={activeNode} />
+            <div className="flex items-center gap-3">
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+              <LocalOnlyNote activeNode={activeNode} />
+            </div>
           </header>
           <Activity />
         </>
       ) : view === 'settings' ? (
         <>
-          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4">
-            <h1 className="text-base font-semibold">Settings</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Appearance, security, notifications, and integrations</p>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4 flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-base font-semibold">Settings</h1>
+              <p className="text-xs text-gray-500 mt-0.5">Appearance, security, notifications, and integrations</p>
+            </div>
+            <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
           </header>
           <Settings theme={theme} setTheme={setTheme} />
         </>
       ) : view === 'nodes' ? (
         <>
-          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4">
-            <h1 className="text-base font-semibold">Nodes</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Pair and manage secondary agents</p>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4 flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-base font-semibold">Nodes</h1>
+              <p className="text-xs text-gray-500 mt-0.5">Pair and manage secondary agents</p>
+            </div>
+            <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
           </header>
           <Nodes nodes={pairedNodes} onChange={refreshNodes} />
         </>
       ) : view === 'scripts' ? (
         <div className="flex flex-col h-full">
-          <header className="shrink-0 bg-[#0c0c14]/90 border-b border-white/[0.06] px-4 sm:px-8 py-4">
-            <h1 className="text-base font-semibold">Script Catalog</h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {activeAddr ? `Running on ${activeAddr}` : 'One-click community-scripts installs'}
-            </p>
+          <header className="shrink-0 bg-[#0c0c14]/90 border-b border-white/[0.06] px-4 sm:px-8 py-4 flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-base font-semibold">Script Catalog</h1>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {activeAddr ? `Running on ${activeAddr}` : 'One-click community-scripts installs'}
+              </p>
+            </div>
+            <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
           </header>
           <Scripts node={activeNode} lxcs={entities.filter(e => e.type === 'lxc')} />
         </div>
@@ -1394,7 +1427,10 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <h1 className="text-base font-semibold">Notebook</h1>
               <p className="text-xs text-gray-500 mt-0.5">Timestamped notes — jot down the why, pin what matters</p>
             </div>
-            <LocalOnlyNote activeNode={activeNode} />
+            <div className="flex items-center gap-3">
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+              <LocalOnlyNote activeNode={activeNode} />
+            </div>
           </header>
           <Notebook entities={entities} filter={notebookFilter} onCountsChanged={refreshCounts} />
         </>
@@ -1402,20 +1438,23 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         <>
 
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4 flex items-center justify-between">
+        <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4 flex items-center justify-between gap-2">
           <div>
             <h1 className="text-base font-semibold">Node Overview</h1>
             <p className="text-xs text-gray-500 mt-0.5">
               {activeAddr ? `Live resource usage — ${activeAddr}` : 'Live Proxmox resource usage'}
             </p>
           </div>
-          <div className="flex items-center gap-2.5">
-            <StatusDot pulseKey={pulseKey} connected={connected} disconnected={disconnected || unreachable} />
-            <span className="text-xs text-gray-500">
-              {unreachable ? copy('status.lost', 'Unreachable')
-                : disconnected ? copy('status.reconnecting', 'Reconnecting…')
-                : copy('status.live', 'Live')}
-            </span>
+          <div className="flex items-center gap-3">
+            <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+            <div className="flex items-center gap-2.5">
+              <StatusDot pulseKey={pulseKey} connected={connected} disconnected={disconnected || unreachable} />
+              <span className="text-xs text-gray-500">
+                {unreachable ? copy('status.lost', 'Unreachable')
+                  : disconnected ? copy('status.reconnecting', 'Reconnecting…')
+                  : copy('status.live', 'Live')}
+              </span>
+            </div>
           </div>
         </header>
 

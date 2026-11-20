@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getUpdateCheck } from '../lib/api'
 import { useSelfUpdate } from '../hooks/useSelfUpdate'
 
-// The one-liner that re-installs SimpDash in place (see scripts/install.sh).
+// The one-liner that re-installs SuperDash in place (see scripts/install.sh).
 export const INSTALL_CMD =
   'curl -fsSL https://raw.githubusercontent.com/swindsor8/simpdash/main/scripts/install.sh | bash'
 
@@ -15,24 +15,73 @@ function Spinner() {
   )
 }
 
-// UpdateBanner checks /api/update-check once on mount and, when a newer release
-// exists, offers a one-click self-update button (when supported by the release)
-// with a manual CLI command fallback.
-export default function UpdateBanner() {
-  const [info, setInfo] = useState(null)
+function IconArrowUp() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
+    </svg>
+  )
+}
+
+// UpdateHeaderPill renders a compact emerald notification pill in the header
+// bar whenever a newer SuperDash release is available. Clicking it toggles the
+// full UpdateBanner drawer with one-click install controls.
+export function UpdateHeaderPill({ info, open, onClick, compact = false }) {
+  if (!info?.update_available) return null
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      title={`SuperDash ${info.latest_version} is available (currently on ${info.current_version})`}
+      className={`items-center gap-1.5 rounded-full border text-xs font-medium transition-colors shrink-0 ${
+        compact ? 'inline-flex px-2.5 py-1' : 'hidden md:inline-flex px-3 py-1'
+      } ${
+        open
+          ? 'bg-emerald-500/25 border-emerald-400/50 text-emerald-200'
+          : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25 hover:border-emerald-400/40'
+      }`}
+    >
+      <span className="relative flex h-2 w-2 shrink-0">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+      </span>
+      <IconArrowUp />
+      <span>{compact ? info.latest_version : `Update ${info.latest_version}`}</span>
+    </button>
+  )
+}
+
+// UpdateBanner shows the expandable update bar with a one-click self-update
+// button (when supported by the release) and a manual CLI command fallback.
+// Pass `info` + `open` + `onClose` from Dashboard so it pairs with the header pill.
+export default function UpdateBanner({ info: propInfo, open = true, onClose }) {
+  const [fetchedInfo, setFetchedInfo] = useState(null)
   const [dismissed, setDismissed] = useState(false)
   const [showCli, setShowCli] = useState(false)
   const [copied, setCopied] = useState(false)
   const updater = useSelfUpdate()
 
   useEffect(() => {
-    getUpdateCheck().then(setInfo).catch(() => {})
-  }, [])
+    if (propInfo !== undefined) return
+    getUpdateCheck().then(setFetchedInfo).catch(() => {})
+  }, [propInfo])
 
-  if (dismissed || !info?.update_available) return null
+  const info = propInfo !== undefined ? propInfo : fetchedInfo
+  const isControlled = onClose !== undefined
+
+  if (!info?.update_available) return null
+  if (isControlled ? (!open && !updater.busy) : dismissed) return null
 
   const canAuto = !!info.can_self_update
   const cliVisible = !canAuto || showCli
+
+  function close() {
+    if (onClose) onClose()
+    else setDismissed(true)
+  }
 
   function copy() {
     navigator.clipboard?.writeText(INSTALL_CMD).then(() => {
@@ -128,10 +177,10 @@ export default function UpdateBanner() {
 
           {!updater.busy && (
             <button
-              onClick={() => setDismissed(true)}
+              onClick={close}
               className="text-xs text-emerald-400/60 hover:text-emerald-300 transition-colors pl-1"
             >
-              Dismiss
+              {isControlled ? 'Hide' : 'Dismiss'}
             </button>
           )}
         </div>
