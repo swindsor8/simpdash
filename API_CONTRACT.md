@@ -215,7 +215,8 @@ local builds report `"dev"`.
 | Method | Path                | Notes |
 |--------|---------------------|-------|
 | GET    | `/api/version`      | `{ "version": string }` — the running build's version. |
-| GET    | `/api/update-check` | `{ "current_version": string, "latest_version": string, "update_available": bool }`. Compares the embedded version against the latest GitHub release (`tag_name`), cached ~24h. On any GitHub error it returns the current version with `latest_version: ""` and `update_available: false` — an update check never breaks the dashboard. A `"dev"` (non-release) build never reports an update available. |
+| GET    | `/api/update-check` | `{ "current_version": string, "latest_version": string, "update_available": bool, "release_url"?: string, "can_self_update": bool }`. Compares the embedded version against the latest GitHub release (`tag_name`), cached ~24h (pass `?refresh=1` to bypass the cache). `can_self_update` is true when a newer release exists on Linux with both a matching `simpdash-linux-<arch>` binary and `checksums.txt`. On any GitHub error it returns the current version with `latest_version: ""` and `update_available: false` — an update check never breaks the dashboard. A `"dev"` (non-release) build never reports an update available. |
+| POST   | `/api/self-update`  | Downloads the latest release binary for this architecture, verifies its SHA-256 digest against `checksums.txt`, smoke-tests `--version`, atomically swaps the binary on disk, responds `200 { "status": "restarting", "target_version": string }`, and triggers `systemctl restart --no-block simpdash`. Returns `409` if another job or self-update is active, `400` if already up to date or running a `"dev"` build, or `502` on download/verification failure. |
 
 ## Lab Notebook (Milestone 9)
 

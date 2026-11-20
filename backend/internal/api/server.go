@@ -148,6 +148,7 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/info", methodGate(http.MethodGet, s.requireAuth(s.Info)))
 	mux.HandleFunc("/api/version", methodGate(http.MethodGet, s.requireAuth(s.Version)))
 	mux.HandleFunc("/api/update-check", methodGate(http.MethodGet, s.requireAuth(s.UpdateCheck)))
+	mux.HandleFunc("/api/self-update", methodGate(http.MethodPost, s.requireAuth(s.SelfUpdate)))
 	mux.HandleFunc("/api/network", methodGate(http.MethodGet, s.requireAuth(s.Network)))
 	mux.HandleFunc("/api/network/stats", methodGate(http.MethodGet, s.requireAuth(s.NetworkStats)))
 	mux.HandleFunc("/api/network/connectivity", methodGate(http.MethodGet, s.requireAuth(s.Connectivity)))

@@ -39,10 +39,13 @@ jobs:
               -o ../simpdash-linux-$arch ./cmd/server
           done
 
+      - name: Checksums
+        run: sha256sum simpdash-linux-amd64 simpdash-linux-arm64 > checksums.txt
+
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            simpdash-linux-amd64 simpdash-linux-arm64 \
+            simpdash-linux-amd64 simpdash-linux-arm64 checksums.txt \
             --title "$GITHUB_REF_NAME" --generate-notes

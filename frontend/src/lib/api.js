@@ -36,12 +36,23 @@ export async function getMe() {
   return r.ok
 }
 
-// getUpdateCheck → { current_version, latest_version, update_available }.
-export async function getUpdateCheck() {
-  const r = await fetch(`${BASE}/update-check`, { credentials: 'same-origin' })
+// getVersion → { version }.
+export async function getVersion() {
+  const r = await fetch(`${BASE}/version`, { credentials: 'same-origin' })
   if (!r.ok) throw new Error(await r.text())
   return r.json()
 }
+
+// getUpdateCheck → { current_version, latest_version, update_available, release_url, can_self_update }.
+export async function getUpdateCheck(refresh = false) {
+  const q = refresh ? '?refresh=1' : ''
+  const r = await fetch(`${BASE}/update-check${q}`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// triggerSelfUpdate → { status: 'restarting', target_version }.
+export const triggerSelfUpdate = () => post('/self-update')
 
 // The data helpers below take an optional `node` (paired node id, or null for
 // the local host) so the same dashboard/scripts/updates views can target a

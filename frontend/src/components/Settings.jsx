@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import {
   getSettings, putNotifySettings, testNotify, putPBSSettings,
-  twoFASetup, twoFAEnable, twoFADisable,
+  twoFASetup, twoFAEnable, twoFADisable, getUpdateCheck,
 } from '../lib/api'
+import { useSelfUpdate } from '../hooks/useSelfUpdate'
+import { INSTALL_CMD } from './UpdateBanner'
 import Themes from './Themes'
 
 const inputCls = 'w-full bg-[#0c0c14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50'
@@ -344,6 +346,163 @@ function PBSSection({ initial }) {
   )
 }
 
+// --- SimpDash version & self-update ---
+
+function VersionSection() {
+  const [info, setInfo] = useState(null)
+  const [checking, setChecking] = useState(false)
+  const [checkErr, setCheckErr] = useState(null)
+  const [checkedNow, setCheckedNow] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const updater = useSelfUpdate()
+
+  useEffect(() => {
+    getUpdateCheck().then(setInfo).catch(() => {})
+  }, [])
+
+  async function refresh() {
+    setChecking(true)
+    setCheckErr(null)
+    setCheckedNow(false)
+    try {
+      const res = await getUpdateCheck(true)
+      setInfo(res)
+      setCheckedNow(true)
+    } catch (e) {
+      setCheckErr(e.message || 'Update check failed')
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  function copyCli() {
+    navigator.clipboard?.writeText(INSTALL_CMD).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const isDev = info?.current_version === 'dev'
+
+  return (
+    <Section
+      title="SimpDash updates"
+      subtitle="Check for new SimpDash releases and update the dashboard binary in place."
+    >
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-400">Installed version:</span>
+            <span className="font-mono text-white">{info?.current_version || '—'}</span>
+            {info?.update_available && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+                {info.latest_version} available
+              </span>
+            )}
+            {info && !info.update_available && !isDev && info.latest_version && (
+              <span className="text-xs text-emerald-400/80">Up to date</span>
+            )}
+          </div>
+          {isDev && (
+            <p className="text-xs text-gray-500">
+              Development build — one-click updates are disabled.
+            </p>
+          )}
+          {info?.release_url && info?.update_available && (
+            <p className="text-xs text-gray-500">
+              <a
+                href={info.release_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+              >
+                View {info.latest_version} release notes ↗
+              </a>
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={refresh}
+            disabled={checking || updater.busy}
+            className={btnGhost}
+          >
+            {checking ? 'Checking…' : 'Check for updates'}
+          </button>
+
+          {info?.update_available && info?.can_self_update && updater.phase === 'idle' && (
+            <button
+              onClick={updater.askConfirm}
+              className="text-xs px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors"
+            >
+              Update to {info.latest_version}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {updater.phase === 'confirm' && info && (
+        <div className="mt-4 flex flex-wrap items-center gap-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+          <p className="text-xs text-emerald-200 flex-1">
+            Download &amp; verify <span className="font-semibold">{info.latest_version}</span> and restart SimpDash (~5 s)?
+          </p>
+          <button
+            onClick={() => updater.run(info.latest_version, info.current_version)}
+            className="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors"
+          >
+            Confirm update
+          </button>
+          <button onClick={updater.cancel} className={btnGhost}>Cancel</button>
+        </div>
+      )}
+
+      {updater.busy && (
+        <p className="text-xs text-emerald-300 mt-3">
+          {updater.phase === 'downloading' && `Downloading & verifying ${updater.targetVersion || info?.latest_version}…`}
+          {updater.phase === 'restarting' && `Restarting SimpDash — waiting for ${updater.targetVersion || info?.latest_version}…`}
+          {updater.phase === 'reloading' && `Updated to ${updater.targetVersion || info?.latest_version} — reloading…`}
+        </p>
+      )}
+
+      {updater.error && (
+        <div className="mt-3 space-y-2">
+          <p className="text-xs text-red-400">{updater.error}</p>
+          <button
+            onClick={() => updater.run(info?.latest_version, info?.current_version)}
+            className="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {info?.update_available && !info?.can_self_update && (
+        <div className="mt-4">
+          <p className="text-xs text-gray-500 mb-2">
+            Prebuilt self-update assets are unavailable for this release — update via CLI:
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 bg-[#0c0c14] border border-white/10 rounded-lg px-3 py-2 text-xs text-gray-300 font-mono overflow-x-auto whitespace-nowrap">
+              {INSTALL_CMD}
+            </code>
+            <button onClick={copyCli} className={btnGhost}>
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {checkErr && <p className="text-xs text-red-400 mt-3">{checkErr}</p>}
+      {checkedNow && !checkErr && !info?.update_available && !isDev && (
+        <p className="text-xs text-emerald-400 mt-3">
+          {info?.latest_version ? `You're on the latest release (${info.latest_version}).` : 'No releases published yet.'}
+        </p>
+      )}
+    </Section>
+  )
+}
+
 export default function Settings({ theme, setTheme }) {
   const [data, setData] = useState(null)
   const [err, setErr] = useState(null)
@@ -363,6 +522,7 @@ export default function Settings({ theme, setTheme }) {
       <TwoFASection initial={data.totp} />
       <NotifySection initial={data.notify} />
       <PBSSection initial={data.pbs} />
+      <VersionSection />
     </div>
   )
 }
