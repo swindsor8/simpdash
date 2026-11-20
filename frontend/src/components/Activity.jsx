@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { getJobs, getClusterTasks } from '../lib/api'
 import { useJobStream } from '../hooks/useJobStream'
 import { useFocusTrap } from '../lib/a11y'
 import Terminal from './Terminal'
 import { StatusPill } from './Card'
 import { loadingText } from '../lib/copy'
+import { useModalEntrance, useScrollReveal } from './motion'
 
 function fmtAgo(ts) {
   if (!ts) return '—'
@@ -50,13 +51,15 @@ function taskVariant(status) {
 function LogModal({ job, onClose }) {
   const { output, state } = useJobStream(job.id, null)
   const trap = useFocusTrap()
+  const backdropRef = useRef(null)
+  useModalEntrance(backdropRef, trap)
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div ref={backdropRef} data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div ref={trap} role="dialog" aria-modal="true" aria-label="Job log"
         className="bg-[#13131e] border border-white/10 rounded-2xl w-full max-w-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3 gap-2">
@@ -76,6 +79,7 @@ export default function Activity() {
   const [jobs, setJobs] = useState(null)
   const [tasks, setTasks] = useState(null)
   const [openJob, setOpenJob] = useState(null)
+  const containerRef = useRef(null)
 
   useEffect(() => {
     let live = true
@@ -88,15 +92,17 @@ export default function Activity() {
     return () => { live = false; clearInterval(t) }
   }, [])
 
+  useScrollReveal(containerRef, { deps: [jobs !== null || tasks !== null] })
+
   if (jobs === null && tasks === null) {
     return <div className="p-4 sm:p-8 text-sm text-gray-600">{loadingMsg}</div>
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-6 max-w-5xl">
+    <div ref={containerRef} className="p-4 sm:p-8 space-y-6 max-w-5xl">
 
       {/* SuperDash jobs — updates and script installs run by this dashboard */}
-      <section>
+      <section data-reveal="">
         <h2 className="text-xs uppercase tracking-wider text-gray-600 mb-2 px-1">SuperDash jobs</h2>
         <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
           {(jobs ?? []).length === 0 ? (
@@ -135,7 +141,7 @@ export default function Activity() {
       </section>
 
       {/* Cluster task log — everything Proxmox did recently, dashboard or not */}
-      <section>
+      <section data-reveal="">
         <h2 className="text-xs uppercase tracking-wider text-gray-600 mb-2 px-1">Proxmox cluster tasks</h2>
         <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
           {(tasks ?? []).length === 0 ? (

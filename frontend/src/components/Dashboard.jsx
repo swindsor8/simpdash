@@ -23,7 +23,11 @@ import ErrorBoundary from './ErrorBoundary'
 import UpdateBanner, { UpdateHeaderPill } from './UpdateBanner'
 import { Card, StatCard, StatusPill, statusVariant } from './Card'
 import RadialGauge from './RadialGauge'
-import { usePowerMorph, useStatusGlow } from './motion'
+import {
+  usePowerMorph, useStatusGlow, useViewTransition,
+  useScrollReveal, useModalEntrance, useStaggerMount,
+} from './motion'
+import { ScrollContainerContext, useSmoothScroll } from '../hooks/useSmoothScroll'
 import { copy } from '../lib/copy'
 import { cardA11y, useFocusTrap } from '../lib/a11y'
 
@@ -225,8 +229,10 @@ function IconUpdateSm() {
 function JobModal({ jobId, title, onClose }) {
   const { output, state, sendInput } = useJobStream(jobId, null)
   const trap = useFocusTrap()
+  const backdropRef = useRef(null)
+  useModalEntrance(backdropRef, trap)
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div ref={backdropRef} data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div ref={trap} role="dialog" aria-modal="true" aria-label={title} className="bg-[#13131e] border border-white/10 rounded-2xl w-full max-w-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3 gap-2">
           <h2 className="text-base font-semibold text-white truncate">{title}</h2>
@@ -246,6 +252,8 @@ function JobModal({ jobId, title, onClose }) {
 // ConfirmModal — generic danger confirmation, reuses the Scripts.jsx pattern.
 function ConfirmModal({ confirm, onConfirm, onCancel }) {
   const trap = useFocusTrap()
+  const backdropRef = useRef(null)
+  useModalEntrance(backdropRef, trap)
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onCancel() }
     window.addEventListener('keydown', onKey)
@@ -271,7 +279,7 @@ function ConfirmModal({ confirm, onConfirm, onCancel }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onCancel}>
+    <div ref={backdropRef} data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onCancel}>
       <div ref={trap} role="dialog" aria-modal="true" aria-label={title} className="bg-[#13131e] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-base font-semibold text-white mb-3">{title}</h2>
         <p className="text-sm text-gray-400 mb-5">{body}</p>
@@ -296,6 +304,8 @@ function ServiceLinkEditor({ entityType, entityId, link, onDone, onClose }) {
   const [extras, setExtras] = useState(link?.extras ?? [])
   const [err, setErr] = useState(null)
   const [saving, setSaving] = useState(false)
+  const popoverRef = useRef(null)
+  useStaggerMount(popoverRef)
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -329,7 +339,7 @@ function ServiceLinkEditor({ entityType, entityId, link, onDone, onClose }) {
   }
 
   return (
-    <div className="absolute top-6 right-0 z-40 bg-[#13131e] border border-white/20 rounded-xl p-3 shadow-2xl w-72" onClick={e => e.stopPropagation()}>
+    <div ref={popoverRef} data-lenis-prevent className="absolute top-6 right-0 z-40 bg-[#13131e] border border-white/20 rounded-xl p-3 shadow-2xl w-72" onClick={e => e.stopPropagation()}>
       <p className="text-[11px] text-gray-400 font-medium mb-2">Service link</p>
       <input
         autoFocus
@@ -601,6 +611,7 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
 
   return (
     <Card
+      data-reveal=""
       className={`p-6 relative card-lift hover:border-white/20 ${glow || ''} ${link ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
       {...cardA11y(link ? handleCardClick : null, `Open ${link?.label || node.id}`)}
@@ -793,7 +804,7 @@ function GuestDetails({ vmid, etype }) {
         ) : services.length === 0 ? (
           <p className="text-[11px] text-gray-600">No running services reported.</p>
         ) : (
-          <ul className="space-y-0.5 max-h-36 overflow-y-auto">
+          <ul data-lenis-prevent className="space-y-0.5 max-h-36 overflow-y-auto">
             {services.map(s => (
               <li key={s.name} className="flex items-center gap-1.5 text-[11px] text-gray-400 min-w-0" title={s.description}>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 shrink-0" />
@@ -855,6 +866,7 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
 
   return (
     <Card
+      data-reveal=""
       className={`relative p-4 flex flex-col card-lift hover:border-white/20 ${glow || ''} ${link ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
       {...cardA11y(link ? handleCardClick : null, `Open ${displayName}`)}
@@ -1012,11 +1024,26 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
   )
 }
 
+// ErrorToast — floating error notification with GSAP entrance.
+function ErrorToast({ message, theme }) {
+  const ref = useRef(null)
+  useStaggerMount(ref, null, { theme, deps: [message] })
+  return (
+    <div ref={ref} className="fixed bottom-4 right-4 z-50 bg-[#13131e] border border-red-500/30 text-red-400 text-xs px-4 py-2.5 rounded-xl shadow-2xl max-w-xs">
+      {copy('toast.fail', message)}
+    </div>
+  )
+}
+
 // --- main ---
 export default function Dashboard({ onLogout, theme, setTheme }) {
   const [view, setView] = useState('dashboard')
   const [navOpen, setNavOpen] = useState(false) // mobile drawer
   const [blip, setBlip] = useState(0) // bump → restarts the channel-tune static overlay (terminal theme)
+  const scrollWrapperRef = useRef(null)
+  const scrollContentRef = useRef(null)
+  const viewRef = useRef(null)
+  const overviewMainRef = useRef(null)
   // Sidebar navigation: switch view and, under the terminal theme, fire a brief
   // static "channel-tune" blip. `extra` runs any per-view side effect first.
   const go = (v, extra) => { if (extra) extra(); setView(v); setNavOpen(false); if (theme === 'terminal') setBlip(b => b + 1) }
@@ -1258,6 +1285,29 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
   }, [guestQuery, activeTag, runningOnly, serviceLinks])
   const toggleTag = useCallback((t) => setActiveTag(cur => (cur === t ? null : t)), [])
 
+  // Smooth scrolling via Lenis (disabled on Scripts which owns its own inner
+  // Lenis scroll pane, and automatically disabled on Win98 / reduced motion).
+  useSmoothScroll(scrollWrapperRef, scrollContentRef, {
+    theme,
+    enabled: view !== 'scripts',
+    resetKey: view,
+  })
+  useViewTransition(viewRef, view, theme)
+  useScrollReveal(overviewMainRef, {
+    theme,
+    scrollerRef: scrollWrapperRef,
+    deps: [
+      view === 'dashboard',
+      nodes === null,
+      nodes?.length ?? 0,
+      totalVMs + totalLXCs,
+      activeNode,
+      guestQuery,
+      activeTag,
+      runningOnly,
+    ],
+  })
+
   async function handleLogout() {
     await logout()
     onLogout()
@@ -1326,7 +1376,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           )}
         </div>
 
-        <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
+        <nav data-lenis-prevent className="flex-1 px-2 space-y-0.5 overflow-y-auto">
           <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => go('dashboard')} badge={pendingUpdates} />
           <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => go('scripts')} />
           <NavItem icon={<IconNote />} label="Notebook" active={view === 'notebook'} onClick={() => go('notebook', () => setNotebookFilter(null))} />
@@ -1344,7 +1394,9 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       </aside>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollWrapperRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollContentRef} className={view === 'scripts' ? 'h-full' : ''}>
+      <ScrollContainerContext.Provider value={scrollWrapperRef}>
 
       <UpdateBanner
         info={appUpdate}
@@ -1353,6 +1405,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       />
 
       <ErrorBoundary resetKey={view}>
+      <div ref={viewRef} className={view === 'scripts' ? 'h-full' : ''}>
 
       {view === 'network' ? (
         <>
@@ -1443,7 +1496,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             </div>
             <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
           </header>
-          <Scripts node={activeNode} lxcs={entities.filter(e => e.type === 'lxc')} />
+          <Scripts node={activeNode} lxcs={entities.filter(e => e.type === 'lxc')} theme={theme} />
         </div>
       ) : view === 'notebook' ? (
         <>
@@ -1483,12 +1536,13 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           </div>
         </header>
 
-        <main className={`p-4 sm:p-8 space-y-6 max-w-[1600px] cards-region ${dimmed ? 'dimmed' : ''} ${reconnecting ? 'reconnect-pulse' : ''}`}>
+        <main ref={overviewMainRef} className={`p-4 sm:p-8 space-y-6 max-w-[1600px] cards-region ${dimmed ? 'dimmed' : ''} ${reconnecting ? 'reconnect-pulse' : ''}`}>
 
           {/* Stat cards — dark elevated surface; no trend pills (no historical
               comparison data exists to compare against). */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 stagger">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard
+              data-reveal=""
               label="Nodes Online"
               loading={nodes === null}
               value={`${onlineNodes} / ${totalNodes}`}
@@ -1496,18 +1550,21 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               icon={<IconServer />}
             />
             <StatCard
+              data-reveal=""
               label="Virtual Machines"
               loading={nodes === null}
               value={totalVMs}
               icon={<IconMonitor />}
             />
             <StatCard
+              data-reveal=""
               label="Containers"
               loading={nodes === null}
               value={totalLXCs}
               icon={<IconBox />}
             />
             <StatCard
+              data-reveal=""
               label="Avg CPU"
               loading={nodes === null}
               value={avgCPU === null ? '—' : avgCPU}
@@ -1605,7 +1662,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
                     localCluster={activeNode == null}
                   />
                   {(vms.length > 0 || lxcs.length > 0) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 stagger">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
                       {vms.map(vm => (
                         <GuestCard
                           key={`vm-${vm.vmid}`} item={vm} type="VM" nodeName={node.id}
@@ -1659,11 +1716,17 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           {/* Updates — hidden while the node is unreachable (nothing to act on). */}
           {!unreachable && (
             <div className="space-y-6">
-              <Updates node={activeNode} />
+              <div data-reveal="">
+                <Updates node={activeNode} />
+              </div>
               {activeNode == null && (() => {
                 const localNode = (nodes ?? []).find(n => n.id === selfNode) || (nodes?.length === 1 ? nodes[0] : null)
                 const localLxcs = localNode?.lxcs ?? []
-                return localLxcs.length > 0 ? <LXCBatchUpdate lxcs={localLxcs} /> : null
+                return localLxcs.length > 0 ? (
+                  <div data-reveal="">
+                    <LXCBatchUpdate lxcs={localLxcs} />
+                  </div>
+                ) : null
               })()}
             </div>
           )}
@@ -1671,7 +1734,10 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         </main>
         </>
       )}
+      </div>
       </ErrorBoundary>
+      </ScrollContainerContext.Provider>
+      </div>
       </div>
 
       {/* Confirmation modal for destructive power actions */}
@@ -1692,11 +1758,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       {theme === 'terminal' && blip > 0 && <div key={blip} className="crt-static run" />}
 
       {/* Error toast */}
-      {toast && (
-        <div className="fixed bottom-4 right-4 z-50 bg-[#13131e] border border-red-500/30 text-red-400 text-xs px-4 py-2.5 rounded-xl shadow-2xl max-w-xs">
-          {copy('toast.fail', toast)}
-        </div>
-      )}
+      {toast && <ErrorToast message={toast} theme={theme} />}
     </div>
   )
 }

@@ -11,10 +11,10 @@ import { AnimatedNumber, useChangeFlash } from './motion'
 // Card — the one elevated dark surface used across the dashboard. Pass
 // icon/title/subtitle/action to get the standard header row; omit them and it's
 // just chrome around `children` (used by the bespoke node/guest cards).
-export function Card({ icon, title, subtitle, action, className = '', onClick, children }) {
+export function Card({ icon, title, subtitle, action, className = '', onClick, children, ...rest }) {
   const titled = title || action
   return (
-    <div onClick={onClick} className={`bg-[#13131e] border border-white/[0.07] rounded-2xl ${className}`}>
+    <div onClick={onClick} className={`bg-[#13131e] border border-white/[0.07] rounded-2xl ${className}`} {...rest}>
       {titled && (
         <div className="flex items-center justify-between gap-2 px-6 py-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -72,11 +72,11 @@ export function TrendPill({ dir, pct }) {
 // A numeric `value` tweens between values (--motion-medium) and flashes the card
 // on change; a string `value` (e.g. "3 / 4") renders as-is. `format` styles the
 // tweened number; `loading` shows a shimmer skeleton before the first frame.
-export function StatCard({ icon, label, value, format, sub, trend, action, loading }) {
+export function StatCard({ icon, label, value, format, sub, trend, action, loading, ...rest }) {
   const numeric = typeof value === 'number'
   const flashKey = useChangeFlash(numeric ? value : null)
   return (
-    <Card className="relative p-5 card-lift hover:border-white/20">
+    <Card className="relative p-5 card-lift hover:border-white/20" {...rest}>
       {flashKey && <span key={flashKey} className="stat-flash-overlay" />}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 min-w-0">

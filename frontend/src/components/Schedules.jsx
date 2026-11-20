@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import {
   getSchedules, createSchedule, updateSchedule, deleteSchedule,
   runScheduleNow, previewSchedule, getBackupStorages, getNodeResources,
@@ -8,6 +8,7 @@ import { useFocusTrap } from '../lib/a11y'
 import Terminal from './Terminal'
 import { Card, StatCard, StatusPill } from './Card'
 import { loadingText } from '../lib/copy'
+import { useModalEntrance, useScrollReveal } from './motion'
 
 const ACTIONS = [
   {
@@ -260,13 +261,15 @@ function IconServerSm() {
 function JobLogModal({ jobId, title, onClose }) {
   const { output, state } = useJobStream(jobId, null)
   const trap = useFocusTrap()
+  const backdropRef = useRef(null)
+  useModalEntrance(backdropRef, trap)
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div ref={backdropRef} data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div
         ref={trap}
         role="dialog"
@@ -293,6 +296,8 @@ function JobLogModal({ jobId, title, onClose }) {
 // ScheduleModal — Create or Edit a scheduled task.
 function ScheduleModal({ initial, clusterNodes, pairedNodes, selfNode, timezone, onClose, onSaved }) {
   const trap = useFocusTrap()
+  const backdropRef = useRef(null)
+  useModalEntrance(backdropRef, trap)
   const isEdit = Boolean(initial?.id)
 
   const defaultNodeName = initial?.node || selfNode || clusterNodes[0]?.id || ''
@@ -565,7 +570,7 @@ function ScheduleModal({ initial, clusterNodes, pairedNodes, selfNode, timezone,
   const inputCls = 'w-full bg-[#0c0c14] border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-blue-500/50 placeholder:text-gray-600'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div ref={backdropRef} data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div
         ref={trap}
         role="dialog"
@@ -586,7 +591,7 @@ function ScheduleModal({ initial, clusterNodes, pairedNodes, selfNode, timezone,
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-sm p-1">✕</button>
         </div>
 
-        <form onSubmit={handleSubmit} className="overflow-y-auto px-6 py-5 space-y-5">
+        <form data-lenis-prevent onSubmit={handleSubmit} className="overflow-y-auto px-6 py-5 space-y-5">
           {/* 1. Name & Enabled */}
           <div className="flex items-end gap-3">
             <div className="flex-1">
@@ -1103,6 +1108,8 @@ export default function Schedules({ nodes = null, pairedNodes = [], selfNode = '
   const [logModal, setLogModal] = useState(null)
   const [toast, setToast] = useState('')
   const [nowMs, setNowMs] = useState(() => Date.now())
+  const containerRef = useRef(null)
+  useScrollReveal(containerRef, { deps: [Boolean(data)] })
 
   const showToast = useCallback((msg) => {
     setToast(msg)
@@ -1204,28 +1211,32 @@ export default function Schedules({ nodes = null, pairedNodes = [], selfNode = '
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-6 max-w-6xl">
+    <div ref={containerRef} className="p-4 sm:p-8 space-y-6 max-w-6xl">
       {/* Stat summary row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
+          data-reveal=""
           label="Active Schedules"
           value={`${stats.activeCount} / ${stats.totalCount}`}
           sub={data.queue_len > 0 ? `${data.queue_len} queued right now` : 'No jobs waiting in queue'}
           icon={<IconClock />}
         />
         <StatCard
+          data-reveal=""
           label="Next Run"
           value={stats.upcoming ? fmtRelative(stats.upcoming.next_run_at, nowMs) : 'None'}
           sub={stats.upcoming ? `${stats.upcoming.name} · ${fmtDateTime(stats.upcoming.next_run_at)}` : 'Create a schedule to begin'}
           icon={<IconClock />}
         />
         <StatCard
+          data-reveal=""
           label="Last Outcomes"
           value={`${stats.succeeded} ok`}
           sub={stats.failed > 0 ? `${stats.failed} failed recently` : 'No failed schedules'}
           icon={<IconCheckCircle />}
         />
         <StatCard
+          data-reveal=""
           label="Server Timezone"
           value={data.tz_abbr || data.timezone || 'Local'}
           sub={data.server_time ? fmtDateTime(data.server_time) : ''}
@@ -1266,7 +1277,7 @@ export default function Schedules({ nodes = null, pairedNodes = [], selfNode = '
       </div>
 
       {/* Schedules list */}
-      <Card>
+      <Card data-reveal="">
         {filtered.length === 0 ? (
           <div className="px-6 py-12 text-center space-y-3">
             <p className="text-sm text-gray-400">
@@ -1445,6 +1456,7 @@ export default function Schedules({ nodes = null, pairedNodes = [], selfNode = '
       {/* Proxmox native backup schedules (read-only visibility) */}
       {nativeBackups.length > 0 && (
         <Card
+          data-reveal=""
           title="Proxmox Native Backup Schedules"
           subtitle="Read-only view of cluster backup jobs configured directly in Proxmox VE"
         >

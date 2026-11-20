@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { login } from '../lib/api'
 import logo from '../../assets/logo.png'
+import { useStaggerMount } from './motion'
 
 export default function Login({ onDone }) {
   const [pw, setPw] = useState('')
@@ -8,6 +9,8 @@ export default function Login({ onDone }) {
   const [needCode, setNeedCode] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const formWrapRef = useRef(null)
+  useStaggerMount(formWrapRef, '[data-stagger]', { deps: [needCode] })
 
   async function submit(e) {
     e.preventDefault()
@@ -30,20 +33,20 @@ export default function Login({ onDone }) {
 
   return (
     <div className="min-h-screen bg-[#0c0c14] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="flex items-center gap-2.5 mb-8">
+      <div ref={formWrapRef} className="w-full max-w-sm">
+        <div data-stagger="" className="flex items-center gap-2.5 mb-8">
           <img src={logo} alt="SuperDash" className="w-8 h-8 rounded-lg object-contain" />
           <span className="font-semibold text-white">SuperDash</span>
         </div>
-        <h1 className="text-2xl font-bold text-white mb-1">
+        <h1 data-stagger="" className="text-2xl font-bold text-white mb-1">
           {needCode ? 'Two-factor code' : 'Welcome back'}
         </h1>
-        <p className="text-gray-500 mb-7 text-sm">
+        <p data-stagger="" className="text-gray-500 mb-7 text-sm">
           {needCode
             ? 'Enter the 6-digit code from your authenticator app, or a recovery code.'
             : 'Enter your password to continue.'}
         </p>
-        <form onSubmit={submit} className="space-y-3">
+        <form data-stagger="" onSubmit={submit} className="space-y-3">
           {!needCode ? (
             <input
               type="password"

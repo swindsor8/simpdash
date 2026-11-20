@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getCatalog, runScript, syncCatalog } from '../lib/api'
 import { useJobStream } from '../hooks/useJobStream'
+import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import Terminal from './Terminal'
 import { useFocusTrap } from '../lib/a11y'
+import { useModalEntrance, useScrollReveal } from './motion'
 
 // A warning is "creating" infrastructure (a new LXC/VM) — surfaced loudest in
 // the confirm dialog since it changes the host, not just an app.
@@ -72,7 +74,7 @@ function ScriptLogo({ script }) {
 function ScriptCard({ script, disabled, onRun }) {
   const res = script.resources
   return (
-    <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-5 flex flex-col">
+    <div data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-5 flex flex-col card-lift hover:border-white/20">
       <div className="flex items-start gap-3 mb-1.5">
         <ScriptLogo script={script} />
         <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 min-w-0 flex-1 mt-0.5">{script.name}</h3>
@@ -116,6 +118,8 @@ function ConfirmDialog({ script, lxcs = [], onCancel, onConfirm }) {
   // 'host' and is ignored by non-addon scripts).
   const [target, setTarget] = useState('host')
   const trap = useFocusTrap()
+  const backdropRef = useRef(null)
+  useModalEntrance(backdropRef, trap)
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onCancel() }
     window.addEventListener('keydown', onKey)
@@ -127,6 +131,8 @@ function ConfirmDialog({ script, lxcs = [], onCancel, onConfirm }) {
 
   return (
     <div
+      ref={backdropRef}
+      data-lenis-prevent
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={onCancel}
     >
@@ -203,6 +209,9 @@ function ConfirmDialog({ script, lxcs = [], onCancel, onConfirm }) {
 // the keystroke stream); closeable any time via the X, backdrop, or Escape —
 // the job keeps running on the server if dismissed mid-install.
 function TerminalDialog({ running, busy, startErr, output, jobState, sendInput, onClose }) {
+  const backdropRef = useRef(null)
+  const dialogRef = useRef(null)
+  useModalEntrance(backdropRef, dialogRef)
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -211,10 +220,13 @@ function TerminalDialog({ running, busy, startErr, output, jobState, sendInput, 
 
   return (
     <div
+      ref={backdropRef}
+      data-lenis-prevent
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         className="bg-[#13131e] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-2"
         onClick={e => e.stopPropagation()}
       >
@@ -324,7 +336,7 @@ function VerifiedTick() {
   )
 }
 
-export default function Scripts({ node = null, lxcs = [] }) {
+export default function Scripts({ node = null, lxcs = [], theme }) {
   const [scripts, setScripts] = useState(null)
   const [loadErr, setLoadErr] = useState(null)
   const [pending, setPending] = useState(null)   // script awaiting confirm
@@ -336,6 +348,8 @@ export default function Scripts({ node = null, lxcs = [] }) {
   const [activeCat, setActiveCat] = useState(null) // null = All
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState(null)
+  const mainWrapperRef = useRef(null)
+  const mainContentRef = useRef(null)
   const { output, state: jobState, sendInput } = useJobStream(jobId, node)
   const busy = jobState === 'running'
 
@@ -386,6 +400,16 @@ export default function Scripts({ node = null, lxcs = [] }) {
   const selected = cats.some(c => c.name === activeCat) ? activeCat : null
   const shown = selected ? filtered.filter(s => s.category === selected) : filtered
 
+  useSmoothScroll(mainWrapperRef, mainContentRef, {
+    theme,
+    resetKey: `${selected ?? ''}:${q}`,
+  })
+  useScrollReveal(mainContentRef, {
+    theme,
+    scrollerRef: mainWrapperRef,
+    deps: [scripts === null, selected, q, shown.length],
+  })
+
   return (
     <div className="flex flex-1 min-h-0">
       {/* In-tab category sidebar */}
@@ -399,7 +423,7 @@ export default function Scripts({ node = null, lxcs = [] }) {
             className="w-full bg-white/5 border border-white/[0.07] rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20"
           />
         </div>
-        <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1 space-y-0.5">
+        <div data-lenis-prevent className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1 space-y-0.5">
           <button
             onClick={() => setActiveCat(null)}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-colors ${
@@ -440,7 +464,8 @@ export default function Scripts({ node = null, lxcs = [] }) {
       </aside>
 
       {/* Card pane — uses the full remaining width */}
-      <main className="flex-1 p-8 space-y-4 overflow-y-auto">
+      <main ref={mainWrapperRef} className="flex-1 overflow-y-auto">
+        <div ref={mainContentRef} className="p-8 space-y-4">
         {loadErr && <p className="text-sm text-red-400">Failed to load catalog: {loadErr}</p>}
         {scripts === null && !loadErr && (
           <p className="text-sm text-gray-600">Loading catalog…</p>
@@ -465,6 +490,7 @@ export default function Scripts({ node = null, lxcs = [] }) {
             </div>
           </>
         )}
+        </div>
       </main>
 
       {(showTerm || startErr) && (

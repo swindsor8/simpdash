@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo, useDeferredValue, useCallback } from 'react'
+import { useState, useEffect, useMemo, useDeferredValue, useCallback, useRef } from 'react'
 import { getNotes, createNote, updateNote, deleteNote } from '../lib/api'
 import { copy, loadingText } from '../lib/copy'
+import { useScrollReveal } from './motion'
 
 const COLORS = ['yellow', 'teal', 'pink', 'blue']
 // Muted, desaturated sticky tones that read against the #0a0b0f background —
@@ -241,11 +242,14 @@ export default function Notebook({ entities = [], filter, onCountsChanged = () =
   const [entityFilter, setEntityFilter] = useState('__all') // '__all' | '' (general) | 'type:id'
   const deferredQuery = useDeferredValue(query)
   const loadingMsg = useMemo(() => loadingText('Loading notes…'), [])
+  const containerRef = useRef(null)
 
   const load = useCallback(() => {
     getNotes().then(setNotes).catch(() => setNotes([]))
   }, [])
   useEffect(() => { load() }, [load])
+
+  useScrollReveal(containerRef, { deps: [Boolean(notes)] })
 
   // A badge click on a tile pre-filters to that entity.
   useEffect(() => {
@@ -264,8 +268,10 @@ export default function Notebook({ entities = [], filter, onCountsChanged = () =
   }, [notes, entityFilter, deferredQuery])
 
   return (
-    <div className="p-8 max-w-6xl">
-      <QuickAdd entities={entities} onCreated={load} onCountsChanged={onCountsChanged} />
+    <div ref={containerRef} className="p-8 max-w-6xl">
+      <div data-reveal="">
+        <QuickAdd entities={entities} onCreated={load} onCountsChanged={onCountsChanged} />
+      </div>
 
       {notes && notes.length > 0 && (
         <div className="flex items-center gap-3 mb-6 flex-wrap">

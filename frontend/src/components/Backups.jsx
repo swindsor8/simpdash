@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { getBackups, getPBS } from '../lib/api'
 import { StatusPill } from './Card'
 import { loadingText } from '../lib/copy'
+import { useScrollReveal } from './motion'
 
 function fmtAge(unix) {
   if (!unix) return null
@@ -69,7 +70,7 @@ function PBSSection() {
   const guests = [...(pbs?.guests ?? [])].sort((a, b) => Number(a.id) - Number(b.id))
 
   return (
-    <section>
+    <section data-reveal="">
       <h2 className="text-xs uppercase tracking-wider text-gray-600 mb-2 px-1">Proxmox Backup Server</h2>
       {pbsErr ? (
         <div className="bg-[#13131e] border border-amber-500/20 rounded-2xl p-5">
@@ -129,6 +130,7 @@ export default function Backups() {
   const loadingMsg = useMemo(() => loadingText('Loading backups…'), [])
   const [data, setData] = useState(null) // null = loading
   const [err, setErr] = useState(null)
+  const containerRef = useRef(null)
 
   useEffect(() => {
     let live = true
@@ -137,6 +139,8 @@ export default function Backups() {
       .catch(e => { if (live) setErr(e.message) })
     return () => { live = false }
   }, [])
+
+  useScrollReveal(containerRef, { deps: [Boolean(data)] })
 
   if (err) return <div className="p-8"><Degraded msg={err} /></div>
   if (!data) return <div className="p-8 text-sm text-gray-600">{loadingMsg}</div>
@@ -147,15 +151,15 @@ export default function Backups() {
   const noBackup = guests.filter(g => !g.last_backup).length
 
   return (
-    <div className="p-4 sm:p-8 space-y-6 max-w-5xl">
+    <div ref={containerRef} className="p-4 sm:p-8 space-y-6 max-w-5xl">
       {(failed > 0 || noBackup > 0) && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-300">
+        <div data-reveal="" className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 text-sm text-amber-300">
           {failed > 0 && <span>{failed} backup job{failed !== 1 ? 's' : ''} failed recently. </span>}
           {noBackup > 0 && <span>{noBackup} guest{noBackup !== 1 ? 's have' : ' has'} no backup.</span>}
         </div>
       )}
 
-      <section className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
+      <section data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-gray-600">
@@ -186,7 +190,7 @@ export default function Backups() {
         </table>
       </section>
 
-      <section>
+      <section data-reveal="">
         <h2 className="text-xs uppercase tracking-wider text-gray-600 mb-2 px-1">Recent backup jobs</h2>
         <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
           {data.jobs.length === 0 ? (

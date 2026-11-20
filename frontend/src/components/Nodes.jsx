@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { pairNode, unpairNode } from '../lib/api'
+import { useScrollReveal } from './motion'
 
 // Nodes — pair and manage secondary agents. Adding a node calls the main-side
 // /api/nodes/pair, which reaches out to the secondary's agent with the pairing
@@ -9,6 +10,8 @@ export default function Nodes({ nodes, onChange }) {
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
+  const containerRef = useRef(null)
+  useScrollReveal(containerRef)
 
   async function handleAdd(e) {
     e.preventDefault()
@@ -36,9 +39,9 @@ export default function Nodes({ nodes, onChange }) {
   }
 
   return (
-    <main className="p-8 space-y-6 max-w-3xl">
+    <main ref={containerRef} className="p-8 space-y-6 max-w-3xl">
       {/* Add node */}
-      <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
+      <div data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-white mb-1">Add a node</h2>
         <p className="text-xs text-gray-500 mb-4">
           On the secondary, run SuperDash in <span className="font-mono text-gray-400">secondary</span> mode.
@@ -77,7 +80,7 @@ export default function Nodes({ nodes, onChange }) {
       </div>
 
       {/* Paired nodes */}
-      <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
+      <div data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
         <div className="px-6 py-4 border-b border-white/[0.06]">
           <h2 className="text-sm font-semibold text-white">Paired nodes</h2>
         </div>

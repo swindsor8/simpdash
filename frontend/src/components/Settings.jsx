@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   getSettings, putProxmoxSettings, testProxmoxSettings,
   putNotifySettings, testNotify, putPBSSettings,
@@ -7,6 +7,7 @@ import {
 import { useSelfUpdate } from '../hooks/useSelfUpdate'
 import { INSTALL_CMD } from './UpdateBanner'
 import Themes from './Themes'
+import { useScrollReveal } from './motion'
 
 const inputCls = 'w-full bg-[#0c0c14] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-700 focus:outline-none focus:border-blue-500/50'
 const labelCls = 'block text-xs text-gray-500 mb-1.5'
@@ -15,7 +16,7 @@ const btnGhost = 'text-xs px-4 py-2 rounded-lg border border-white/10 text-gray-
 
 function Section({ title, subtitle, children }) {
   return (
-    <div className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
+    <div data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
       <h2 className="text-sm font-semibold text-white mb-1">{title}</h2>
       <p className="text-xs text-gray-500 mb-5">{subtitle}</p>
       {children}
@@ -611,16 +612,19 @@ function VersionSection() {
 export default function Settings({ theme, setTheme }) {
   const [data, setData] = useState(null)
   const [err, setErr] = useState(null)
+  const containerRef = useRef(null)
 
   useEffect(() => {
     getSettings().then(setData).catch(e => setErr(e.message))
   }, [])
 
+  useScrollReveal(containerRef, { theme, deps: [Boolean(data)] })
+
   if (err) return <div className="p-4 sm:p-8 text-sm text-red-400">{err}</div>
   if (!data) return <div className="p-4 sm:p-8 text-sm text-gray-600">Loading…</div>
 
   return (
-    <div className="p-4 sm:p-8 space-y-6 max-w-3xl">
+    <div ref={containerRef} className="p-4 sm:p-8 space-y-6 max-w-3xl">
       <Section title="Appearance" subtitle="Choose a colour theme.">
         <Themes theme={theme} setTheme={setTheme} embedded />
       </Section>

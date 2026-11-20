@@ -64,6 +64,7 @@ export default function Terminal({ output, state, sendInput }) {
       </div>
       <div
         ref={elRef}
+        data-lenis-prevent
         className="bg-[#0c0c14] border border-white/[0.06] rounded-xl p-2 overflow-auto"
       />
     </div>

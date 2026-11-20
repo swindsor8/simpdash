@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getNetwork, getNetworkStats, runSpeedtest, getConnectivity, getSpeedtestHistory } from '../lib/api'
 import { loadingText } from '../lib/copy'
+import { useScrollReveal } from './motion'
 
 const TYPE_ORDER = ['bridge', 'bond', 'eth', 'vlan', 'OVSBridge', 'OVSBond', 'OVSPort', 'OVSIntPort', 'alias', 'loopback']
 const HISTORY_LEN = 40 // samples kept for sparklines (~80 s at the 2 s poll)
@@ -133,6 +134,8 @@ export default function Network() {
   const [stResult, setStResult] = useState(null)
   const [stErr, setStErr] = useState(null)
   const [stHist, setStHist] = useState([])
+  const containerRef = useRef(null)
+  useScrollReveal(containerRef, { deps: [Boolean(ifaces)] })
 
   useEffect(() => {
     // The interface list comes from the PVE API; without Proxmox the rest of
@@ -268,11 +271,11 @@ export default function Network() {
   const arrow = (key) => sort.key === key ? (sort.dir === 1 ? ' ↓' : ' ↑') : ''
 
   return (
-    <div className="p-4 sm:p-8 max-w-5xl space-y-6">
+    <div ref={containerRef} className="p-4 sm:p-8 max-w-5xl space-y-6">
 
       {/* Live throughput + connectivity */}
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] p-5 space-y-4">
+        <div data-reveal="" className="rounded-2xl border border-white/[0.06] bg-[#13131e] p-5 space-y-4">
           <h2 className="text-sm font-semibold">Total Throughput <span className="text-xs text-gray-500 font-normal">· physical NICs</span></h2>
           <div className="grid grid-cols-2 gap-3">
             <LiveMetric icon={<IconDown />} label="Down" value={fmtRate(curTotalRx)} color="text-emerald-400" glow="bg-emerald-500" history={total.rx} />
@@ -280,7 +283,7 @@ export default function Network() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] p-5">
+        <div data-reveal="" className="rounded-2xl border border-white/[0.06] bg-[#13131e] p-5">
           <h2 className="text-sm font-semibold mb-4">Connectivity</h2>
           {!conn ? (
             <p className="text-xs text-gray-600">Checking…</p>
@@ -308,7 +311,7 @@ export default function Network() {
       </div>
 
       {/* Speed test */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] p-6 space-y-5">
+      <div data-reveal="" className="rounded-2xl border border-white/[0.06] bg-[#13131e] p-6 space-y-5">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold">Internet Speed Test</h2>
@@ -364,7 +367,7 @@ export default function Network() {
       </div>
 
       {/* Host interfaces */}
-      <div>
+      <div data-reveal="">
         <div className="flex items-center justify-between mb-3 px-1">
           <h2 className="text-sm font-semibold">Host Interfaces</h2>
           {!ifaceErr && (
@@ -441,7 +444,7 @@ export default function Network() {
       </div>
 
       {/* Guest network */}
-      <div>
+      <div data-reveal="">
         <h2 className="text-sm font-semibold mb-3 px-1">VM &amp; Container Traffic <span className="text-xs text-gray-500 font-normal">· top talkers first</span></h2>
         <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] overflow-hidden">
           {guestsSorted.length === 0 ? (

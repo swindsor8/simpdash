@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { setupPassword } from '../lib/api'
 import logo from '../../assets/logo.png'
+import { useStaggerMount } from './motion'
 
 const TOKEN_COMMANDS = `pveum role add SimpDash -privs "VM.Audit,Sys.Audit,Datastore.Audit,VM.PowerMgmt,Sys.PowerMgmt"
 pveum user add simpdash@pve
@@ -19,6 +20,8 @@ export default function SetupPassword({ pveLocal = true, onDone }) {
   const [showHelp, setShowHelp] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const formWrapRef = useRef(null)
+  useStaggerMount(formWrapRef, '[data-stagger]')
 
   async function submit(e) {
     e.preventDefault()
@@ -52,19 +55,19 @@ export default function SetupPassword({ pveLocal = true, onDone }) {
 
   return (
     <div className="min-h-screen bg-[#0c0c14] flex items-center justify-center p-4">
-      <div className={`w-full ${pveLocal ? 'max-w-sm' : 'max-w-md'}`}>
-        <div className="flex items-center gap-2.5 mb-8">
+      <div ref={formWrapRef} className={`w-full ${pveLocal ? 'max-w-sm' : 'max-w-md'}`}>
+        <div data-stagger="" className="flex items-center gap-2.5 mb-8">
           <img src={logo} alt="SuperDash" className="w-8 h-8 rounded-lg object-contain" />
           <span className="font-semibold text-white">SuperDash</span>
         </div>
-        <h1 className="text-2xl font-bold text-white mb-1">Set up your dashboard</h1>
-        <p className="text-gray-500 mb-6 text-sm">
+        <h1 data-stagger="" className="text-2xl font-bold text-white mb-1">Set up your dashboard</h1>
+        <p data-stagger="" className="text-gray-500 mb-6 text-sm">
           {pveLocal
             ? 'Choose an admin password to get started.'
             : 'Choose an admin password and connect your Proxmox VE API token.'}
         </p>
 
-        <form onSubmit={submit} className="space-y-3">
+        <form data-stagger="" onSubmit={submit} className="space-y-3">
           <input
             type="password"
             placeholder="Admin password (min 8 chars)"
