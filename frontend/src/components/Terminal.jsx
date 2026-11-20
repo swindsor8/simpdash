@@ -47,6 +47,7 @@ export default function Terminal({ output, state, sendInput }) {
     if (!term) return
     for (let i = writtenRef.current; i < output.length; i++) {
       const f = output[i]
+      if (f.type === 'progress') continue
       if (f.type === 'out') term.write(f.data)
       else term.write((f.line ?? '') + '\r\n')
     }

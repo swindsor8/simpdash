@@ -4,18 +4,21 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 // falsy jobId to stay idle. `node` (a paired node id, or null for local) selects
 // whether the stream is local or relayed through main from a secondary.
 //
-// Returns { output, state, sendInput } where state is
-// 'idle' | 'running' | 'succeeded' | 'failed'. sendInput(str) writes keystrokes
-// back to an interactive (PTY) job's stdin. Shared by the Updates and Scripts
-// views so the live terminal behaves identically in both.
+// Returns { output, state, sendInput, progress } where state is
+// 'idle' | 'running' | 'succeeded' | 'failed', sendInput(str) writes keystrokes
+// back to an interactive (PTY) job's stdin, and progress is the ordered array
+// of structured per-item progress frames (used by batch jobs such as Update All
+// LXCs). Shared by the Updates, LXCBatchUpdate, and Scripts views.
 export function useJobStream(jobId, node) {
   const [output, setOutput] = useState([])
+  const [progress, setProgress] = useState([])
   const [state, setState] = useState('idle')
   const wsRef = useRef(null)
 
   useEffect(() => {
     if (!jobId) return
     setOutput([])
+    setProgress([])
     setState('running')
 
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
@@ -28,6 +31,14 @@ export function useJobStream(jobId, node) {
         const msg = JSON.parse(e.data)
         if (msg.type === 'done') {
           setState(msg.exit_code === 0 ? 'succeeded' : 'failed')
+        } else if (msg.type === 'progress') {
+          setProgress(prev => {
+            const idx = prev.findIndex(item => item.vmid === msg.vmid)
+            if (idx === -1) return [...prev, msg]
+            const next = prev.slice()
+            next[idx] = { ...next[idx], ...msg }
+            return next
+          })
         } else {
           setOutput(prev => [...prev, msg])
         }
@@ -50,5 +61,5 @@ export function useJobStream(jobId, node) {
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(data)
   }, [])
 
-  return { output, state, sendInput }
+  return { output, state, sendInput, progress }
 }

@@ -167,6 +167,9 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/catalog/sync", methodGate(http.MethodPost, s.requireAuth(s.CatalogSync)))
 	// /api/catalog/ is a prefix match; the handler parses /:slug/run.
 	mux.HandleFunc("/api/catalog/", s.handleCatalogPrefix)
+	// Batch LXC updates + persisted exclude list (exact routes beat /api/guests/ prefix).
+	mux.HandleFunc("/api/guests/update-all", methodGate(http.MethodPost, s.requireAuth(s.GuestUpdateAll)))
+	mux.HandleFunc("/api/guests/update-all/excludes", s.requireAuth(s.handleLXCExcludes))
 	// /api/guests/:vmid/services — running services inside a local guest.
 	mux.HandleFunc("/api/guests/", s.handleGuestsPrefix)
 	// Paired secondary nodes (M5). /api/nodes lists; /api/nodes/ handles pair,

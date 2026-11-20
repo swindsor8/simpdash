@@ -18,6 +18,7 @@ function fmtAgo(ts) {
 const JOB_LABELS = {
   apt_upgrade: 'System upgrade',
   ct_upgrade: 'Container upgrade',
+  lxc_batch_upgrade: 'Batch container upgrade',
   script: 'Script install',
 }
 

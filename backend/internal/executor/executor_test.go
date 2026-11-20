@@ -127,3 +127,44 @@ func TestFailedJobPersists(t *testing.T) {
 		t.Errorf("exit_code = %v, want 3", job.ExitCode)
 	}
 }
+
+func TestStartFuncStreamsAndPersists(t *testing.T) {
+	db := newStore(t)
+	e := New()
+
+	id, err := e.StartFunc("lxc_batch_upgrade", func(em *Emitter) int {
+		em.RawJSON(`{"type":"progress","vmid":100,"status":"running"}`)
+		em.Line("stdout", "step 1")
+		code := em.RunCmd(exec.Command("sh", "-c", "echo from-cmd"))
+		em.RawJSON(`{"type":"progress","vmid":100,"status":"succeeded"}`)
+		return code
+	}, db)
+	if err != nil {
+		t.Fatalf("StartFunc: %v", err)
+	}
+
+	var frames []map[string]any
+	if hist, ch, active := e.Subscribe(id); active {
+		for _, h := range hist {
+			var m map[string]any
+			if json.Unmarshal([]byte(h), &m) == nil {
+				frames = append(frames, m)
+			}
+		}
+		frames = append(frames, drain(ch)...)
+	} else {
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	job, err := db.GetJob(id)
+	if err != nil || job == nil {
+		t.Fatalf("GetJob: %v (job=%v)", err, job)
+	}
+	if job.Status != "succeeded" {
+		t.Errorf("status = %q, want succeeded", job.Status)
+	}
+	if !strings.Contains(job.Output, "from-cmd") || !strings.Contains(job.Output, `"type":"progress"`) {
+		t.Errorf("unexpected output: %q", job.Output)
+	}
+	_ = frames
+}

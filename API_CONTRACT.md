@@ -143,6 +143,10 @@ failure message.
 | GET    | `/api/updates/check`  | Runs `apt update`, returns pending package list. Also refreshes the cached badge count. |
 | GET    | `/api/updates/pending`| Cached `{ "count", "checked_at" }` — **never** runs apt. A background ticker refreshes every 12 h; drives the nav badge and the daily "updates available" notification. |
 | POST   | `/api/updates/apply`  | Kicks off `apt upgrade -y` as a job. Returns `{ "job_id": string }` immediately. |
+| POST   | `/api/guests/:vmid/update` | Runs a non-interactive package upgrade (`apt-get` / `apk` / `dnf`) inside a single local LXC via `pct exec`; returns `{ "job_id": string }` (or `409` if busy). |
+| POST   | `/api/guests/update-all` | Runs a sequential package upgrade across all running local LXCs, skipping persisted excludes and stopped containers. Optional JSON body `{ "vmids"?: int[], "exclude"?: int[], "continue_on_error"?: bool }` (`continue_on_error` defaults to `true`). Returns `{ "job_id": string, "queued": [{vmid, name}], "skipped": [{vmid, name, reason}] }`. |
+| GET    | `/api/guests/update-all/excludes` | `{ "excluded": int[] }` — persisted LXC VMIDs excluded from batch updates. |
+| PUT    | `/api/guests/update-all/excludes` | Body `{ "excluded": int[] }` — validates, deduplicates, sorts, and persists the exclude list to `config.yaml`. |
 | WS     | `/api/jobs/:id/stream`| Streams stdout/stderr lines + final exit code for any job (updates or script installs share this). |
 | GET    | `/api/jobs`           | Job history from SQLite (id, type, status, started_at, finished_at, exit_code). |
 | GET    | `/api/jobs/:id`       | Full log + metadata for one job. |

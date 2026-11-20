@@ -57,6 +57,10 @@ type Config struct {
 	TOTPEnabled   bool     `yaml:"totp_enabled,omitempty"`
 	TOTPSecret    string   `yaml:"totp_secret,omitempty"`
 	RecoveryCodes []string `yaml:"recovery_codes,omitempty"`
+
+	// LXCUpdateExclude lists LXC VMIDs skipped during batch "Update All LXCs"
+	// runs (e.g. critical containers the admin prefers to update manually).
+	LXCUpdateExclude []int `yaml:"lxc_update_exclude,omitempty"`
 }
 
 // NotifyConfig is the outbound notification destination + event toggles.

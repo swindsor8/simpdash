@@ -84,6 +84,32 @@ export async function updateContainer(vmid) {
   return r.json()
 }
 
+// getLXCUpdateExcludes → { excluded: number[] }.
+export async function getLXCUpdateExcludes() {
+  const r = await fetch(`${BASE}/guests/update-all/excludes`, { credentials: 'same-origin' })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// putLXCUpdateExcludes → persists excluded LXC VMIDs, returns { excluded: number[] }.
+export async function putLXCUpdateExcludes(excluded) {
+  const r = await fetch(`${BASE}/guests/update-all/excludes`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ excluded }),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+// updateAllContainers → starts a sequential batch upgrade across running local
+// LXCs (skipping excluded/stopped). Returns { job_id, queued, skipped }.
+export const updateAllContainers = (opts = {}) => post('/guests/update-all', opts)
+
 export async function getJobs() {
   const r = await fetch(`${BASE}/jobs`, { credentials: 'same-origin' })
   if (!r.ok) throw new Error(await r.text())

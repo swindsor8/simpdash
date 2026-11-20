@@ -83,8 +83,7 @@ func (s *Server) GuestUpdate(w http.ResponseWriter, r *http.Request, vmid string
 	}
 	// Set DEBIAN_FRONTEND inside the container — the host process env doesn't
 	// cross the pct-exec boundary — so apt never blocks on an unattended prompt.
-	const script = "DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y upgrade"
-	cmd := exec.Command("pct", "exec", vmid, "--", "sh", "-c", script)
+	cmd := exec.Command("pct", "exec", vmid, "--", "sh", "-c", lxcUpgradeScript)
 
 	id, err := s.exec.Start("ct_upgrade", cmd, s.db)
 	if errors.Is(err, executor.ErrBusy) {

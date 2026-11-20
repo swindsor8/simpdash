@@ -72,6 +72,56 @@ func (e *Executor) StartPTY(jobType string, cmd *exec.Cmd, db *store.DB) (string
 	return e.start(jobType, cmd, db, true)
 }
 
+// Emitter lets custom multi-step jobs (such as batch LXC updates) stream both
+// terminal lines and structured JSON progress frames through the standard job
+// WebSocket and SQLite persistence pipeline.
+type Emitter struct {
+	e   *Executor
+	job *activeJob
+}
+
+// Line emits a single stdout or stderr line frame.
+func (em *Emitter) Line(stream, line string) {
+	em.e.emit(em.job, encLine(stream, line))
+}
+
+// RawJSON emits a pre-encoded JSON frame (e.g. structured progress events).
+func (em *Emitter) RawJSON(frame string) {
+	em.e.emit(em.job, frame)
+}
+
+// RunCmd runs cmd, streaming its stdout and stderr line-by-line into the job
+// stream, and returns its exit code (0 on success, -1 if it failed to start).
+func (em *Emitter) RunCmd(cmd *exec.Cmd) int {
+	return em.e.runPipes(em.job, cmd)
+}
+
+// StartFunc runs a custom Go function inside the Executor's single-job slot,
+// returning the job ID immediately. fn returns the final exit code (0 =
+// succeeded, non-zero = failed). Returns ErrBusy if a job is already running.
+func (e *Executor) StartFunc(jobType string, fn func(em *Emitter) int, db *store.DB) (string, error) {
+	e.mu.Lock()
+	if e.current != nil {
+		e.mu.Unlock()
+		return "", ErrBusy
+	}
+	id := newID()
+	job := &activeJob{id: id, jobType: jobType}
+	e.current = job
+	e.mu.Unlock()
+
+	now := time.Now()
+	if err := db.CreateJob(id, jobType, now); err != nil {
+		e.mu.Lock()
+		e.current = nil
+		e.mu.Unlock()
+		return "", fmt.Errorf("create job record: %w", err)
+	}
+
+	go e.runFunc(job, fn, db)
+	return id, nil
+}
+
 func (e *Executor) start(jobType string, cmd *exec.Cmd, db *store.DB, interactive bool) (string, error) {
 	e.mu.Lock()
 	if e.current != nil {
@@ -189,19 +239,71 @@ func (e *Executor) run(job *activeJob, cmd *exec.Cmd, db *store.DB, startedAt ti
 		return
 	}
 
+	exitCode = e.runPipes(job, cmd)
+	if exitCode == 0 {
+		status = "succeeded"
+	}
+
+	// Broadcast the done message before the defer closes subscriber channels.
+	e.emit(job, encDone(exitCode))
+}
+
+func (e *Executor) runFunc(job *activeJob, fn func(em *Emitter) int, db *store.DB) {
+	exitCode := -1
+	status := "failed"
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("executor panic in job %s: %v", job.id, r)
+			e.emit(job, encLine("stderr", fmt.Sprintf("internal error: %v", r)))
+			e.emit(job, encDone(-1))
+		}
+
+		output := job.outputString()
+		if err := db.FinishJob(job.id, status, exitCode, time.Now(), output); err != nil {
+			log.Printf("persist job %s: %v", job.id, err)
+		}
+
+		job.mu.Lock()
+		job.done = true
+		subs := make([]chan string, len(job.subs))
+		copy(subs, job.subs)
+		job.mu.Unlock()
+
+		e.mu.Lock()
+		e.current = nil
+		e.mu.Unlock()
+
+		for _, ch := range subs {
+			close(ch)
+		}
+
+		if e.OnFinish != nil {
+			e.OnFinish(job.jobType, status, exitCode)
+		}
+	}()
+
+	exitCode = fn(&Emitter{e: e, job: job})
+	if exitCode == 0 {
+		status = "succeeded"
+	}
+	e.emit(job, encDone(exitCode))
+}
+
+func (e *Executor) runPipes(job *activeJob, cmd *exec.Cmd) int {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		e.emit(job, encLine("stderr", "failed to open stdout pipe: "+err.Error()))
-		return
+		return -1
 	}
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		e.emit(job, encLine("stderr", "failed to open stderr pipe: "+err.Error()))
-		return
+		return -1
 	}
 	if err := cmd.Start(); err != nil {
 		e.emit(job, encLine("stderr", "failed to start command: "+err.Error()))
-		return
+		return -1
 	}
 
 	// Read stdout and stderr concurrently, merge into one channel.
@@ -231,16 +333,11 @@ func (e *Executor) run(job *activeJob, cmd *exec.Cmd, db *store.DB, startedAt ti
 	// Both pipes fully drained — safe to call Wait.
 	if err := cmd.Wait(); err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
-			exitCode = ee.ExitCode()
+			return ee.ExitCode()
 		}
-		// status stays "failed"
-	} else {
-		exitCode = 0
-		status = "succeeded"
+		return -1
 	}
-
-	// Broadcast the done message before the defer closes subscriber channels.
-	e.emit(job, encDone(exitCode))
+	return 0
 }
 
 // runPTY starts cmd on a pseudo-terminal, streams its raw output as "out"

@@ -10,6 +10,7 @@ import { useResourceStream } from '../hooks/useResourceStream'
 import { useJobStream } from '../hooks/useJobStream'
 import Terminal from './Terminal'
 import Updates from './Updates'
+import LXCBatchUpdate from './LXCBatchUpdate'
 import Scripts from './Scripts'
 import Nodes from './Nodes'
 import Network from './Network'
@@ -1592,7 +1593,16 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           )}
 
           {/* Updates — hidden while the node is unreachable (nothing to act on). */}
-          {!unreachable && <Updates node={activeNode} />}
+          {!unreachable && (
+            <div className="space-y-6">
+              <Updates node={activeNode} />
+              {activeNode == null && (() => {
+                const localNode = (nodes ?? []).find(n => n.id === selfNode) || (nodes?.length === 1 ? nodes[0] : null)
+                const localLxcs = localNode?.lxcs ?? []
+                return localLxcs.length > 0 ? <LXCBatchUpdate lxcs={localLxcs} /> : null
+              })()}
+            </div>
+          )}
 
         </main>
         </>
