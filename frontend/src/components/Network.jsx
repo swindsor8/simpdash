@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getNetwork, getNetworkStats, runSpeedtest, getConnectivity, getSpeedtestHistory } from '../lib/api'
 import { loadingText } from '../lib/copy'
-import { useScrollReveal } from './motion'
+import { useScrollReveal, useStrokeDraw, useStaggerMount, AnimatedNumber } from './motion'
 
 const TYPE_ORDER = ['bridge', 'bond', 'eth', 'vlan', 'OVSBridge', 'OVSBond', 'OVSPort', 'OVSIntPort', 'alias', 'loopback']
 const HISTORY_LEN = 40 // samples kept for sparklines (~80 s at the 2 s poll)
@@ -65,16 +65,20 @@ function IconPing() {
   )
 }
 
-// Sparkline draws a normalized polyline (+ faint fill) from a series of values.
+// Sparkline draws a normalized polyline (+ faint fill) from a series of values,
+// with a one-shot GSAP stroke draw-in when data first arrives.
 function Sparkline({ data, color = '#34d399', width = 90, height = 26 }) {
-  if (!data || data.length < 2) return <svg width={width} height={height} />
+  const lineRef = useRef(null)
+  const ready = Boolean(data && data.length >= 2)
+  useStrokeDraw(lineRef, ready)
+  if (!ready) return <svg width={width} height={height} />
   const max = Math.max(...data, 1)
   const step = width / (data.length - 1)
   const pts = data.map((v, i) => `${(i * step).toFixed(1)},${(height - (Math.max(0, v) / max) * height).toFixed(1)}`)
   return (
     <svg width={width} height={height} className="overflow-visible">
       <polygon points={`0,${height} ${pts.join(' ')} ${width},${height}`} fill={color} fillOpacity="0.12" />
-      <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+      <polyline ref={lineRef} points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   )
 }
@@ -84,15 +88,21 @@ function Dot({ ok }) {
 }
 
 // SpeedMetric is one hero result in the speed-test panel.
-function SpeedMetric({ icon, label, value, unit, color, glow }) {
+function SpeedMetric({ icon, label, value, numericValue, format, unit, color, glow }) {
   return (
-    <div className="relative rounded-2xl bg-white/5 border border-white/[0.06] p-5 overflow-hidden">
+    <div data-speed-card="" className="relative rounded-2xl bg-white/5 border border-white/[0.06] p-5 overflow-hidden">
       <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-20 ${glow}`} />
       <div className={`flex items-center gap-2 text-xs font-medium ${color}`}>
         {icon}<span className="uppercase tracking-wider">{label}</span>
       </div>
       <div className="mt-3 flex items-baseline gap-1.5">
-        <span className={`text-4xl font-bold tabular-nums ${color}`}>{value}</span>
+        <span className={`text-4xl font-bold tabular-nums ${color}`}>
+          {typeof numericValue === 'number' ? (
+            <AnimatedNumber value={numericValue} from={0} duration={0.85} format={format} />
+          ) : (
+            value
+          )}
+        </span>
         <span className="text-sm text-gray-500">{unit}</span>
       </div>
     </div>
@@ -135,7 +145,9 @@ export default function Network() {
   const [stErr, setStErr] = useState(null)
   const [stHist, setStHist] = useState([])
   const containerRef = useRef(null)
+  const speedResRef = useRef(null)
   useScrollReveal(containerRef, { deps: [Boolean(ifaces)] })
+  useStaggerMount(speedResRef, '[data-speed-card]', { deps: [stResult] })
 
   useEffect(() => {
     // The interface list comes from the PVE API; without Proxmox the rest of
@@ -343,11 +355,11 @@ export default function Network() {
         {stErr && <p className="text-sm text-red-400">{stErr}</p>}
 
         {stResult && (
-          <div className="space-y-3">
+          <div ref={speedResRef} className="space-y-3">
             <div className="grid grid-cols-3 gap-4">
-              <SpeedMetric icon={<IconDown />} label="Download" value={fmtMbps(stResult.download)} unit="Mbps" color="text-emerald-400" glow="bg-emerald-500" />
-              <SpeedMetric icon={<IconUp />} label="Upload" value={fmtMbps(stResult.upload)} unit="Mbps" color="text-blue-400" glow="bg-blue-500" />
-              <SpeedMetric icon={<IconPing />} label="Ping" value={stResult.ping.toFixed(1)} unit="ms" color="text-yellow-400" glow="bg-yellow-500" />
+              <SpeedMetric icon={<IconDown />} label="Download" numericValue={stResult.download / 1_000_000} format={n => n.toFixed(1)} unit="Mbps" color="text-emerald-400" glow="bg-emerald-500" />
+              <SpeedMetric icon={<IconUp />} label="Upload" numericValue={stResult.upload / 1_000_000} format={n => n.toFixed(1)} unit="Mbps" color="text-blue-400" glow="bg-blue-500" />
+              <SpeedMetric icon={<IconPing />} label="Ping" numericValue={stResult.ping} format={n => n.toFixed(1)} unit="ms" color="text-yellow-400" glow="bg-yellow-500" />
             </div>
             {stResult.server?.sponsor && (
               <p className="text-xs text-gray-600">

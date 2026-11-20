@@ -3,6 +3,7 @@ import { getLXCUpdateExcludes, putLXCUpdateExcludes, updateAllContainers } from 
 import { useJobStream } from '../hooks/useJobStream'
 import Terminal from './Terminal'
 import { Card, StatusPill } from './Card'
+import { Expandable } from './motion'
 
 function IconContainers() {
   return (
@@ -190,7 +191,7 @@ export default function LXCBatchUpdate({ lxcs = [] }) {
       }
     >
       {/* Inline confirmation bar */}
-      {confirming && !busy && (
+      <Expandable open={confirming && !busy}>
         <div className="px-6 py-4 border-b border-white/[0.06] bg-blue-500/[0.06] flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-1.5">
             <p className="text-sm text-gray-200">
@@ -229,10 +230,10 @@ export default function LXCBatchUpdate({ lxcs = [] }) {
             </button>
           </div>
         </div>
-      )}
+      </Expandable>
 
       {/* Exclude list manager */}
-      {excludesOpen && (
+      <Expandable open={excludesOpen}>
         <div className="px-6 py-4 border-b border-white/[0.06] bg-white/[0.015]">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-400">
@@ -272,7 +273,7 @@ export default function LXCBatchUpdate({ lxcs = [] }) {
             })}
           </div>
         </div>
-      )}
+      </Expandable>
 
       {startErr && (
         <div className="px-6 py-3 border-b border-white/[0.06]">

@@ -85,7 +85,7 @@ function PBSSection() {
                 <div key={ds.store} className="flex items-center gap-3">
                   <span className="text-xs font-mono text-gray-400 w-28 truncate shrink-0">{ds.store}</span>
                   <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
-                    <div className={`h-full rounded-full ${pct >= 90 ? 'bg-red-400/80' : pct >= 75 ? 'bg-amber-400/80' : 'bg-blue-400/60'}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                    <div className={`h-full rounded-full bar-fill ${pct >= 90 ? 'bg-red-400/80' : pct >= 75 ? 'bg-amber-400/80' : 'bg-blue-400/60'}`} style={{ width: `${Math.min(100, pct)}%` }} />
                   </div>
                   <span className="text-xs font-mono text-gray-600 w-32 text-right shrink-0">
                     {fmtGB(ds.used)} / {fmtGB(ds.total)}

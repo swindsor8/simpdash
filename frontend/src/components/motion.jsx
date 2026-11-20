@@ -1,9 +1,11 @@
 // Motion-language helpers shared across the dashboard, powered by GSAP +
 // ScrollTrigger and tuned per theme via motionConfig.js. CSS owns static
 // transitions & hovers (see MOTION LANGUAGE in index.css); GSAP handles
-// number tweening, view transitions, scroll-triggered reveals, and modal/form
-// entrances. Every GSAP helper respects prefers-reduced-motion and clears
-// inline transform/opacity/filter on completion so CSS :hover never conflicts.
+// number tweening, view transitions, scroll-triggered reveals, scroll-linked
+// progress bars, smooth expandable panels, sliding nav indicators, pointer
+// spotlights, SVG stroke draw-ins, and modal/form entrances. Every GSAP helper
+// respects prefers-reduced-motion and clears inline transform/opacity/filter on
+// completion so CSS :hover never conflicts.
 
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
@@ -20,12 +22,14 @@ const tokenMs = (name) => {
   return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || 300
 }
 
-// AnimatedNumber — tweens its displayed value from old → new over --motion-medium
-// via GSAP. Interrupted updates smoothly retarget from the live value. Snaps
+// AnimatedNumber — tweens its displayed value from old → new via GSAP.
+// Interrupted updates smoothly retarget from the live value. Pass `from={0}` to
+// count up from zero on first mount (e.g. speed test hero numbers). Snaps
 // immediately under prefers-reduced-motion or the Win98 theme.
-export function AnimatedNumber({ value, format = Math.round }) {
-  const [display, setDisplay] = useState(value)
-  const proxyRef = useRef({ val: typeof value === 'number' ? value : 0 })
+export function AnimatedNumber({ value, format = Math.round, from, duration }) {
+  const initial = typeof from === 'number' && typeof value === 'number' && shouldAnimate() ? from : value
+  const [display, setDisplay] = useState(initial)
+  const proxyRef = useRef({ val: typeof initial === 'number' ? initial : 0 })
   const tweenRef = useRef(null)
 
   useEffect(() => {
@@ -41,7 +45,7 @@ export function AnimatedNumber({ value, format = Math.round }) {
     if (proxyRef.current.val === value) return
 
     const profile = getThemeProfile()
-    const dur = tokenMs('--motion-medium') / 1000
+    const dur = typeof duration === 'number' ? duration : tokenMs('--motion-medium') / 1000
     tweenRef.current = gsap.to(proxyRef.current, {
       val: value,
       duration: dur,
@@ -58,7 +62,7 @@ export function AnimatedNumber({ value, format = Math.round }) {
       tweenRef.current?.kill()
       tweenRef.current = null
     }
-  }, [value])
+  }, [value, duration])
 
   return format(display)
 }
@@ -201,7 +205,7 @@ export function useModalEntrance(backdropRef, dialogRef, theme) {
 }
 
 // useStaggerMount — one-shot GSAP stagger for compact non-scrolled groups
-// (Login, SetupPassword, popovers, toasts, expandable drawers).
+// (Login, SetupPassword, popovers, toasts, expandable drawers, sidebar boot).
 export function useStaggerMount(containerRef, selector, { theme, deps = [] } = {}) {
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -227,6 +231,286 @@ export function useStaggerMount(containerRef, selector, { theme, deps = [] } = {
     return () => ctx.revert()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [containerRef, selector, theme, ...deps])
+}
+
+// Expandable — smooth GSAP height + opacity reveal for collapsible panels
+// (storage pools, guest services/docker, batch update confirm/excludes, update
+// banner, setup guides). Refreshes ScrollTrigger once height settles.
+export function Expandable({ open, className = '', children }) {
+  const [rendered, setRendered] = useState(open)
+  const wrapRef = useRef(null)
+  const skipInitialOpenRef = useRef(open)
+
+  useEffect(() => {
+    if (open) setRendered(true)
+  }, [open])
+
+  useLayoutEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+
+    // If mounted already open, skip animating the initial paint.
+    if (skipInitialOpenRef.current) {
+      skipInitialOpenRef.current = false
+      return
+    }
+
+    const profile = getThemeProfile()
+    if (!shouldAnimate() || !profile.expand) {
+      if (!open) setRendered(false)
+      return
+    }
+
+    const { duration, ease } = profile.expand
+    gsap.killTweensOf(el)
+
+    if (open) {
+      gsap.fromTo(
+        el,
+        { height: 0, opacity: 0, y: -4, overflow: 'hidden' },
+        {
+          height: 'auto',
+          opacity: 1,
+          y: 0,
+          duration,
+          ease,
+          clearProps: 'height,overflow,transform,opacity',
+          onComplete: () => ScrollTrigger.refresh(),
+        },
+      )
+    } else {
+      gsap.to(el, {
+        height: 0,
+        opacity: 0,
+        y: -4,
+        overflow: 'hidden',
+        duration: Math.max(0.14, duration * 0.75),
+        ease: 'power2.inOut',
+        onComplete: () => {
+          setRendered(false)
+          ScrollTrigger.refresh()
+        },
+      })
+    }
+
+    return () => gsap.killTweensOf(el)
+  }, [open, rendered])
+
+  if (!rendered) return null
+  return (
+    <div ref={wrapRef} className={className}>
+      {children}
+    </div>
+  )
+}
+
+// ScrollProgressBar — 2px theme-accented reading bar along the top of the
+// content pane, scrubbed smoothly by GSAP from the active Lenis scroll container.
+export function ScrollProgressBar({ scrollerRef, theme, resetKey }) {
+  const barRef = useRef(null)
+
+  useEffect(() => {
+    const scroller = scrollerRef?.current
+    const bar = barRef.current
+    if (!scroller || !bar) return
+
+    const profile = getThemeProfile(theme)
+    if (!shouldAnimate(theme) || !profile.scrollBar) {
+      gsap.set(bar, { scaleX: 0, opacity: 0 })
+      return
+    }
+
+    const setScale = gsap.quickTo(bar, 'scaleX', { duration: 0.14, ease: 'power2.out' })
+    const setOpacity = gsap.quickTo(bar, 'opacity', { duration: 0.2, ease: 'power2.out' })
+
+    const update = () => {
+      const max = scroller.scrollHeight - scroller.clientHeight
+      if (max <= 24) {
+        setScale(0)
+        setOpacity(0)
+        return
+      }
+      const p = Math.max(0, Math.min(1, scroller.scrollTop / max))
+      setScale(p)
+      setOpacity(p > 0.005 ? 1 : 0)
+    }
+
+    update()
+    scroller.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update, { passive: true })
+
+    let ro = null
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(update)
+      ro.observe(scroller)
+      if (scroller.firstElementChild) ro.observe(scroller.firstElementChild)
+    }
+
+    return () => {
+      scroller.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+      ro?.disconnect()
+      gsap.killTweensOf(bar)
+    }
+  }, [scrollerRef, theme, resetKey])
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none sticky top-0 left-0 right-0 z-30 h-[2px] -mb-[2px] overflow-hidden"
+    >
+      <div
+        ref={barRef}
+        className="scroll-progress-fill h-full w-full origin-left"
+        style={{ transform: 'scaleX(0)', opacity: 0 }}
+      />
+    </div>
+  )
+}
+
+// useSlidingIndicator — glides a floating highlight pill vertically behind the
+// active item in a sidebar <nav> using GSAP.
+export function useSlidingIndicator(navRef, indicatorRef, activeKey, theme) {
+  const placedRef = useRef(false)
+
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    const pill = indicatorRef.current
+    if (!nav || !pill) return
+
+    const activeEl = nav.querySelector('[aria-current="page"]')
+    if (!activeEl) {
+      gsap.set(pill, { opacity: 0 })
+      return
+    }
+
+    const y = activeEl.offsetTop
+    const height = activeEl.offsetHeight
+    const profile = getThemeProfile(theme)
+
+    if (!placedRef.current || !shouldAnimate(theme) || !profile.navGlide) {
+      placedRef.current = true
+      gsap.set(pill, { y, height, opacity: 1 })
+      return
+    }
+
+    gsap.to(pill, {
+      y,
+      height,
+      opacity: 1,
+      duration: profile.navGlide.duration,
+      ease: profile.navGlide.ease,
+      overwrite: 'auto',
+    })
+  }, [navRef, indicatorRef, activeKey, theme])
+}
+
+// useCardSpotlight — attaches a subtle, GSAP-interpolated pointer spotlight
+// (--mx, --my, --spot-o) to a card surface. Disabled on touch devices, reduced
+// motion, and flat/retro themes (retro, mario, win98).
+export function useCardSpotlight(cardRef, enabled = true) {
+  useEffect(() => {
+    const el = cardRef.current
+    if (!enabled || !el || typeof window === 'undefined') return
+    if (window.matchMedia?.('(pointer: coarse)').matches) return
+
+    const state = { x: 0, y: 0, o: 0 }
+    let qx = null
+    let qy = null
+    let qo = null
+
+    const ensureTweens = () => {
+      if (qx) return
+      qx = gsap.quickTo(state, 'x', {
+        duration: 0.25,
+        ease: 'power2.out',
+        onUpdate: () => el.style.setProperty('--mx', `${state.x.toFixed(1)}px`),
+      })
+      qy = gsap.quickTo(state, 'y', {
+        duration: 0.25,
+        ease: 'power2.out',
+        onUpdate: () => el.style.setProperty('--my', `${state.y.toFixed(1)}px`),
+      })
+      qo = gsap.quickTo(state, 'o', {
+        duration: 0.28,
+        ease: 'power2.out',
+        onUpdate: () => el.style.setProperty('--spot-o', state.o.toFixed(3)),
+      })
+    }
+
+    const onMove = (e) => {
+      const profile = getThemeProfile()
+      if (!shouldAnimate() || !profile.spotlight) return
+      ensureTweens()
+      const rect = el.getBoundingClientRect()
+      qx(e.clientX - rect.left)
+      qy(e.clientY - rect.top)
+      qo(1)
+    }
+
+    const onLeave = () => {
+      if (!qo) return
+      qo(0)
+    }
+
+    el.addEventListener('pointermove', onMove, { passive: true })
+    el.addEventListener('pointerleave', onLeave, { passive: true })
+    return () => {
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerleave', onLeave)
+      gsap.killTweensOf(state)
+    }
+  }, [cardRef, enabled])
+}
+
+// useStrokeDraw — animates an SVG <polyline>/<path> stroke drawing itself left
+// to right once on first data mount (oscilloscope trace feel for sparklines).
+export function useStrokeDraw(pathRef, ready) {
+  const drawnRef = useRef(false)
+
+  useLayoutEffect(() => {
+    const el = pathRef.current
+    if (!el || !ready || drawnRef.current) return
+    drawnRef.current = true
+
+    const profile = getThemeProfile()
+    if (!shouldAnimate() || !profile.sparkDraw || typeof el.getTotalLength !== 'function') return
+
+    const len = el.getTotalLength()
+    if (!len || !Number.isFinite(len)) return
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        el,
+        { strokeDasharray: len, strokeDashoffset: len },
+        {
+          strokeDashoffset: 0,
+          duration: profile.sparkDraw.duration,
+          ease: profile.sparkDraw.ease,
+          clearProps: 'strokeDasharray,strokeDashoffset',
+        },
+      )
+    })
+
+    return () => ctx.revert()
+  }, [pathRef, ready])
+}
+
+// usePopPulse — brief celebratory scale pop when a trigger value flips true
+// (e.g. copied IP badge, saved check, active theme pill).
+export function usePopPulse(ref, trigger) {
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || !trigger || !shouldAnimate()) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        el,
+        { scale: 0.86 },
+        { scale: 1, duration: 0.28, ease: 'back.out(2)', clearProps: 'transform' },
+      )
+    })
+    return () => ctx.revert()
+  }, [ref, trigger])
 }
 
 // useChangeFlash — true briefly whenever `value` actually changes. Coalesces a

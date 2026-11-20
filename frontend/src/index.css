@@ -140,7 +140,7 @@
 .gauge-fill {
   fill: none; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 100;
   stroke: var(--gauge-color, #10b981);
-  transition: stroke-dashoffset var(--motion-medium), stroke var(--motion-medium);
+  transition: stroke var(--motion-medium);
 }
 .rg-sm .gauge-track, .rg-sm .gauge-fill { stroke-width: 9; }
 
@@ -174,7 +174,6 @@
 [data-theme="terminal"] .gauge-needle {
   display: block; stroke: var(--pip); stroke-width: 2.5; stroke-linecap: round;
   transform-box: view-box; transform-origin: 50px 50px;
-  transition: transform var(--motion-medium);
   filter: drop-shadow(0 0 var(--g, 1px) var(--pip-glow));
 }
 [data-theme="terminal"] .gauge-hub { display: block; fill: var(--pip); }
@@ -1512,3 +1511,101 @@
   .crt-boot .cursor { animation: crt-blink 1s steps(1) infinite; }
 }
 @keyframes crt-blink { 50% { opacity: 0; } }
+
+/* ===========================================================================
+   GSAP INTERACTIVE MOTION PRIMITIVES — scroll progress fill, gliding sidebar
+   indicator, card pointer spotlight, and theme-switch veil. All theme-aware
+   and gated by prefers-reduced-motion.
+   =========================================================================== */
+
+/* Scroll progress bar fill — inherits each theme's accent palette */
+.scroll-progress-fill {
+  background: linear-gradient(90deg, #4f46e5, #2bc8b7);
+}
+[data-theme="nocturne"] .scroll-progress-fill,
+[data-theme="default"]  .scroll-progress-fill {
+  background: linear-gradient(90deg, #9b99fe, #2bc8b7);
+}
+[data-theme="glass"] .scroll-progress-fill {
+  background: linear-gradient(90deg, rgba(165,220,255,0.9), rgba(210,160,255,0.9));
+  box-shadow: 0 0 10px rgba(165,220,255,0.55);
+}
+[data-theme="retro"] .scroll-progress-fill {
+  background: #f24c00;
+}
+[data-theme="mario"] .scroll-progress-fill {
+  background: #fbd000;
+  box-shadow: 0 1px 0 #000;
+}
+[data-theme="terminal"] .scroll-progress-fill {
+  background: var(--pip);
+  box-shadow: 0 0 8px var(--pip-glow);
+}
+[data-theme="win98"] .scroll-progress-fill {
+  display: none;
+}
+
+/* Gliding sidebar active indicator pill */
+.nav-glide-pill {
+  background-color: rgba(255, 255, 255, 0.10);
+}
+[data-theme="nocturne"] .nav-glide-pill {
+  background-color: rgba(99, 102, 241, 0.16);
+  box-shadow: inset 2px 0 0 #2bc8b7;
+}
+[data-theme="default"] .nav-glide-pill {
+  background-color: rgba(99, 102, 241, 0.12);
+  box-shadow: inset 2px 0 0 #14b8a6;
+}
+[data-theme="glass"] .nav-glide-pill {
+  background-color: rgba(255, 255, 255, 0.22);
+  box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 0.4);
+}
+[data-theme="retro"] .nav-glide-pill {
+  background-color: rgba(242, 76, 0, 0.18);
+}
+[data-theme="mario"] .nav-glide-pill {
+  background-color: rgba(251, 208, 0, 0.55);
+}
+[data-theme="win98"] .nav-glide-pill {
+  background-color: #000080;
+  border-radius: 0;
+}
+[data-theme="terminal"] .nav-glide-pill {
+  background-color: var(--pip);
+  box-shadow: 0 0 10px var(--pip-glow);
+}
+[data-theme="win98"] aside button[aria-current="page"] { color: #ffffff; }
+[data-theme="terminal"] aside button[aria-current="page"] { color: #020a02; }
+
+/* Subtle GSAP pointer spotlight on cards (driven by --mx, --my, --spot-o) */
+.card-spot {
+  position: relative;
+}
+.card-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--spot-o, 0);
+  background: radial-gradient(
+    260px circle at var(--mx, -200px) var(--my, -200px),
+    var(--spot-color, rgba(155, 153, 254, 0.10)),
+    transparent 70%
+  );
+  z-index: 1;
+}
+[data-theme="default"]  .card-spot { --spot-color: rgba(79, 70, 229, 0.07); }
+[data-theme="glass"]    .card-spot { --spot-color: rgba(255, 255, 255, 0.16); }
+[data-theme="terminal"] .card-spot { --spot-color: rgba(26, 255, 64, 0.10); }
+[data-theme="retro"]    .card-spot::before,
+[data-theme="mario"]    .card-spot::before,
+[data-theme="win98"]    .card-spot::before { display: none; }
+
+/* Nav icon micro-nudge on hover */
+@media (prefers-reduced-motion: no-preference) {
+  aside nav button svg { transition: transform var(--motion-fast); }
+  aside nav button:hover svg { transform: translateX(2px) scale(1.06); }
+  [data-theme="win98"] aside nav button:hover svg { transform: none; }
+}

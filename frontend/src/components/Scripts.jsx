@@ -4,7 +4,7 @@ import { useJobStream } from '../hooks/useJobStream'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import Terminal from './Terminal'
 import { useFocusTrap } from '../lib/a11y'
-import { useModalEntrance, useScrollReveal } from './motion'
+import { useModalEntrance, useScrollReveal, useCardSpotlight, ScrollProgressBar } from './motion'
 
 // A warning is "creating" infrastructure (a new LXC/VM) — surfaced loudest in
 // the confirm dialog since it changes the host, not just an app.
@@ -73,8 +73,10 @@ function ScriptLogo({ script }) {
 
 function ScriptCard({ script, disabled, onRun }) {
   const res = script.resources
+  const cardRef = useRef(null)
+  useCardSpotlight(cardRef)
   return (
-    <div data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-5 flex flex-col card-lift hover:border-white/20">
+    <div ref={cardRef} data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-5 flex flex-col card-lift card-spot hover:border-white/20">
       <div className="flex items-start gap-3 mb-1.5">
         <ScriptLogo script={script} />
         <h3 className="text-sm font-semibold text-white leading-snug line-clamp-2 min-w-0 flex-1 mt-0.5">{script.name}</h3>
@@ -465,7 +467,9 @@ export default function Scripts({ node = null, lxcs = [], theme }) {
 
       {/* Card pane — uses the full remaining width */}
       <main ref={mainWrapperRef} className="flex-1 overflow-y-auto">
-        <div ref={mainContentRef} className="p-8 space-y-4">
+        <div ref={mainContentRef}>
+        <ScrollProgressBar scrollerRef={mainWrapperRef} theme={theme} resetKey={`${selected ?? ''}:${q}`} />
+        <div className="p-8 space-y-4">
         {loadErr && <p className="text-sm text-red-400">Failed to load catalog: {loadErr}</p>}
         {scripts === null && !loadErr && (
           <p className="text-sm text-gray-600">Loading catalog…</p>
@@ -490,6 +494,7 @@ export default function Scripts({ node = null, lxcs = [], theme }) {
             </div>
           </>
         )}
+        </div>
         </div>
       </main>
 

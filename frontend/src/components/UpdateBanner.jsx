@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getUpdateCheck } from '../lib/api'
 import { useSelfUpdate } from '../hooks/useSelfUpdate'
+import { Expandable, usePopPulse } from './motion'
 
 // The one-liner that re-installs SuperDash in place (see scripts/install.sh).
 export const INSTALL_CMD =
@@ -62,7 +63,9 @@ export default function UpdateBanner({ info: propInfo, open = true, onClose }) {
   const [dismissed, setDismissed] = useState(false)
   const [showCli, setShowCli] = useState(false)
   const [copied, setCopied] = useState(false)
+  const copyBtnRef = useRef(null)
   const updater = useSelfUpdate()
+  usePopPulse(copyBtnRef, copied)
 
   useEffect(() => {
     if (propInfo !== undefined) return
@@ -71,11 +74,9 @@ export default function UpdateBanner({ info: propInfo, open = true, onClose }) {
 
   const info = propInfo !== undefined ? propInfo : fetchedInfo
   const isControlled = onClose !== undefined
+  const visible = Boolean(info?.update_available) && (isControlled ? (open || updater.busy) : !dismissed)
 
-  if (!info?.update_available) return null
-  if (isControlled ? (!open && !updater.busy) : dismissed) return null
-
-  const canAuto = !!info.can_self_update
+  const canAuto = Boolean(info?.can_self_update)
   const cliVisible = !canAuto || showCli
 
   function close() {
@@ -91,6 +92,8 @@ export default function UpdateBanner({ info: propInfo, open = true, onClose }) {
   }
 
   return (
+    <Expandable open={visible}>
+    {info && (
     <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-4 sm:px-8 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 text-sm text-emerald-300 min-w-0">
@@ -190,13 +193,14 @@ export default function UpdateBanner({ info: propInfo, open = true, onClose }) {
         <p className="text-xs text-red-400 mt-2">{updater.error}</p>
       )}
 
-      {cliVisible && !updater.busy && (
+      <Expandable open={cliVisible && !updater.busy}>
         <div className="mt-2.5">
           <div className="flex items-center gap-2">
             <code className="flex-1 bg-[#0c0c14] border border-emerald-500/15 rounded-lg px-3 py-2 text-xs text-emerald-200 font-mono overflow-x-auto whitespace-nowrap">
               {INSTALL_CMD}
             </code>
             <button
+              ref={copyBtnRef}
               onClick={copy}
               className="shrink-0 text-xs px-3 py-2 rounded-lg border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/10 transition-colors"
             >
@@ -207,7 +211,9 @@ export default function UpdateBanner({ info: propInfo, open = true, onClose }) {
             Re-running the installer is safe — it updates in place and won't repeat onboarding.
           </p>
         </div>
-      )}
+      </Expandable>
     </div>
+    )}
+    </Expandable>
   )
 }

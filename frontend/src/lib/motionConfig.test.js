@@ -14,6 +14,12 @@ for (const id of ALL_THEMES) {
   const p = getThemeProfile(id)
   assert.ok(p, `missing profile for ${id}`)
   assert.equal(p, THEME_MOTION[id], `profile mismatch for ${id}`)
+  if (id !== 'win98') {
+    assert.ok(p.gauge?.duration > 0, `missing gauge profile for ${id}`)
+    assert.ok(p.expand?.duration > 0, `missing expand profile for ${id}`)
+    assert.ok(p.navGlide?.duration > 0, `missing navGlide profile for ${id}`)
+    assert.ok(p.sparkDraw?.duration > 0, `missing sparkDraw profile for ${id}`)
+  }
 }
 
 // Unknown theme falls back cleanly to nocturne
@@ -25,9 +31,15 @@ for (const id of ALL_THEMES) {
   assert.equal(shouldAnimate(id, true), false, `animations must be off under reduced motion (${id})`)
 }
 
-// Win98 stays authentic: no smooth scroll, instant snaps
+// Win98 stays authentic: no smooth scroll, instant snaps, no spotlight or scroll bar
 assert.equal(shouldUseLenis('win98', false), false)
 assert.equal(shouldAnimate('win98', false), false)
+assert.equal(THEME_MOTION.win98.spotlight, false)
+assert.equal(THEME_MOTION.win98.scrollBar, false)
+
+// Neobrutalist / 8-bit skins keep flat surfaces without pointer spotlight glow
+assert.equal(THEME_MOTION.retro.spotlight, false)
+assert.equal(THEME_MOTION.mario.spotlight, false)
 
 // Liquid Glass has softer inertia (lower lerp) than Nocturne; Retro is snappier
 assert.ok(THEME_MOTION.glass.lenis.lerp < THEME_MOTION.nocturne.lenis.lerp)

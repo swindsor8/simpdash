@@ -6,15 +6,23 @@
 // glass) override those class names by name in index.css, so reusing them keeps
 // every theme working with zero extra CSS. Don't swap in raw hex or new colors.
 
-import { AnimatedNumber, useChangeFlash } from './motion'
+import { useRef } from 'react'
+import { AnimatedNumber, useChangeFlash, useCardSpotlight } from './motion'
 
 // Card — the one elevated dark surface used across the dashboard. Pass
 // icon/title/subtitle/action to get the standard header row; omit them and it's
 // just chrome around `children` (used by the bespoke node/guest cards).
-export function Card({ icon, title, subtitle, action, className = '', onClick, children, ...rest }) {
+export function Card({ icon, title, subtitle, action, className = '', onClick, spotlight = false, children, ...rest }) {
   const titled = title || action
+  const ref = useRef(null)
+  useCardSpotlight(ref, spotlight)
   return (
-    <div onClick={onClick} className={`bg-[#13131e] border border-white/[0.07] rounded-2xl ${className}`} {...rest}>
+    <div
+      ref={ref}
+      onClick={onClick}
+      className={`bg-[#13131e] border border-white/[0.07] rounded-2xl ${spotlight ? 'card-spot' : ''} ${className}`}
+      {...rest}
+    >
       {titled && (
         <div className="flex items-center justify-between gap-2 px-6 py-4 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -76,7 +84,7 @@ export function StatCard({ icon, label, value, format, sub, trend, action, loadi
   const numeric = typeof value === 'number'
   const flashKey = useChangeFlash(numeric ? value : null)
   return (
-    <Card className="relative p-5 card-lift hover:border-white/20" {...rest}>
+    <Card spotlight className="relative p-5 card-lift hover:border-white/20" {...rest}>
       {flashKey && <span key={flashKey} className="stat-flash-overlay" />}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2 min-w-0">

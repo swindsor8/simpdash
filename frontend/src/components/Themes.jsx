@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { THEMES } from '../hooks/useTheme'
+import { useCardSpotlight, usePopPulse, useScrollReveal } from './motion'
 
 // The Switch widget from the design brief — used as the live toggle for the
 // retro theme. Colours are the retro palette itself (#121331, #f24c00, #ebe6ef).
@@ -145,6 +147,10 @@ function BrandPreview({ id }) {
 }
 
 function ThemeCard({ t, active, onSelect }) {
+  const cardRef = useRef(null)
+  const badgeRef = useRef(null)
+  useCardSpotlight(cardRef)
+  usePopPulse(badgeRef, active)
   const isBrand = t.id === 'nocturne' || t.id === 'default'
   const isRetro = t.id === 'retro'
   const isMario = t.id === 'mario'
@@ -153,7 +159,9 @@ function ThemeCard({ t, active, onSelect }) {
   const isGlass = t.id === 'glass'
   return (
     <div
-      className={`bg-[#13131e] border rounded-2xl p-5 flex flex-col gap-4 transition-colors cursor-pointer ${
+      ref={cardRef}
+      data-reveal=""
+      className={`bg-[#13131e] border rounded-2xl p-5 flex flex-col gap-4 transition-colors cursor-pointer card-lift card-spot ${
         active
           ? 'border-white/30 ring-1 ring-white/20'
           : 'border-white/[0.07] hover:border-white/20'
@@ -212,7 +220,7 @@ function ThemeCard({ t, active, onSelect }) {
           <p className="text-xs text-gray-500 mt-0.5">{t.description}</p>
         </div>
         {active && (
-          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium shrink-0">
+          <span ref={badgeRef} className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-medium shrink-0">
             Active
           </span>
         )}
@@ -231,8 +239,10 @@ function ThemeCard({ t, active, onSelect }) {
 }
 
 export default function Themes({ theme, setTheme, embedded = false }) {
+  const gridRef = useRef(null)
+  useScrollReveal(gridRef, { theme })
   const grid = (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {THEMES.map(t => (
         <ThemeCard key={t.id} t={t} active={theme === t.id} onSelect={setTheme} />
       ))}

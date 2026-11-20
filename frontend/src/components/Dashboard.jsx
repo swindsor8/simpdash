@@ -26,6 +26,8 @@ import RadialGauge from './RadialGauge'
 import {
   usePowerMorph, useStatusGlow, useViewTransition,
   useScrollReveal, useModalEntrance, useStaggerMount,
+  Expandable, ScrollProgressBar, useSlidingIndicator,
+  useStrokeDraw, usePopPulse,
 } from './motion'
 import { ScrollContainerContext, useSmoothScroll } from '../hooks/useSmoothScroll'
 import { copy } from '../lib/copy'
@@ -56,15 +58,18 @@ function consoleUrl(pveURL, node, pxType, vmid) {
   return `https://${host}/?console=${ct}&novnc=1&vmid=${vmid}&node=${encodeURIComponent(node)}`
 }
 
-// MiniSpark — tiny inline sparkline for node trend rows.
+// MiniSpark — tiny inline sparkline for node trend rows with GSAP stroke draw-in.
 function MiniSpark({ data, color = '#60a5fa', width = 72, height = 20 }) {
-  if (!data || data.length < 2) return <svg width={width} height={height} aria-hidden="true" />
+  const lineRef = useRef(null)
+  const ready = Boolean(data && data.length >= 2)
+  useStrokeDraw(lineRef, ready)
+  if (!ready) return <svg width={width} height={height} aria-hidden="true" />
   const max = Math.max(...data, 0.0001)
   const step = width / (data.length - 1)
   const pts = data.map((v, i) => `${(i * step).toFixed(1)},${(height - (Math.max(0, v) / max) * (height - 2) - 1).toFixed(1)}`)
   return (
     <svg width={width} height={height} className="overflow-visible" aria-hidden="true">
-      <polyline points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" opacity="0.8" />
+      <polyline ref={lineRef} points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" opacity="0.8" />
     </svg>
   )
 }
@@ -412,9 +417,9 @@ function NavItem({ icon, label, active, onClick, badge }) {
     <button
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
+      className={`relative z-10 w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
         active
-          ? 'bg-white/10 text-white font-medium'
+          ? 'text-white font-medium'
           : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
       }`}
     >
@@ -550,7 +555,7 @@ function StorageBar({ pool }) {
       </span>
       <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden min-w-[3rem]">
         <div
-          className={`h-full rounded-full ${hot ? 'bg-red-400/80' : warm ? 'bg-amber-400/80' : 'bg-blue-400/60'}`}
+          className={`h-full rounded-full bar-fill ${hot ? 'bg-red-400/80' : warm ? 'bg-amber-400/80' : 'bg-blue-400/60'}`}
           style={{ width: `${Math.min(100, pct)}%` }}
         />
       </div>
@@ -611,6 +616,7 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
 
   return (
     <Card
+      spotlight
       data-reveal=""
       className={`p-6 relative card-lift hover:border-white/20 ${glow || ''} ${link ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
@@ -723,13 +729,13 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
             {worstStorage >= 0.9 && <StatusPill variant="error">{Math.round(worstStorage * 100)}% full</StatusPill>}
             {worstStorage >= 0.75 && worstStorage < 0.9 && <StatusPill variant="warning">{Math.round(worstStorage * 100)}% full</StatusPill>}
           </button>
-          {showStorage && (
+          <Expandable open={showStorage}>
             <div className="mt-3 space-y-2">
               {[...storage].sort((a, b) => (b.maxdisk ? b.disk / b.maxdisk : 0) - (a.maxdisk ? a.disk / a.maxdisk : 0)).map(p => (
                 <StorageBar key={p.id} pool={p} />
               ))}
             </div>
-          )}
+          </Expandable>
         </div>
       )}
     </Card>
@@ -845,6 +851,8 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
   const [showDetails, setShowDetails] = useState(false)
   const [copied, setCopied] = useState(false)
   const [pending, setPending] = useState(null) // last action fired — drives the themed in-flight label
+  const copyBtnRef = useRef(null)
+  usePopPulse(copyBtnRef, copied)
   const displayName = link?.label || item.name
   const key = `${pxType}:${item.vmid}`
   const health = healthMap?.[key]
@@ -866,6 +874,7 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
 
   return (
     <Card
+      spotlight
       data-reveal=""
       className={`relative p-4 flex flex-col card-lift hover:border-white/20 ${glow || ''} ${link ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
@@ -902,9 +911,10 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
             {type}{item.vmid}
             {ip && (
               <button
+                ref={copyBtnRef}
                 onClick={copyIP}
                 title="Copy IP address"
-                className="text-gray-500 hover:text-gray-300 transition-colors"
+                className="text-gray-500 hover:text-gray-300 transition-colors inline-block"
               >
                 {copied ? 'copied' : ip}
               </button>
@@ -1016,9 +1026,9 @@ function GuestCard({ item, type, nodeName, backup, noteCount, onOpenNotes, link,
             </button>
           )}
         </div>
-        {showDetails && canInspect && running && (
+        <Expandable open={showDetails && canInspect && running}>
           <GuestDetails vmid={String(item.vmid)} etype={pxType} />
-        )}
+        </Expandable>
       </div>
     </Card>
   )
@@ -1044,6 +1054,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
   const scrollContentRef = useRef(null)
   const viewRef = useRef(null)
   const overviewMainRef = useRef(null)
+  const navRef = useRef(null)
+  const navPillRef = useRef(null)
   // Sidebar navigation: switch view and, under the terminal theme, fire a brief
   // static "channel-tune" blip. `extra` runs any per-view side effect first.
   const go = (v, extra) => { if (extra) extra(); setView(v); setNavOpen(false); if (theme === 'terminal') setBlip(b => b + 1) }
@@ -1293,6 +1305,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
     resetKey: view,
   })
   useViewTransition(viewRef, view, theme)
+  useSlidingIndicator(navRef, navPillRef, view, theme)
+  useStaggerMount(navRef, 'button')
   useScrollReveal(overviewMainRef, {
     theme,
     scrollerRef: scrollWrapperRef,
@@ -1376,7 +1390,13 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           )}
         </div>
 
-        <nav data-lenis-prevent className="flex-1 px-2 space-y-0.5 overflow-y-auto">
+        <nav ref={navRef} data-lenis-prevent className="relative flex-1 px-2 space-y-0.5 overflow-y-auto">
+          <span
+            ref={navPillRef}
+            aria-hidden="true"
+            className="nav-glide-pill pointer-events-none absolute left-2 right-2 top-0 rounded-xl z-0"
+            style={{ opacity: 0 }}
+          />
           <NavItem icon={<IconGrid />} label="Dashboard" active={view === 'dashboard'} onClick={() => go('dashboard')} badge={pendingUpdates} />
           <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => go('scripts')} />
           <NavItem icon={<IconNote />} label="Notebook" active={view === 'notebook'} onClick={() => go('notebook', () => setNotebookFilter(null))} />
@@ -1396,6 +1416,9 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       {/* Content */}
       <div ref={scrollWrapperRef} className="flex-1 overflow-y-auto">
       <div ref={scrollContentRef} className={view === 'scripts' ? 'h-full' : ''}>
+      {view !== 'scripts' && (
+        <ScrollProgressBar scrollerRef={scrollWrapperRef} theme={theme} resetKey={view} />
+      )}
       <ScrollContainerContext.Provider value={scrollWrapperRef}>
 
       <UpdateBanner

@@ -4,11 +4,14 @@
 // index.css): the default theme shows a threshold-coloured progress ring, the
 // terminal theme shows a monochrome analog dial (ticks + needle, no arc fill).
 //
-// The arc sweeps to new values over --motion-medium via a CSS transition on
-// stroke-dashoffset (the needle does the same via a transform transition), so it
-// animates in lockstep with the AnimatedNumber in the centre rather than snapping.
+// Arc fill and dial needle sweep from 0 on first mount and smoothly tween to
+// live updates via GSAP using each theme's motion profile (instant on Win98 /
+// prefers-reduced-motion), staying in lockstep with AnimatedNumber.
 
+import { useLayoutEffect, useRef } from 'react'
+import gsap from 'gsap'
 import { AnimatedNumber } from './motion'
+import { getThemeProfile, shouldAnimate } from '../lib/motionConfig'
 
 // 270° arc with the gap at the bottom — reads as a ring AND as an analog dial.
 const CX = 50, CY = 50, R = 42, START = 135, SWEEP = 270
@@ -41,26 +44,79 @@ export default function RadialGauge({ value, max, label, size = 'lg', idle = fal
     ? 'text-[11px] font-semibold text-white tabular-nums leading-none'
     : 'text-lg font-bold text-white tabular-nums leading-none'
 
+  const fillRef = useRef(null)
+  const needleRef = useRef(null)
+  const mountedRef = useRef(false)
+
+  useLayoutEffect(() => {
+    if (!live) {
+      mountedRef.current = false
+      return
+    }
+    const fill = fillRef.current
+    const needle = needleRef.current
+    const targetOffset = 100 - pct
+    const targetAngle = 270 * frac - 135
+    const profile = getThemeProfile()
+    const animate = shouldAnimate() && Boolean(profile.gauge)
+
+    if (!animate) {
+      if (fill) gsap.set(fill, { strokeDashoffset: targetOffset })
+      if (needle) gsap.set(needle, { rotation: targetAngle, svgOrigin: '50 50' })
+      mountedRef.current = true
+      return
+    }
+
+    const isFirst = !mountedRef.current
+    mountedRef.current = true
+    const dur = isFirst ? profile.gauge.duration : Math.min(0.42, profile.gauge.duration * 0.65)
+    const ease = profile.gauge.ease
+
+    if (fill) {
+      if (isFirst) {
+        gsap.fromTo(fill, { strokeDashoffset: 100 }, { strokeDashoffset: targetOffset, duration: dur, ease, overwrite: 'auto' })
+      } else {
+        gsap.to(fill, { strokeDashoffset: targetOffset, duration: dur, ease, overwrite: 'auto' })
+      }
+    }
+    if (needle) {
+      if (isFirst) {
+        gsap.fromTo(
+          needle,
+          { rotation: -135, svgOrigin: '50 50' },
+          { rotation: targetAngle, svgOrigin: '50 50', duration: dur, ease, overwrite: 'auto' },
+        )
+      } else {
+        gsap.to(needle, { rotation: targetAngle, svgOrigin: '50 50', duration: dur, ease, overwrite: 'auto' })
+      }
+    }
+
+    return () => {
+      if (fill) gsap.killTweensOf(fill)
+      if (needle) gsap.killTweensOf(needle)
+    }
+  }, [live, pct, frac])
+
   return (
     <div className={`radial-gauge ${size === 'sm' ? 'rg-sm' : 'rg-lg'}`} data-level={level}>
       <svg viewBox="0 0 100 100" className="rg-svg" aria-hidden="true">
         <path className="gauge-track" d={ARC_D} pathLength="100" />
         {live && (
-          <path className="gauge-fill" d={ARC_D} pathLength="100" style={{ strokeDashoffset: 100 - pct }} />
+          <path ref={fillRef} className="gauge-fill" d={ARC_D} pathLength="100" />
         )}
         <g className="gauge-ticks">
           {TICKS.map((t, i) => <line key={i} x1={t[0]} y1={t[1]} x2={t[2]} y2={t[3]} />)}
         </g>
         {live && (
           <>
-            <line className="gauge-needle" x1="50" y1="50" x2="50" y2="13" style={{ transform: `rotate(${270 * frac - 135}deg)` }} />
+            <line ref={needleRef} className="gauge-needle" x1="50" y1="50" x2="50" y2="13" />
             <circle className="gauge-hub" cx="50" cy="50" r="3.5" />
           </>
         )}
       </svg>
       <div className="rg-center">
         <span className={valueCls}>
-          {noData ? naLabel : idle ? '—' : <AnimatedNumber value={pct} format={format} />}
+          {noData ? naLabel : idle ? '—' : <AnimatedNumber value={pct} format={format} from={0} duration={0.65} />}
         </span>
         {label && <span className="rg-label text-gray-500">{label}</span>}
       </div>

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { setupPassword } from '../lib/api'
 import logo from '../../assets/logo.png'
-import { useStaggerMount } from './motion'
+import { useStaggerMount, Expandable } from './motion'
 
 const TOKEN_COMMANDS = `pveum role add SimpDash -privs "VM.Audit,Sys.Audit,Datastore.Audit,VM.PowerMgmt,Sys.PowerMgmt"
 pveum user add simpdash@pve
@@ -104,7 +104,7 @@ export default function SetupPassword({ pveLocal = true, onDone }) {
                 </button>
               </div>
 
-              {showHelp && (
+              <Expandable open={showHelp}>
                 <div className="bg-[#13131e] border border-white/[0.07] rounded-xl p-3 space-y-2">
                   <p className="text-xs text-gray-400">
                     Run these 4 commands on your Proxmox host (or create an API token in Datacenter → Permissions with Privilege Separation unchecked):
@@ -113,7 +113,7 @@ export default function SetupPassword({ pveLocal = true, onDone }) {
                     {TOKEN_COMMANDS}
                   </pre>
                 </div>
-              )}
+              </Expandable>
 
               <input
                 type="url"
