@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   logout, getNodes, getBackups, getNoteCounts, getInfo, entityAction, updateContainer,
   getServiceLinks, upsertServiceLink, deleteServiceLink, serviceIconUrl,
-  getServiceHealth, getGuestIPs, getUpdatesPending, getRRD,
-  getGuestServices, getGuestDocker, getUpdateCheck,
+  getServiceHealth, getGuestIPs, getUpdatesPending,
+  getGuestServices, getGuestDocker, getUpdateCheck, getActiveJob, cancelJob,
 } from '../lib/api'
 import logo from '../../assets/logo.png'
 import { useResourceStream } from '../hooks/useResourceStream'
@@ -14,6 +14,8 @@ import LXCBatchUpdate from './LXCBatchUpdate'
 import Scripts from './Scripts'
 import Nodes from './Nodes'
 import Network from './Network'
+import Hardware from './Hardware'
+import NodeTrends from './NodeTrends'
 import Backups, { BackupBadge } from './Backups'
 import Schedules from './Schedules'
 import Notebook from './Notebook'
@@ -27,7 +29,7 @@ import {
   usePowerMorph, useStatusGlow, useViewTransition,
   useScrollReveal, useModalEntrance, useStaggerMount,
   Expandable, ScrollProgressBar, useSlidingIndicator,
-  useStrokeDraw, usePopPulse,
+  usePopPulse,
 } from './motion'
 import { ScrollContainerContext, useSmoothScroll } from '../hooks/useSmoothScroll'
 import { copy } from '../lib/copy'
@@ -56,22 +58,6 @@ function consoleUrl(pveURL, node, pxType, vmid) {
   if (!host || /^(127\.|localhost)/.test(host)) host = `${window.location.hostname}:8006`
   const ct = pxType === 'qemu' ? 'kvm' : 'lxc'
   return `https://${host}/?console=${ct}&novnc=1&vmid=${vmid}&node=${encodeURIComponent(node)}`
-}
-
-// MiniSpark — tiny inline sparkline for node trend rows with GSAP stroke draw-in.
-function MiniSpark({ data, color = '#60a5fa', width = 72, height = 20 }) {
-  const lineRef = useRef(null)
-  const ready = Boolean(data && data.length >= 2)
-  useStrokeDraw(lineRef, ready)
-  if (!ready) return <svg width={width} height={height} aria-hidden="true" />
-  const max = Math.max(...data, 0.0001)
-  const step = width / (data.length - 1)
-  const pts = data.map((v, i) => `${(i * step).toFixed(1)},${(height - (Math.max(0, v) / max) * (height - 2) - 1).toFixed(1)}`)
-  return (
-    <svg width={width} height={height} className="overflow-visible" aria-hidden="true">
-      <polyline ref={lineRef} points={pts.join(' ')} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" opacity="0.8" />
-    </svg>
-  )
 }
 
 // HealthDot — service reachability from the backend prober.
@@ -161,6 +147,14 @@ function IconNetwork() {
   )
 }
 
+function IconHardware() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>
+    </svg>
+  )
+}
+
 function IconWifi() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -230,20 +224,41 @@ function IconUpdateSm() {
 }
 
 // JobModal — streams a running executor job's live output (reuses the Updates/
-// Scripts terminal plumbing). Used for per-container apt upgrades.
-function JobModal({ jobId, title, onClose }) {
-  const { output, state, sendInput } = useJobStream(jobId, null)
+// Scripts terminal plumbing) and supports cancelling the active job.
+function JobModal({ jobId, node = null, title, onClose }) {
+  const { output, state, sendInput } = useJobStream(jobId, node)
+  const [cancelling, setCancelling] = useState(false)
   const trap = useFocusTrap()
   const backdropRef = useRef(null)
   useModalEntrance(backdropRef, trap)
+
+  async function handleCancel() {
+    setCancelling(true)
+    try { await cancelJob(jobId, node) }
+    catch { /* surfaced via stream */ }
+    finally { setCancelling(false) }
+  }
+
   return (
     <div ref={backdropRef} data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div ref={trap} role="dialog" aria-modal="true" aria-label={title} className="bg-[#13131e] border border-white/10 rounded-2xl w-full max-w-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-3 gap-2">
           <h2 className="text-base font-semibold text-white truncate">{title}</h2>
           <div className="flex items-center gap-2 shrink-0">
-            {state === 'running' && <StatusPill variant="neutral">Running…</StatusPill>}
+            {state === 'running' && (
+              <>
+                <StatusPill variant="neutral">Running…</StatusPill>
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                  className="text-xs px-2.5 py-1 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+                >
+                  {cancelling ? 'Stopping…' : 'Cancel'}
+                </button>
+              </>
+            )}
             {state === 'succeeded' && <StatusPill variant="success">Done</StatusPill>}
+            {state === 'cancelled' && <StatusPill variant="warning">Cancelled</StatusPill>}
             {state === 'failed' && <StatusPill variant="error">Failed</StatusPill>}
             <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-sm">✕</button>
           </div>
@@ -251,6 +266,37 @@ function JobModal({ jobId, title, onClose }) {
         <Terminal output={output} state={state} sendInput={sendInput} />
       </div>
     </div>
+  )
+}
+
+const ACTIVE_JOB_LABELS = {
+  apt_upgrade: 'Host update',
+  ct_upgrade: 'LXC update',
+  lxc_batch_upgrade: 'Batch LXCs',
+  catalog_script: 'Script install',
+  sched_host_update: 'Scheduled host update',
+  sched_ct_update: 'Scheduled LXC update',
+  sched_lxc_batch_update: 'Scheduled batch LXCs',
+  sched_backup: 'Scheduled backup',
+  sched_snapshot: 'Scheduled snapshot',
+  sched_power: 'Scheduled power',
+  sched_speedtest: 'Scheduled speedtest',
+}
+
+function ActiveJobPill({ job, onClick }) {
+  if (!job) return null
+  const label = ACTIVE_JOB_LABELS[job.type] || job.type || 'Job'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title="A job is running — click to view live output or cancel"
+      className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-300 hover:bg-blue-500/25 transition-colors"
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+      <span className="hidden sm:inline">{label}…</span>
+      <span className="sm:hidden">Running…</span>
+    </button>
   )
 }
 
@@ -273,7 +319,7 @@ function ConfirmModal({ confirm, onConfirm, onCancel }) {
   let title, body, danger = isForceStop
   if (isUpdate) {
     title = `Update ${name || `container ${entityId}`}?`
-    body = 'Runs apt-get update && apt-get -y upgrade inside the container. It must be running; the upgrade can restart services inside it.'
+    body = 'Runs a non-interactive package upgrade (apt-get / apk / dnf) inside the container. It must be running; the upgrade can restart services inside it.'
   } else if (isForceStop) {
     title = `Force stop ${entityId}?`
     body = copy('confirm.forceStop', 'This is the equivalent of pulling the power. The guest will not shut down gracefully and may lose unsaved data or corrupt the filesystem.')
@@ -566,37 +612,6 @@ function StorageBar({ pool }) {
   )
 }
 
-// NodeTrends — 1h CPU/memory sparklines from PVE's own RRD store. Local
-// cluster only (the endpoint queries the local PVE API); silently absent for
-// paired-node views and monitor-only nodes that error out.
-function NodeTrends({ nodeId, online }) {
-  const [pts, setPts] = useState(null)
-  useEffect(() => {
-    if (!online) return
-    let live = true
-    const load = () => getRRD(nodeId, 'hour').then(d => live && setPts(d)).catch(() => {})
-    load()
-    const t = setInterval(load, 60000)
-    return () => { live = false; clearInterval(t) }
-  }, [nodeId, online])
-  if (!pts || pts.length < 2) return null
-  const cpu = pts.map(p => p.cpu ?? 0)
-  const mem = pts.map(p => (p.memtotal ? (p.memused ?? 0) / p.memtotal : 0))
-  return (
-    <div className="flex items-center gap-4 mt-3" title="Last hour (from Proxmox RRD)">
-      <span className="text-[10px] uppercase tracking-wider text-gray-600">1h</span>
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] text-gray-600">cpu</span>
-        <MiniSpark data={cpu} color="#60a5fa" />
-      </div>
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] text-gray-600">mem</span>
-        <MiniSpark data={mem} color="#34d399" />
-      </div>
-    </div>
-  )
-}
-
 function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight, onAction, onInstallAgent, localCluster }) {
   const monitorOnly = node.managed === false
   const online = node.status === 'online'
@@ -703,8 +718,6 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
           {monitorOnly && (
             <p className="text-xs text-gray-600 mt-2">No SuperDash agent here — stats only.</p>
           )}
-
-          {localCluster && <NodeTrends nodeId={node.id} online={online} />}
         </div>
 
         {/* CPU / Memory / Disk gauges — fill the horizontal space freed up at wide widths */}
@@ -714,6 +727,8 @@ function NodeCard({ node, selfNode, serviceLinks, onServiceLinkChange, inflight,
           <NodeGauge name="Disk" value={node.disk} max={node.maxdisk} label={fmtPair(node.disk, node.maxdisk)} />
         </div>
       </div>
+
+      {localCluster && <NodeTrends nodeId={node.id} online={online} />}
 
       {/* Storage pools — collapsed to a summary line; full stores die quietly,
           so the worst pool's fill level is always visible up front. */}
@@ -1106,15 +1121,39 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
     return () => { live = false; clearInterval(t) }
   }, [])
 
-  // Pending apt updates badge — cached server-side, cheap to poll.
+  // Pending apt updates badge + reboot-required indicator — cached server-side, cheap to poll.
   const [pendingUpdates, setPendingUpdates] = useState(0)
+  const [rebootRequired, setRebootRequired] = useState(false)
   useEffect(() => {
     let live = true
-    const load = () => getUpdatesPending().then(d => live && setPendingUpdates(d.count ?? 0)).catch(() => {})
+    const load = () => getUpdatesPending(activeNode).then(d => {
+      if (!live) return
+      setPendingUpdates(d.count ?? 0)
+      setRebootRequired(Boolean(d.reboot_required))
+    }).catch(() => {})
     load()
     const t = setInterval(load, 15 * 60 * 1000)
     return () => { live = false; clearInterval(t) }
-  }, [])
+  }, [activeNode])
+
+  // Active executor job indicator — lets the admin reopen or cancel any
+  // background job (updates, scripts, scheduled tasks) from any tab.
+  const [activeJob, setActiveJob] = useState(null)
+  useEffect(() => {
+    let live = true
+    const load = () => getActiveJob(activeNode).then(d => {
+      if (live) setActiveJob(d?.active ? d.job : null)
+    }).catch(() => {})
+    load()
+    const t = setInterval(load, 5000)
+    return () => { live = false; clearInterval(t) }
+  }, [activeNode])
+
+  const openActiveJobModal = useCallback(() => {
+    if (!activeJob) return
+    const label = ACTIVE_JOB_LABELS[activeJob.type] || activeJob.type || 'Running job'
+    setUpdateJob({ jobId: activeJob.id, node: activeNode, title: label })
+  }, [activeJob, activeNode])
 
   useEffect(() => {
     if (!toast) return
@@ -1133,7 +1172,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
   }, [pairedNodes, activeNode])
 
   const { nodes, connected, pulseKey, unreachable, disconnected } = useResourceStream(activeNode)
-  const activeAddr = pairedNodes.find(n => n.id === activeNode)?.address
+  const activePaired = pairedNodes.find(n => n.id === activeNode)
+  const activeAddr = activePaired ? (activePaired.node_name ? `${activePaired.node_name} (${activePaired.address})` : activePaired.address) : undefined
 
   // One-time "we're back" glow across the cards when the debounced disconnect
   // clears. Toggling the class off→on restarts the CSS animation each reconnect.
@@ -1187,16 +1227,16 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
     }
   }
 
-  // Container apt upgrade: always confirmed (privileged in-guest mutation), then
-  // streamed in the JobModal. Local LXCs only — see GuestCard's onUpdate wiring.
+  // Container package upgrade: always confirmed (privileged in-guest mutation),
+  // then streamed in the JobModal. Works on both local host and paired secondaries.
   function handleUpdate(item) {
     setConfirm({ entityType: 'lxc', entityId: String(item.vmid), action: 'update', name: item.name })
   }
 
   async function runUpdate(c) {
     try {
-      const { job_id } = await updateContainer(c.entityId)
-      setUpdateJob({ jobId: job_id, title: `Updating ${c.name || `CT ${c.entityId}`}` })
+      const { job_id } = await updateContainer(c.entityId, activeNode)
+      setUpdateJob({ jobId: job_id, node: activeNode, title: `Updating ${c.name || `CT ${c.entityId}`}` })
     } catch (e) {
       setToast(e.message)
     }
@@ -1342,6 +1382,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         <img src={logo} alt="" className="w-6 h-6 rounded-lg object-contain" />
         <span className="font-semibold text-sm tracking-tight">SuperDash</span>
         <span className="ml-auto flex items-center gap-2.5">
+          <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
           <UpdateHeaderPill
             info={appUpdate}
             open={updateBannerOpen}
@@ -1382,11 +1423,13 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           >
             <option value="">This host (local)</option>
             {pairedNodes.map(n => (
-              <option key={n.id} value={n.id}>{n.address}</option>
+              <option key={n.id} value={n.id}>
+                {n.node_name ? `${n.node_name} (${n.address})` : n.address}
+              </option>
             ))}
           </select>
           {activeNode && (
-            <p className="text-[10px] text-gray-600 mt-1.5">Applies to Dashboard &amp; Scripts.</p>
+            <p className="text-[10px] text-gray-600 mt-1.5">Applies to Dashboard, Hardware &amp; Scripts.</p>
           )}
         </div>
 
@@ -1401,6 +1444,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
           <NavItem icon={<IconTerminal />} label="Scripts" active={view === 'scripts'} onClick={() => go('scripts')} />
           <NavItem icon={<IconNote />} label="Notebook" active={view === 'notebook'} onClick={() => go('notebook', () => setNotebookFilter(null))} />
           <NavItem icon={<IconWifi />} label="Network" active={view === 'network'} onClick={() => go('network')} />
+          <NavItem icon={<IconHardware />} label="Hardware" active={view === 'hardware'} onClick={() => go('hardware')} />
           <NavItem icon={<IconArchive />} label="Backups" active={view === 'backups'} onClick={() => go('backups')} />
           <NavItem icon={<IconCalendarClock />} label="Schedules" active={view === 'schedules'} onClick={() => go('schedules')} />
           <NavItem icon={<IconActivity />} label="Activity" active={view === 'activity'} onClick={() => go('activity')} />
@@ -1438,11 +1482,28 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <p className="text-xs text-gray-500 mt-0.5">Host network interfaces and bridges</p>
             </div>
             <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
               <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
               <LocalOnlyNote activeNode={activeNode} />
             </div>
           </header>
           <Network />
+        </>
+      ) : view === 'hardware' ? (
+        <>
+          <header className="sticky top-0 z-10 bg-[#0c0c14]/90 backdrop-blur-sm border-b border-white/[0.06] px-4 sm:px-8 py-4 flex items-center justify-between gap-2">
+            <div>
+              <h1 className="text-base font-semibold">Hardware Health</h1>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {activeAddr ? `Sensors, SMART drives, and ZFS pools — ${activeAddr}` : 'Host thermal sensors, SMART drives, and ZFS pools'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+            </div>
+          </header>
+          <Hardware node={activeNode} />
         </>
       ) : view === 'backups' ? (
         <>
@@ -1452,6 +1513,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <p className="text-xs text-gray-500 mt-0.5">Last backup per guest and recent vzdump jobs</p>
             </div>
             <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
               <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
               <LocalOnlyNote activeNode={activeNode} />
             </div>
@@ -1466,6 +1528,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <p className="text-xs text-gray-500 mt-0.5">One-time and recurring updates, backups, snapshots, and power tasks</p>
             </div>
             <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
               <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
               <LocalOnlyNote activeNode={activeNode} />
             </div>
@@ -1480,6 +1543,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <p className="text-xs text-gray-500 mt-0.5">Dashboard jobs and the Proxmox cluster task log</p>
             </div>
             <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
               <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
               <LocalOnlyNote activeNode={activeNode} />
             </div>
@@ -1493,9 +1557,12 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <h1 className="text-base font-semibold">Settings</h1>
               <p className="text-xs text-gray-500 mt-0.5">Appearance, security, notifications, and integrations</p>
             </div>
-            <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+            <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+            </div>
           </header>
-          <Settings theme={theme} setTheme={setTheme} />
+          <Settings theme={theme} setTheme={setTheme} onDataImported={() => { refreshServiceLinks(); refreshCounts() }} />
         </>
       ) : view === 'nodes' ? (
         <>
@@ -1504,7 +1571,10 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <h1 className="text-base font-semibold">Nodes</h1>
               <p className="text-xs text-gray-500 mt-0.5">Pair and manage secondary agents</p>
             </div>
-            <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+            <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+            </div>
           </header>
           <Nodes nodes={pairedNodes} onChange={refreshNodes} />
         </>
@@ -1517,7 +1587,10 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
                 {activeAddr ? `Running on ${activeAddr}` : 'One-click community-scripts installs'}
               </p>
             </div>
-            <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+            <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
+              <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
+            </div>
           </header>
           <Scripts node={activeNode} lxcs={entities.filter(e => e.type === 'lxc')} theme={theme} />
         </div>
@@ -1529,6 +1602,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <p className="text-xs text-gray-500 mt-0.5">Timestamped notes — jot down the why, pin what matters</p>
             </div>
             <div className="flex items-center gap-3">
+              <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
               <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
               <LocalOnlyNote activeNode={activeNode} />
             </div>
@@ -1547,6 +1621,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {rebootRequired && <StatusPill variant="warning">Reboot required</StatusPill>}
+            <ActiveJobPill job={activeJob} onClick={openActiveJobModal} />
             <UpdateHeaderPill info={appUpdate} open={updateBannerOpen} onClick={() => setUpdateBannerOpen(v => !v)} />
             <div className="flex items-center gap-2.5">
               <StatusDot pulseKey={pulseKey} connected={connected} disconnected={disconnected || unreachable} />
@@ -1714,7 +1790,7 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
                           onServiceLinkChange={refreshServiceLinks}
                           isInflight={!!inflight[`lxc:${ct.vmid}`]}
                           onAction={handleAction}
-                          onUpdate={activeNode == null ? handleUpdate : undefined}
+                          onUpdate={node.managed !== false ? handleUpdate : undefined}
                           ips={activeNode == null ? guestIPs : undefined}
                           healthMap={activeNode == null ? healthMap : undefined}
                           pveURL={pveURL}
@@ -1742,12 +1818,13 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
               <div data-reveal="">
                 <Updates node={activeNode} />
               </div>
-              {activeNode == null && (() => {
-                const localNode = (nodes ?? []).find(n => n.id === selfNode) || (nodes?.length === 1 ? nodes[0] : null)
-                const localLxcs = localNode?.lxcs ?? []
-                return localLxcs.length > 0 ? (
+              {(() => {
+                const targetName = activeNode == null ? selfNode : activePaired?.node_name
+                const targetNode = (nodes ?? []).find(n => n.id === targetName) || (nodes?.length === 1 ? nodes[0] : null)
+                const targetLxcs = targetNode?.lxcs ?? []
+                return targetLxcs.length > 0 ? (
                   <div data-reveal="">
-                    <LXCBatchUpdate lxcs={localLxcs} />
+                    <LXCBatchUpdate lxcs={targetLxcs} node={activeNode} />
                   </div>
                 ) : null
               })()}
@@ -1772,9 +1849,14 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         />
       )}
 
-      {/* Live apt-upgrade log for a container update */}
+      {/* Live job log modal (container updates & reopened active jobs) */}
       {updateJob && (
-        <JobModal jobId={updateJob.jobId} title={updateJob.title} onClose={() => setUpdateJob(null)} />
+        <JobModal
+          jobId={updateJob.jobId}
+          node={updateJob.node ?? null}
+          title={updateJob.title}
+          onClose={() => setUpdateJob(null)}
+        />
       )}
 
       {/* Section-transition static blip (terminal theme only; keyed so it replays) */}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getLXCUpdateExcludes, putLXCUpdateExcludes, updateAllContainers } from '../lib/api'
+import { getLXCUpdateExcludes, putLXCUpdateExcludes, updateAllContainers, cancelJob } from '../lib/api'
 import { useJobStream } from '../hooks/useJobStream'
 import Terminal from './Terminal'
 import { Card, StatusPill } from './Card'
@@ -68,7 +68,7 @@ function RowBadge({ item }) {
   }
 }
 
-export default function LXCBatchUpdate({ lxcs = [] }) {
+export default function LXCBatchUpdate({ lxcs = [], node = null }) {
   const [excluded, setExcluded] = useState([])
   const [excludesOpen, setExcludesOpen] = useState(false)
   const [excludeErr, setExcludeErr] = useState(null)
@@ -78,15 +78,19 @@ export default function LXCBatchUpdate({ lxcs = [] }) {
   const [stopOnError, setStopOnError] = useState(false)
   const [jobId, setJobId] = useState(null)
   const [startErr, setStartErr] = useState(null)
+  const [cancelling, setCancelling] = useState(false)
   const [showTerminal, setShowTerminal] = useState(true)
 
-  const { output, state: jobState, sendInput, progress } = useJobStream(jobId, null)
+  const { output, state: jobState, sendInput, progress } = useJobStream(jobId, node)
 
   useEffect(() => {
-    getLXCUpdateExcludes()
+    setJobId(null)
+    setStartErr(null)
+    setConfirming(false)
+    getLXCUpdateExcludes(node)
       .then(d => setExcluded(Array.isArray(d?.excluded) ? d.excluded : []))
-      .catch(() => {})
-  }, [])
+      .catch(() => setExcluded([]))
+  }, [node])
 
   const sortedLxcs = useMemo(
     () => [...lxcs].sort((a, b) => a.vmid - b.vmid),
@@ -133,7 +137,7 @@ export default function LXCBatchUpdate({ lxcs = [] }) {
     setExcluded(next)
     setSavingExclude(true)
     try {
-      const res = await putLXCUpdateExcludes(next)
+      const res = await putLXCUpdateExcludes(next, node)
       if (Array.isArray(res?.excluded)) setExcluded(res.excluded)
     } catch (e) {
       setExcluded(prev)
@@ -148,10 +152,22 @@ export default function LXCBatchUpdate({ lxcs = [] }) {
     setStartErr(null)
     setShowTerminal(true)
     try {
-      const res = await updateAllContainers({ continue_on_error: !stopOnError })
+      const res = await updateAllContainers({ continue_on_error: !stopOnError }, node)
       setJobId(res.job_id)
     } catch (e) {
       setStartErr(e.message || 'Could not start batch LXC update')
+    }
+  }
+
+  async function handleCancel() {
+    if (!jobId) return
+    setCancelling(true)
+    try {
+      await cancelJob(jobId, node)
+    } catch (e) {
+      setStartErr(e.message)
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -186,7 +202,18 @@ export default function LXCBatchUpdate({ lxcs = [] }) {
               Update all ({counts.eligible})
             </button>
           )}
-          {busy && <StatusPill variant="neutral">Updating {stats.completed}/{stats.activeTotal || counts.eligible}</StatusPill>}
+          {busy && (
+            <>
+              <StatusPill variant="neutral">Updating {stats.completed}/{stats.activeTotal || counts.eligible}</StatusPill>
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="text-xs px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+              >
+                {cancelling ? 'Stopping…' : 'Cancel'}
+              </button>
+            </>
+          )}
         </div>
       }
     >
@@ -295,6 +322,7 @@ export default function LXCBatchUpdate({ lxcs = [] }) {
             </div>
             {jobState === 'succeeded' && <StatusPill variant="success">All updated</StatusPill>}
             {jobState === 'failed' && <StatusPill variant="error">Completed with errors</StatusPill>}
+            {jobState === 'cancelled' && <StatusPill variant="warning">Cancelled</StatusPill>}
           </div>
 
           {/* Progress bar */}

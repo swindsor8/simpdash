@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -44,6 +45,14 @@ func Open(path string) (*DB, error) {
 	return db, nil
 }
 
+// maxStoredJobs caps how many historical jobs are kept on disk so the flat
+// JSON file does not grow unboundedly across scheduled runs.
+const maxStoredJobs = 100
+
+// maxJobOutputBytes caps persisted log output per job (~2 MB, keeping the tail)
+// so a runaway verbose job cannot bloat the store.
+const maxJobOutputBytes = 2 << 20
+
 // CreateJob inserts a new running job record.
 func (s *DB) CreateJob(id, jobType string, startedAt time.Time) error {
 	s.mu.Lock()
@@ -58,6 +67,7 @@ func (s *DB) CreateJob(id, jobType string, startedAt time.Time) error {
 		Status:    "running",
 		StartedAt: startedAt.UTC(),
 	})
+	jobs = pruneJobs(jobs, maxStoredJobs)
 	return s.write(jobs)
 }
 
@@ -69,6 +79,14 @@ func (s *DB) FinishJob(id, status string, exitCode int, finishedAt time.Time, ou
 	if err != nil {
 		return err
 	}
+	if len(output) > maxJobOutputBytes {
+		tail := output[len(output)-maxJobOutputBytes:]
+		// Align to the next newline so we never cut a JSON frame in half.
+		if idx := strings.IndexByte(tail, '\n'); idx >= 0 && idx+1 < len(tail) {
+			tail = tail[idx+1:]
+		}
+		output = `{"type":"stderr","line":"[earlier output truncated]"}` + "\n" + tail
+	}
 	t := finishedAt.UTC()
 	for _, j := range jobs {
 		if j.ID == id {
@@ -79,7 +97,23 @@ func (s *DB) FinishJob(id, status string, exitCode int, finishedAt time.Time, ou
 			break
 		}
 	}
+	jobs = pruneJobs(jobs, maxStoredJobs)
 	return s.write(jobs)
+}
+
+// pruneJobs keeps at most limit jobs (newest StartedAt first), always keeping
+// any currently running jobs.
+func pruneJobs(jobs []*Job, limit int) []*Job {
+	if len(jobs) <= limit {
+		return jobs
+	}
+	sort.Slice(jobs, func(i, j int) bool {
+		if (jobs[i].Status == "running") != (jobs[j].Status == "running") {
+			return jobs[i].Status == "running"
+		}
+		return jobs[i].StartedAt.After(jobs[j].StartedAt)
+	})
+	return jobs[:limit]
 }
 
 // GetJob returns a single job with full output, or nil if not found.

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getCatalog, runScript, syncCatalog } from '../lib/api'
+import { getCatalog, runScript, syncCatalog, cancelJob } from '../lib/api'
 import { useJobStream } from '../hooks/useJobStream'
 import { useSmoothScroll } from '../hooks/useSmoothScroll'
 import Terminal from './Terminal'
@@ -210,15 +210,22 @@ function ConfirmDialog({ script, lxcs = [], onCancel, onConfirm }) {
 // the catalog down. Stays open while running (interactive whiptail menus need
 // the keystroke stream); closeable any time via the X, backdrop, or Escape —
 // the job keeps running on the server if dismissed mid-install.
-function TerminalDialog({ running, busy, startErr, output, jobState, sendInput, onClose }) {
+function TerminalDialog({ running, busy, startErr, output, jobState, sendInput, onCancelJob, onClose }) {
   const backdropRef = useRef(null)
   const dialogRef = useRef(null)
+  const [cancelling, setCancelling] = useState(false)
   useModalEntrance(backdropRef, dialogRef)
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  async function doCancel() {
+    setCancelling(true)
+    try { await onCancelJob?.() }
+    finally { setCancelling(false) }
+  }
 
   return (
     <div
@@ -239,12 +246,23 @@ function TerminalDialog({ running, busy, startErr, output, jobState, sendInput, 
               <span className="text-white font-medium">{running}</span>
             </p>
           )}
-          <button
-            onClick={onClose}
-            className="ml-auto text-xs px-3 py-1 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors"
-          >
-            Close
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            {busy && onCancelJob && (
+              <button
+                onClick={doCancel}
+                disabled={cancelling}
+                className="text-xs px-3 py-1 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+              >
+                {cancelling ? 'Stopping…' : 'Cancel job'}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-xs px-3 py-1 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
         {startErr && <p className="text-xs text-red-400">{startErr}</p>}
         <Terminal output={output} state={jobState} sendInput={sendInput} />
@@ -506,6 +524,7 @@ export default function Scripts({ node = null, lxcs = [], theme }) {
           output={output}
           jobState={jobState}
           sendInput={sendInput}
+          onCancelJob={jobId ? () => cancelJob(jobId, node).catch(e => setStartErr(e.message)) : null}
           onClose={() => { setShowTerm(false); setStartErr(null) }}
         />
       )}

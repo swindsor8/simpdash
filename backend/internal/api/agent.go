@@ -97,12 +97,16 @@ func (s *Server) requireAgentToken(next http.HandlerFunc) http.HandlerFunc {
 func (s *Server) AgentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/agent/pair", methodGate(http.MethodPost, s.AgentPair))
 	mux.HandleFunc("/agent/resources", methodGate(http.MethodGet, s.requireAgentToken(s.Resources)))
+	mux.HandleFunc("/agent/hardware", methodGate(http.MethodGet, s.requireAgentToken(s.Hardware)))
 	mux.HandleFunc("/agent/updates/check", methodGate(http.MethodGet, s.requireAgentToken(s.UpdatesCheck)))
+	mux.HandleFunc("/agent/updates/pending", methodGate(http.MethodGet, s.requireAgentToken(s.UpdatesPending)))
 	mux.HandleFunc("/agent/updates/apply", methodGate(http.MethodPost, s.requireAgentToken(s.UpdatesApply)))
 	mux.HandleFunc("/agent/guests/update-all", methodGate(http.MethodPost, s.requireAgentToken(s.GuestUpdateAll)))
+	mux.HandleFunc("/agent/guests/update-all/excludes", s.requireAgentToken(s.handleLXCExcludes))
 	mux.HandleFunc("/agent/guests/", s.agentGuestsPrefix)
 	mux.HandleFunc("/agent/catalog", methodGate(http.MethodGet, s.requireAgentToken(s.Catalog)))
 	mux.HandleFunc("/agent/catalog/", s.agentCatalogPrefix)
+	mux.HandleFunc("/agent/jobs/active", methodGate(http.MethodGet, s.requireAgentToken(s.ActiveJob)))
 	mux.HandleFunc("/agent/jobs/", s.agentJobsPrefix)
 }
 
@@ -159,6 +163,10 @@ func (s *Server) agentJobsPrefix(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.streamJob(w, r, id)
+	case "cancel":
+		methodGate(http.MethodPost, s.requireAgentToken(func(w http.ResponseWriter, r *http.Request) {
+			s.CancelJob(w, r, id)
+		}))(w, r)
 	case "":
 		methodGate(http.MethodGet, s.requireAgentToken(func(w http.ResponseWriter, r *http.Request) {
 			s.Job(w, r, id)

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useDeferredValue, useCallback, useRef } from 'react'
 import { getNotes, createNote, updateNote, deleteNote } from '../lib/api'
+import { parseMarkdown, toggleTaskLine } from '../lib/markdown'
 import { copy, loadingText } from '../lib/copy'
 import { useScrollReveal } from './motion'
 
@@ -89,6 +90,118 @@ function EntityPicker({ value, onChange, entities, generalLabel, allOption, clas
   )
 }
 
+function InlineTokens({ tokens }) {
+  return tokens.map((tok, i) => {
+    switch (tok.type) {
+      case 'code':
+        return (
+          <code key={i} className="px-1 py-0.5 rounded bg-black/30 font-mono text-[12px] text-amber-200/90">
+            {tok.value}
+          </code>
+        )
+      case 'bold':
+        return <strong key={i} className="font-semibold text-white"><InlineTokens tokens={tok.children} /></strong>
+      case 'italic':
+        return <em key={i} className="italic"><InlineTokens tokens={tok.children} /></em>
+      case 'strike':
+        return <del key={i} className="line-through opacity-65"><InlineTokens tokens={tok.children} /></del>
+      case 'link':
+        return (
+          <a
+            key={i}
+            href={tok.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline break-all"
+          >
+            {tok.label}
+          </a>
+        )
+      default:
+        return <span key={i}>{tok.value}</span>
+    }
+  })
+}
+
+function MarkdownBody({ content, onToggleTask, disabled }) {
+  const blocks = useMemo(() => parseMarkdown(content), [content])
+  return (
+    <div className="text-sm text-gray-100 space-y-2 break-words leading-relaxed">
+      {blocks.map((b, i) => {
+        if (b.type === 'heading') {
+          const cls = b.level === 1 ? 'text-base font-semibold text-white'
+            : b.level === 2 ? 'text-sm font-semibold text-white'
+            : 'text-xs font-semibold uppercase tracking-wider text-gray-200'
+          return <p key={i} className={cls}><InlineTokens tokens={b.tokens} /></p>
+        }
+        if (b.type === 'codeblock') {
+          return (
+            <pre key={i} className="bg-black/30 border border-white/10 rounded-lg p-2.5 text-xs font-mono text-gray-200 overflow-x-auto whitespace-pre">
+              <code>{b.code}</code>
+            </pre>
+          )
+        }
+        if (b.type === 'hr') {
+          return <hr key={i} className="border-white/15 my-2" />
+        }
+        if (b.type === 'quote') {
+          return (
+            <blockquote key={i} className="border-l-2 border-white/30 pl-2.5 text-gray-300 italic">
+              <InlineTokens tokens={b.tokens} />
+            </blockquote>
+          )
+        }
+        if (b.type === 'ul') {
+          return (
+            <ul key={i} className="space-y-1">
+              {b.items.map((item, j) => (
+                item.task ? (
+                  <li key={j} className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      disabled={disabled}
+                      onChange={() => onToggleTask?.(item.lineIndex)}
+                      className="mt-1 accent-blue-500 cursor-pointer shrink-0"
+                    />
+                    <span className={item.checked ? 'line-through opacity-60' : ''}>
+                      <InlineTokens tokens={item.tokens} />
+                    </span>
+                  </li>
+                ) : (
+                  <li key={j} className="flex items-start gap-2">
+                    <span className="text-gray-400 select-none">•</span>
+                    <span className="min-w-0 flex-1"><InlineTokens tokens={item.tokens} /></span>
+                  </li>
+                )
+              ))}
+            </ul>
+          )
+        }
+        if (b.type === 'ol') {
+          return (
+            <ol key={i} className="list-decimal list-inside space-y-1">
+              {b.items.map((item, j) => (
+                <li key={j}><InlineTokens tokens={item.tokens} /></li>
+              ))}
+            </ol>
+          )
+        }
+        return (
+          <p key={i} className="whitespace-pre-wrap">
+            {b.lines.map((lineTokens, j) => (
+              <span key={j}>
+                {j > 0 && <br />}
+                <InlineTokens tokens={lineTokens} />
+              </span>
+            ))}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
 function NoteCard({ note, entities, onChanged, onCountsChanged, onFilterEntity }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(note.content)
@@ -107,6 +220,13 @@ function NoteCard({ note, entities, onChanged, onCountsChanged, onFilterEntity }
     if (!c) return
     setBusy(true)
     try { await updateNote(note.id, { content: c }); setEditing(false); onChanged() }
+    catch (e) { alert(e.message) } finally { setBusy(false) }
+  }
+  async function handleToggleTask(lineIndex) {
+    const next = toggleTaskLine(note.content, lineIndex)
+    if (next === note.content) return
+    setBusy(true)
+    try { await updateNote(note.id, { content: next }); onChanged() }
     catch (e) { alert(e.message) } finally { setBusy(false) }
   }
   function doDelete() {
@@ -131,7 +251,7 @@ function NoteCard({ note, entities, onChanged, onCountsChanged, onFilterEntity }
             className="w-full bg-black/20 rounded-lg p-2 text-sm text-gray-100 resize-y focus:outline-none focus:ring-1 focus:ring-white/20"
           />
         ) : (
-          <p className="text-sm text-gray-100 whitespace-pre-wrap break-words">{note.content}</p>
+          <MarkdownBody content={note.content} onToggleTask={handleToggleTask} disabled={busy} />
         )}
 
         {note.entity_type && (
@@ -199,7 +319,7 @@ function QuickAdd({ entities, onCreated, onCountsChanged }) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') save() }}
-        placeholder="Jot something down… why you made that change, what to remember."
+        placeholder="Jot something down… supports **bold**, `code`, - [ ] checklists, and links."
         rows={2}
         maxLength={2000}
         className="w-full bg-[#0c0c14] border border-white/10 rounded-lg p-3 text-sm text-gray-100 resize-y focus:outline-none focus:border-blue-500/50 placeholder:text-gray-600"

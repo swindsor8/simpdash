@@ -16,6 +16,7 @@ import (
 	"simpdash/internal/catalog"
 	"simpdash/internal/config"
 	"simpdash/internal/executor"
+	"simpdash/internal/hardware"
 	"simpdash/internal/notify"
 	"simpdash/internal/pbs"
 	"simpdash/internal/proxmox"
@@ -65,10 +66,11 @@ type Server struct {
 	loginLimiter *limiter
 
 	// Integrations + caches (all zero-value-ready unless noted).
-	notifier    *notify.Notifier // constructed in NewServer
-	pbs         *pbs.Client      // constructed in NewServer
+	notifier    *notify.Notifier    // constructed in NewServer
+	pbs         *pbs.Client         // constructed in NewServer
 	pbsCache    pbsCache
-	health      *healthChecker // constructed in NewServer
+	health      *healthChecker      // constructed in NewServer
+	hw          *hardware.Collector // constructed in NewServer
 	icons       iconCache
 	rrd         rrdCache
 	tasks       tasksCache
@@ -114,6 +116,8 @@ func NewServer(cfg *config.Config, cfgPath string, px *proxmox.Client, poller *P
 		}
 	}
 	s.health = newHealthChecker(serviceLinks)
+	s.health.onChange = s.serviceHealthChanged
+	s.hw = hardware.NewCollector()
 	// Job-failure notifications: executor calls back on every completion.
 	exec.OnFinish = s.JobFinished
 	// The live resource stream is annotated with the same managed/monitor-only
@@ -160,13 +164,15 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/network/connectivity", methodGate(http.MethodGet, s.requireAuth(s.Connectivity)))
 	mux.HandleFunc("/api/network/speedtest", methodGate(http.MethodPost, s.requireAuth(s.Speedtest)))
 	mux.HandleFunc("/api/network/speedtest/history", methodGate(http.MethodGet, s.requireAuth(s.SpeedtestHistory)))
+	mux.HandleFunc("/api/hardware", methodGate(http.MethodGet, s.requireAuth(s.Hardware)))
 	mux.HandleFunc("/api/resources", methodGate(http.MethodGet, s.requireAuth(s.Resources)))
 	mux.HandleFunc("/api/resources/stream", s.ResourcesStream)
 	mux.HandleFunc("/api/backups", methodGate(http.MethodGet, s.requireAuth(s.Backups)))
 	mux.HandleFunc("/api/updates/check", methodGate(http.MethodGet, s.requireAuth(s.UpdatesCheck)))
 	mux.HandleFunc("/api/updates/apply", methodGate(http.MethodPost, s.requireAuth(s.UpdatesApply)))
 	mux.HandleFunc("/api/jobs", methodGate(http.MethodGet, s.requireAuth(s.Jobs)))
-	// /api/jobs/ is a prefix match; the handler parses /:id and /:id/stream.
+	mux.HandleFunc("/api/jobs/active", methodGate(http.MethodGet, s.requireAuth(s.ActiveJob)))
+	// /api/jobs/ is a prefix match; the handler parses /:id, /:id/stream, /:id/cancel.
 	mux.HandleFunc("/api/jobs/", s.handleJobsPrefix)
 	mux.HandleFunc("/api/catalog", methodGate(http.MethodGet, s.requireAuth(s.Catalog)))
 	// Exact route beats the /api/catalog/ prefix below (longest-match wins).
@@ -204,13 +210,17 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/service-health", methodGate(http.MethodGet, s.requireAuth(s.ServiceHealth)))
 	// Cached apt count (never triggers apt) for the nav badge.
 	mux.HandleFunc("/api/updates/pending", methodGate(http.MethodGet, s.requireAuth(s.UpdatesPending)))
-	// Settings: Proxmox API, notifications, PBS, 2FA. Secrets are write-only.
+	// Settings: Proxmox API, notifications, PBS, 2FA, password, export/import. Secrets are write-only.
 	mux.HandleFunc("/api/settings", methodGate(http.MethodGet, s.requireAuth(s.GetSettings)))
+	mux.HandleFunc("/api/settings/password", methodGate(http.MethodPost, s.requireAuth(s.ChangePassword)))
+	mux.HandleFunc("/api/settings/export", methodGate(http.MethodGet, s.requireAuth(s.ExportConfig)))
+	mux.HandleFunc("/api/settings/import", methodGate(http.MethodPost, s.requireAuth(s.ImportConfig)))
 	mux.HandleFunc("/api/settings/proxmox", methodGate(http.MethodPut, s.requireAuth(s.PutProxmox)))
 	mux.HandleFunc("/api/settings/proxmox/test", methodGate(http.MethodPost, s.requireAuth(s.TestProxmox)))
 	mux.HandleFunc("/api/settings/notify", methodGate(http.MethodPut, s.requireAuth(s.PutNotify)))
 	mux.HandleFunc("/api/settings/notify/test", methodGate(http.MethodPost, s.requireAuth(s.NotifyTest)))
 	mux.HandleFunc("/api/settings/pbs", methodGate(http.MethodPut, s.requireAuth(s.PutPBS)))
+	mux.HandleFunc("/api/settings/pbs/test", methodGate(http.MethodPost, s.requireAuth(s.TestPBS)))
 	mux.HandleFunc("/api/settings/2fa/setup", methodGate(http.MethodPost, s.requireAuth(s.TwoFASetup)))
 	mux.HandleFunc("/api/settings/2fa/enable", methodGate(http.MethodPost, s.requireAuth(s.TwoFAEnable)))
 	mux.HandleFunc("/api/settings/2fa/disable", methodGate(http.MethodPost, s.requireAuth(s.TwoFADisable)))
@@ -287,6 +297,10 @@ func (s *Server) handleJobsPrefix(w http.ResponseWriter, r *http.Request) {
 	switch suffix {
 	case "stream":
 		s.JobStream(w, r, id)
+	case "cancel":
+		methodGate(http.MethodPost, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
+			s.CancelJob(w, r, id)
+		}))(w, r)
 	case "":
 		methodGate(http.MethodGet, s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
 			s.Job(w, r, id)

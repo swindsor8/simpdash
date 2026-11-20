@@ -165,3 +165,70 @@ func (s *Server) Me(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
+
+// ChangePassword handles POST /api/settings/password — updates the admin
+// password after verifying the current password (and a 2FA code when TOTP is
+// enabled). Rotates the session secret to revoke other sessions and re-issues
+// a fresh cookie to the current browser so it stays signed in.
+func (s *Server) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	ip := clientIP(r)
+	if !s.loginLimiter.allow(ip) {
+		writeErr(w, http.StatusTooManyRequests, "too many attempts, try again shortly")
+		return
+	}
+	var body struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+		Code            string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeErr(w, http.StatusBadRequest, "invalid body")
+		return
+	}
+	if body.CurrentPassword == "" {
+		writeErr(w, http.StatusBadRequest, "current password required")
+		return
+	}
+	if len(body.NewPassword) < 8 {
+		writeErr(w, http.StatusBadRequest, "new password must be at least 8 characters")
+		return
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(s.cfg.PasswordHash), []byte(body.CurrentPassword)); err != nil {
+		s.loginLimiter.recordFailure(ip)
+		writeErr(w, http.StatusUnauthorized, "current password is incorrect")
+		return
+	}
+	if s.cfg.TOTPEnabled {
+		if body.Code == "" {
+			writeErr(w, http.StatusBadRequest, "2FA code required to change password")
+			return
+		}
+		if !s.checkSecondFactor(body.Code) {
+			s.loginLimiter.recordFailure(ip)
+			writeErr(w, http.StatusUnauthorized, "invalid 2FA code")
+			return
+		}
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	s.cfgMu.Lock()
+	s.cfg.PasswordHash = string(hash)
+	err = s.cfg.Save(s.cfgPath)
+	s.cfgMu.Unlock()
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, "failed to save config")
+		return
+	}
+
+	// Revoke any other sessions while keeping this browser logged in.
+	if err := s.rotateSecret(); err == nil {
+		s.setSession(w, r)
+	}
+	s.loginLimiter.reset(ip)
+	log.Printf("admin password changed")
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}

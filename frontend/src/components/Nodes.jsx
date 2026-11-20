@@ -91,8 +91,11 @@ export default function Nodes({ nodes, onChange }) {
             {nodes.map(n => (
               <li key={n.id} className="flex items-center justify-between px-6 py-3.5">
                 <div>
-                  <p className="text-sm text-gray-200 font-mono">{n.address}</p>
-                  <p className="text-[11px] text-gray-600">node {n.id}</p>
+                  <p className="text-sm text-gray-200 font-medium">
+                    {n.node_name || n.address}
+                    {n.node_name && <span className="ml-2 text-xs text-gray-500 font-mono">{n.address}</span>}
+                  </p>
+                  <p className="text-[11px] text-gray-600 font-mono">id {n.id}</p>
                 </div>
                 <button
                   onClick={() => handleRemove(n.id)}

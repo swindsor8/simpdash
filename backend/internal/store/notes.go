@@ -149,6 +149,44 @@ func (s *NotesDB) DeleteNote(id int64) (bool, error) {
 	return false, nil
 }
 
+// ReplaceAll replaces all notes (or appends when replace=false) with clean IDs.
+func (s *NotesDB) Import(incoming []*Note, replace bool) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var notes []*Note
+	if !replace {
+		var err error
+		notes, err = s.read()
+		if err != nil {
+			return 0, err
+		}
+	}
+	now := time.Now().UTC()
+	added := 0
+	for _, in := range incoming {
+		if in == nil || strings.TrimSpace(in.Content) == "" {
+			continue
+		}
+		cp := *in
+		cp.ID = nextNoteID(notes)
+		if cp.Color == "" {
+			cp.Color = "yellow"
+		}
+		if cp.CreatedAt.IsZero() {
+			cp.CreatedAt = now
+		}
+		if cp.UpdatedAt.IsZero() {
+			cp.UpdatedAt = cp.CreatedAt
+		}
+		notes = append(notes, &cp)
+		added++
+	}
+	if err := s.write(notes); err != nil {
+		return 0, err
+	}
+	return added, nil
+}
+
 // Counts tallies notes per linked entity (general notes excluded), in first-seen
 // order.
 func (s *NotesDB) Counts() ([]EntityCount, error) {

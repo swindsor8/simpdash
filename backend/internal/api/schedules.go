@@ -311,7 +311,16 @@ func (sc *Scheduler) executeQueued(ctx context.Context, item queuedScheduleRun) 
 	var jobID string
 	for {
 		jobID, err = sc.srv.exec.StartFunc(jobType, func(em *executor.Emitter) int {
-			code, msg := sc.srv.runScheduledTask(ctx, sched, em)
+			runCtx, cancel := context.WithCancel(ctx)
+			defer cancel()
+			go func() {
+				select {
+				case <-em.Context().Done():
+					cancel()
+				case <-runCtx.Done():
+				}
+			}()
+			code, msg := sc.srv.runScheduledTask(runCtx, sched, em)
 			if msg != "" {
 				setErr(msg)
 			}

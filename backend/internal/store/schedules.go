@@ -190,6 +190,27 @@ func (s *SchedulesDB) Delete(id int64) (bool, error) {
 	return false, nil
 }
 
+// ReplaceAll replaces all persisted schedules (used by config import).
+func (s *SchedulesDB) ReplaceAll(incoming []*Schedule) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]*Schedule, 0, len(incoming))
+	now := time.Now().UTC()
+	for _, in := range incoming {
+		if in == nil {
+			continue
+		}
+		cp := cloneSchedule(in)
+		cp.ID = nextScheduleID(out)
+		if cp.CreatedAt.IsZero() {
+			cp.CreatedAt = now
+		}
+		cp.UpdatedAt = now
+		out = append(out, cp)
+	}
+	return s.write(out)
+}
+
 // --- internal helpers ---
 
 func sortSchedules(list []*Schedule) {

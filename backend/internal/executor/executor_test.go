@@ -168,3 +168,69 @@ func TestStartFuncStreamsAndPersists(t *testing.T) {
 	}
 	_ = frames
 }
+
+func TestCancelRunningJob(t *testing.T) {
+	db := newStore(t)
+	e := New()
+
+	id, err := e.Start("apt_upgrade", exec.Command("sh", "-c", "echo started; sleep 10"), db)
+	if err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	info := e.ActiveInfo()
+	if info == nil || info.ID != id || info.Type != "apt_upgrade" {
+		t.Fatalf("ActiveInfo = %+v, want id=%s", info, id)
+	}
+	_, ch, active := e.Subscribe(id)
+	if !active {
+		t.Fatal("want active subscription")
+	}
+
+	time.Sleep(150 * time.Millisecond)
+	if !e.Cancel(id) {
+		t.Fatal("Cancel returned false for running job")
+	}
+
+	frames := drain(ch)
+	var sawCancelled bool
+	for _, f := range frames {
+		if f["type"] == "done" && f["cancelled"] == true {
+			sawCancelled = true
+		}
+	}
+	if !sawCancelled {
+		t.Fatalf("expected cancelled done frame, got %+v", frames)
+	}
+	if e.Active() {
+		t.Fatal("executor still active after cancel")
+	}
+	job, err := db.GetJob(id)
+	if err != nil || job == nil {
+		t.Fatalf("GetJob: %v", err)
+	}
+	if job.Status != "cancelled" {
+		t.Errorf("status = %q, want cancelled", job.Status)
+	}
+}
+
+func TestLongLineDoesNotTruncateScanner(t *testing.T) {
+	db := newStore(t)
+	e := New()
+
+	// 80 KB single line (> default 64 KB bufio.Scanner max).
+	longLine := strings.Repeat("a", 80*1024)
+	id, err := e.Start("apt_upgrade", exec.Command("sh", "-c", "printf '%s\\n' \"$1\"", "sh", longLine), db)
+	if err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	if _, ch, active := e.Subscribe(id); active {
+		drain(ch)
+	}
+	job, err := db.GetJob(id)
+	if err != nil || job == nil {
+		t.Fatalf("GetJob: %v", err)
+	}
+	if job.Status != "succeeded" || !strings.Contains(job.Output, longLine) {
+		t.Fatalf("expected 80KB line captured intact (status=%s, len=%d)", job.Status, len(job.Output))
+	}
+}

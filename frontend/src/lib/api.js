@@ -65,8 +65,14 @@ export async function checkUpdates(node) {
   return r.json()
 }
 
-export async function applyUpdates(node) {
-  const r = await fetch(`${nodeBase(node)}/updates/apply`, { method: 'POST', credentials: 'same-origin' })
+export async function applyUpdates(node, opts = {}) {
+  const hasBody = opts && Object.keys(opts).length > 0
+  const r = await fetch(`${nodeBase(node)}/updates/apply`, {
+    method: 'POST',
+    headers: hasBody ? { 'Content-Type': 'application/json' } : {},
+    body: hasBody ? JSON.stringify(opts) : undefined,
+    credentials: 'same-origin',
+  })
   if (!r.ok) {
     const { error } = await r.json().catch(() => ({ error: r.statusText }))
     throw new Error(error || r.statusText)
@@ -74,10 +80,10 @@ export async function applyUpdates(node) {
   return r.json()
 }
 
-// updateContainer → starts an apt upgrade inside a local LXC (pct exec) and
-// returns { job_id } for streaming. Containers only, local host only.
-export async function updateContainer(vmid) {
-  const r = await fetch(`${BASE}/guests/${vmid}/update`, { method: 'POST', credentials: 'same-origin' })
+// updateContainer → starts a package upgrade inside an LXC (pct exec) on the
+// local host (node=null) or a paired secondary node and returns { job_id }.
+export async function updateContainer(vmid, node = null) {
+  const r = await fetch(`${nodeBase(node)}/guests/${vmid}/update`, { method: 'POST', credentials: 'same-origin' })
   if (!r.ok) {
     const { error } = await r.json().catch(() => ({ error: r.statusText }))
     throw new Error(error || r.statusText)
@@ -86,15 +92,15 @@ export async function updateContainer(vmid) {
 }
 
 // getLXCUpdateExcludes → { excluded: number[] }.
-export async function getLXCUpdateExcludes() {
-  const r = await fetch(`${BASE}/guests/update-all/excludes`, { credentials: 'same-origin' })
+export async function getLXCUpdateExcludes(node = null) {
+  const r = await fetch(`${nodeBase(node)}/guests/update-all/excludes`, { credentials: 'same-origin' })
   if (!r.ok) throw new Error(await r.text())
   return r.json()
 }
 
 // putLXCUpdateExcludes → persists excluded LXC VMIDs, returns { excluded: number[] }.
-export async function putLXCUpdateExcludes(excluded) {
-  const r = await fetch(`${BASE}/guests/update-all/excludes`, {
+export async function putLXCUpdateExcludes(excluded, node = null) {
+  const r = await fetch(`${nodeBase(node)}/guests/update-all/excludes`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ excluded }),
@@ -107,13 +113,56 @@ export async function putLXCUpdateExcludes(excluded) {
   return r.json()
 }
 
-// updateAllContainers → starts a sequential batch upgrade across running local
-// LXCs (skipping excluded/stopped). Returns { job_id, queued, skipped }.
-export const updateAllContainers = (opts = {}) => post('/guests/update-all', opts)
+// updateAllContainers → starts a sequential batch upgrade across running LXCs
+// (skipping excluded/stopped). Works on local host or a paired secondary node.
+export async function updateAllContainers(opts = {}, node = null) {
+  const r = await fetch(`${nodeBase(node)}/guests/update-all`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(opts),
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
 
 export async function getJobs() {
   const r = await fetch(`${BASE}/jobs`, { credentials: 'same-origin' })
   if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// getActiveJob → { active: bool, job?: { id, type, started_at } }.
+export async function getActiveJob(node = null) {
+  const r = await fetch(`${nodeBase(node)}/jobs/active`, { credentials: 'same-origin' })
+  if (!r.ok) return { active: false }
+  return r.json().catch(() => ({ active: false }))
+}
+
+// cancelJob → terminates a currently running executor job.
+export async function cancelJob(id, node = null) {
+  const r = await fetch(`${nodeBase(node)}/jobs/${encodeURIComponent(id)}/cancel`, {
+    method: 'POST',
+    credentials: 'same-origin',
+  })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+// getHardware → live sensors + cached SMART drives + ZFS pools for local or paired node.
+export async function getHardware(node = null, refresh = false) {
+  const q = refresh ? '?refresh=1' : ''
+  const r = await fetch(`${nodeBase(node)}/hardware${q}`, { credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
   return r.json()
 }
 
@@ -344,14 +393,28 @@ export async function getGuestDocker(vmid, type) {
   return r.json()
 }
 
-// getUpdatesPending → cached { count, checked_at } — never triggers apt.
-export async function getUpdatesPending() {
-  const r = await fetch(`${BASE}/updates/pending`, { credentials: 'same-origin' })
-  if (!r.ok) return { count: 0, checked_at: 0 }
-  return r.json().catch(() => ({ count: 0, checked_at: 0 }))
+// getUpdatesPending → cached { count, checked_at, reboot_required, reboot_packages } — never triggers apt.
+export async function getUpdatesPending(node = null) {
+  const r = await fetch(`${nodeBase(node)}/updates/pending`, { credentials: 'same-origin' })
+  if (!r.ok) return { count: 0, checked_at: 0, reboot_required: false, reboot_packages: [] }
+  return r.json().catch(() => ({ count: 0, checked_at: 0, reboot_required: false, reboot_packages: [] }))
 }
 
-// --- settings (notifications, PBS, 2FA) ---
+// --- settings (password, notifications, PBS, 2FA, export/import) ---
+
+export const changePassword = (current_password, new_password, code) =>
+  post('/settings/password', code ? { current_password, new_password, code } : { current_password, new_password })
+
+export async function exportConfig() {
+  const r = await fetch(`${BASE}/settings/export`, { credentials: 'same-origin' })
+  if (!r.ok) {
+    const { error } = await r.json().catch(() => ({ error: r.statusText }))
+    throw new Error(error || r.statusText)
+  }
+  return r.json()
+}
+
+export const importConfig = (bundle) => post('/settings/import', bundle)
 
 export async function getSettings() {
   const r = await fetch(`${BASE}/settings`, { credentials: 'same-origin' })
@@ -404,6 +467,8 @@ export async function putPBSSettings(body) {
   }
   return r.json()
 }
+
+export const testPBSSettings = (body) => post('/settings/pbs/test', body)
 
 // getPBS → PBS datastore usage + per-guest verify state; null if not configured.
 export async function getPBS() {

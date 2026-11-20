@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { getJobs, getClusterTasks } from '../lib/api'
+import { getJobs, getClusterTasks, cancelJob } from '../lib/api'
 import { useJobStream } from '../hooks/useJobStream'
 import { useFocusTrap } from '../lib/a11y'
 import Terminal from './Terminal'
@@ -50,6 +50,7 @@ function taskVariant(status) {
 // LogModal replays a finished job's stored output (or streams a running one).
 function LogModal({ job, onClose }) {
   const { output, state } = useJobStream(job.id, null)
+  const [cancelling, setCancelling] = useState(false)
   const trap = useFocusTrap()
   const backdropRef = useRef(null)
   useModalEntrance(backdropRef, trap)
@@ -58,6 +59,14 @@ function LogModal({ job, onClose }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  async function handleCancel() {
+    setCancelling(true)
+    try { await cancelJob(job.id) }
+    catch { /* best-effort */ }
+    finally { setCancelling(false) }
+  }
+
   return (
     <div ref={backdropRef} data-lenis-prevent className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div ref={trap} role="dialog" aria-modal="true" aria-label="Job log"
@@ -66,7 +75,18 @@ function LogModal({ job, onClose }) {
           <h2 className="text-base font-semibold text-white truncate">
             {JOB_LABELS[job.type] ?? job.type} · {fmtAgo(new Date(job.started_at).getTime() / 1000)}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-sm">✕</button>
+          <div className="flex items-center gap-2 shrink-0">
+            {state === 'running' && (
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="text-xs px-2.5 py-1 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+              >
+                {cancelling ? 'Stopping…' : 'Cancel job'}
+              </button>
+            )}
+            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-sm">✕</button>
+          </div>
         </div>
         <Terminal output={output} state={state} />
       </div>
@@ -115,7 +135,7 @@ export default function Activity() {
                 {(jobs ?? []).slice(0, 30).map(j => (
                   <tr key={j.id} className="border-t border-white/[0.05] first:border-t-0 hover:bg-white/5">
                     <td className="px-5 py-3">
-                      <StatusPill variant={j.status === 'succeeded' ? 'success' : j.status === 'running' ? 'neutral' : 'error'}>
+                      <StatusPill variant={j.status === 'succeeded' ? 'success' : j.status === 'running' ? 'neutral' : j.status === 'cancelled' ? 'warning' : 'error'}>
                         {j.status}
                       </StatusPill>
                     </td>

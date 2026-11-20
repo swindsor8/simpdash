@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import {
   getSettings, putProxmoxSettings, testProxmoxSettings,
-  putNotifySettings, testNotify, putPBSSettings,
+  putNotifySettings, testNotify, putPBSSettings, testPBSSettings,
   twoFASetup, twoFAEnable, twoFADisable, getUpdateCheck,
+  changePassword, exportConfig, importConfig,
 } from '../lib/api'
+import { encodeQR, qrToSvgPath } from '../lib/qrcode'
 import { useSelfUpdate } from '../hooks/useSelfUpdate'
 import { INSTALL_CMD } from './UpdateBanner'
 import Themes from './Themes'
@@ -29,6 +31,139 @@ function Msg({ msg }) {
   return <p className={`text-xs mt-3 ${msg.ok ? 'text-emerald-400' : 'text-red-400'}`}>{msg.text}</p>
 }
 
+// Offline scannable QR code SVG (always black-on-white for camera contrast across all themes).
+function QRCodeBox({ value, size = 168 }) {
+  const svg = useMemo(() => {
+    try {
+      const { matrix } = encodeQR(value)
+      return qrToSvgPath(matrix, 4)
+    } catch {
+      return null
+    }
+  }, [value])
+
+  if (!svg) return null
+  return (
+    <div className="inline-block rounded-xl p-2 shadow-inner" style={{ background: '#ffffff' }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${svg.viewBoxSize} ${svg.viewBoxSize}`}
+        shapeRendering="crispEdges"
+        role="img"
+        aria-label="Two-factor authentication QR code"
+      >
+        <rect width={svg.viewBoxSize} height={svg.viewBoxSize} fill="#ffffff" />
+        <path d={svg.path} fill="#000000" />
+      </svg>
+    </div>
+  )
+}
+
+// --- Password ---
+
+function PasswordSection({ totpEnabled }) {
+  const [cur, setCur] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState(null)
+
+  async function save(e) {
+    e.preventDefault()
+    setMsg(null)
+    if (next.length < 8) {
+      setMsg({ ok: false, text: 'New password must be at least 8 characters.' })
+      return
+    }
+    if (next !== confirm) {
+      setMsg({ ok: false, text: 'New passwords do not match.' })
+      return
+    }
+    if (totpEnabled && !code.trim()) {
+      setMsg({ ok: false, text: 'Enter a 2FA code to confirm the password change.' })
+      return
+    }
+    setBusy(true)
+    try {
+      await changePassword(cur, next, totpEnabled ? code.trim() : undefined)
+      setCur('')
+      setNext('')
+      setConfirm('')
+      setCode('')
+      setMsg({ ok: true, text: 'Password updated. Other active sessions have been signed out.' })
+    } catch (err) {
+      setMsg({ ok: false, text: err.message })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Section
+      title="Admin password"
+      subtitle="Change the local dashboard password. Updating it revokes any other active browser sessions."
+    >
+      <form onSubmit={save} className="space-y-4 max-w-md">
+        <label className="block">
+          <span className={labelCls}>Current password</span>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={cur}
+            onChange={e => setCur(e.target.value)}
+            required
+            className={inputCls}
+          />
+        </label>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <label className="block">
+            <span className={labelCls}>New password (min 8 chars)</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={next}
+              onChange={e => setNext(e.target.value)}
+              required
+              minLength={8}
+              className={inputCls}
+            />
+          </label>
+          <label className="block">
+            <span className={labelCls}>Confirm new password</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+              required
+              minLength={8}
+              className={inputCls}
+            />
+          </label>
+        </div>
+        {totpEnabled && (
+          <label className="block max-w-xs">
+            <span className={labelCls}>2FA or recovery code</span>
+            <input
+              value={code}
+              onChange={e => setCode(e.target.value)}
+              placeholder="123456"
+              inputMode="numeric"
+              className={`${inputCls} font-mono`}
+            />
+          </label>
+        )}
+        <button type="submit" disabled={busy || !cur || !next || !confirm} className={btnPrimary}>
+          {busy ? 'Updating…' : 'Update password'}
+        </button>
+        <Msg msg={msg} />
+      </form>
+    </Section>
+  )
+}
+
 // --- Notifications ---
 
 const PROVIDERS = [
@@ -41,8 +176,10 @@ const PROVIDERS = [
 const EVENTS = [
   ['job_failed', 'A dashboard job (update / script install) fails'],
   ['node_offline', 'A Proxmox node goes offline (and comes back)'],
+  ['service_down', 'A linked web service becomes unreachable (and recovers)'],
   ['updates_available', 'apt updates are available (daily digest)'],
   ['backup_failed', 'A vzdump backup job fails'],
+  ['pbs_verify_failed', 'A PBS backup fails verification'],
 ]
 
 function NotifySection({ initial }) {
@@ -53,8 +190,12 @@ function NotifySection({ initial }) {
     insecure: !!initial.insecure,
     job_failed: !!initial.job_failed,
     node_offline: !!initial.node_offline,
+    service_down: !!initial.service_down,
     updates_available: !!initial.updates_available,
     backup_failed: !!initial.backup_failed,
+    pbs_verify_failed: !!initial.pbs_verify_failed,
+    storage_threshold: initial.storage_threshold || 0,
+    backup_stale_days: initial.backup_stale_days || 0,
   })
   const [hasToken, setHasToken] = useState(!!initial.has_token)
   const [busy, setBusy] = useState(false)
@@ -66,7 +207,12 @@ function NotifySection({ initial }) {
     setBusy(true); setMsg(null)
     try {
       // Empty token field keeps the stored token; the backend treats "-" as clear.
-      await putNotifySettings({ ...form, token: form.token === '' ? null : form.token })
+      await putNotifySettings({
+        ...form,
+        storage_threshold: Number(form.storage_threshold) || 0,
+        backup_stale_days: Number(form.backup_stale_days) || 0,
+        token: form.token === '' ? null : form.token,
+      })
       if (form.token && form.token !== '-') setHasToken(true)
       if (form.token === '-') setHasToken(false)
       set('token', '')
@@ -122,6 +268,37 @@ function NotifySection({ initial }) {
           </label>
         ))}
       </div>
+
+      {/* Threshold-based alerts */}
+      <div className="grid sm:grid-cols-2 gap-4 mb-4 pt-3 border-t border-white/[0.06]">
+        <label>
+          <span className={labelCls}>Storage pool alert threshold (%) <span className="text-gray-700">— 0 disables</span></span>
+          <input
+            type="number"
+            min="0"
+            max="99"
+            value={form.storage_threshold}
+            onChange={e => set('storage_threshold', e.target.value)}
+            placeholder="0 (or e.g. 85)"
+            className={inputCls}
+          />
+          <p className="text-[11px] text-gray-600 mt-1">Alert when a pool stays at or above 50–99% full.</p>
+        </label>
+        <label>
+          <span className={labelCls}>Stale backup alert (days) <span className="text-gray-700">— 0 disables</span></span>
+          <input
+            type="number"
+            min="0"
+            max="365"
+            value={form.backup_stale_days}
+            onChange={e => set('backup_stale_days', e.target.value)}
+            placeholder="0 (or e.g. 7)"
+            className={inputCls}
+          />
+          <p className="text-[11px] text-gray-600 mt-1">Daily digest if a guest has no backup within N days.</p>
+        </label>
+      </div>
+
       <label className="flex items-center gap-2.5 text-xs text-gray-600 cursor-pointer select-none mb-5">
         <input type="checkbox" checked={form.insecure} onChange={e => set('insecure', e.target.checked)} className="accent-blue-500" />
         Skip TLS verification (self-hosted server with a self-signed certificate)
@@ -137,7 +314,7 @@ function NotifySection({ initial }) {
 
 // --- Two-factor auth ---
 
-function TwoFASection({ initial }) {
+function TwoFASection({ initial, onChanged }) {
   const [enabled, setEnabled] = useState(!!initial.enabled)
   const [recoveryLeft, setRecoveryLeft] = useState(initial.recovery_codes ?? 0)
   const [setup, setSetup] = useState(null)       // { secret, otpauth_uri }
@@ -159,6 +336,7 @@ function TwoFASection({ initial }) {
     try {
       const res = await twoFAEnable(code.trim())
       setEnabled(true)
+      onChanged?.(true)
       setSetup(null)
       setCode('')
       setRecovery(res.recovery_codes)
@@ -172,6 +350,7 @@ function TwoFASection({ initial }) {
     try {
       await twoFADisable(disableForm.password, disableForm.code.trim())
       setEnabled(false)
+      onChanged?.(false)
       setDisableForm(null)
       setRecovery(null)
       setMsg({ ok: true, text: 'Two-factor authentication disabled.' })
@@ -190,17 +369,19 @@ function TwoFASection({ initial }) {
 
       {setup && (
         <div className="space-y-4">
-          <div>
-            <p className="text-sm text-gray-300 mb-2">
-              1. In your authenticator app (Aegis, Google Authenticator, 1Password…), add an account
-              by <span className="text-white font-medium">entering this key manually</span>:
-            </p>
-            <code className="block bg-[#0c0c14] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-emerald-300 font-mono tracking-wider break-all select-all">
-              {setup.secret}
-            </code>
-            <p className="text-[11px] text-gray-600 mt-1.5">
-              Type: time-based (TOTP) · 6 digits · 30 s. On this device? <a className="text-blue-400 hover:underline" href={setup.otpauth_uri}>open in authenticator</a>.
-            </p>
+          <div className="flex flex-col sm:flex-row items-start gap-5">
+            <QRCodeBox value={setup.otpauth_uri} size={160} />
+            <div className="flex-1 min-w-0 space-y-2">
+              <p className="text-sm text-gray-300">
+                1. Scan this QR code in your authenticator app (Aegis, Google Authenticator, 1Password…) or enter the key manually:
+              </p>
+              <code className="block bg-[#0c0c14] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-emerald-300 font-mono tracking-wider break-all select-all">
+                {setup.secret}
+              </code>
+              <p className="text-[11px] text-gray-600">
+                Type: time-based (TOTP) · 6 digits · 30 s. On this device? <a className="text-blue-400 hover:underline" href={setup.otpauth_uri}>open in authenticator</a>.
+              </p>
+            </div>
           </div>
           <div>
             <p className="text-sm text-gray-300 mb-2">2. Enter the 6-digit code it shows to confirm:</p>
@@ -403,9 +584,27 @@ function PBSSection({ initial }) {
     try {
       await putPBSSettings({ ...form, secret: form.secret === '' ? null : form.secret })
       if (form.secret && form.secret !== '-') setHasSecret(true)
+      if (form.secret === '-' || !form.url.trim()) setHasSecret(false)
       setMsg({ ok: true, text: form.url ? 'Saved — the Backups tab now shows PBS data.' : 'PBS integration disabled.' })
       set('secret', '')
     } catch (e) { setMsg({ ok: false, text: e.message }) }
+    finally { setBusy(false) }
+  }
+
+  async function test() {
+    setBusy(true); setMsg(null)
+    try {
+      const res = await testPBSSettings({
+        url: form.url.trim(),
+        token_id: form.token_id.trim(),
+        secret: form.secret === '' ? null : form.secret,
+        fingerprint: form.fingerprint.trim(),
+      })
+      setMsg({
+        ok: true,
+        text: `Connected — ${res?.datastores ?? 0} datastore${res?.datastores !== 1 ? 's' : ''}, ${res?.guests ?? 0} backed-up guest${res?.guests !== 1 ? 's' : ''}.`,
+      })
+    } catch (e) { setMsg({ ok: false, text: `Connection failed: ${e.message}` }) }
     finally { setBusy(false) }
   }
 
@@ -446,7 +645,90 @@ function PBSSection({ initial }) {
         self-signed setup, so credentials are never sent to an unverified server. Grant the token{' '}
         <span className="font-mono text-gray-500">Datastore.Audit</span> only: read-only is all the dashboard needs.
       </p>
-      <button onClick={save} disabled={busy} className={btnPrimary}>Save</button>
+      <div className="flex gap-2">
+        <button onClick={save} disabled={busy} className={btnPrimary}>Save</button>
+        <button onClick={test} disabled={busy} className={btnGhost}>Test connection</button>
+      </div>
+      <Msg msg={msg} />
+    </Section>
+  )
+}
+
+// --- Config backup & restore ---
+
+function BackupRestoreSection({ onImported }) {
+  const [mode, setMode] = useState('merge')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState(null)
+  const fileRef = useRef(null)
+
+  async function handleExport() {
+    setBusy(true); setMsg(null)
+    try {
+      const bundle = await exportConfig()
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `superdash-backup-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      setMsg({ ok: true, text: 'Exported service links, notes, schedules, and LXC excludes (no secrets included).' })
+    } catch (e) {
+      setMsg({ ok: false, text: e.message })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleFile(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setBusy(true); setMsg(null)
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text)
+      const res = await importConfig({ ...parsed, mode })
+      const imp = res?.imported || {}
+      setMsg({
+        ok: true,
+        text: `Imported (${mode}): ${imp.service_links ?? 0} links, ${imp.notes ?? 0} notes, ${imp.schedules ?? 0} schedules, ${imp.lxc_update_exclude ?? 0} excludes.`,
+      })
+      onImported?.()
+    } catch (err) {
+      setMsg({ ok: false, text: `Import failed: ${err.message}` })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Section
+      title="Backup & restore"
+      subtitle="Export or restore your service links, notebook notes, schedules, and LXC exclude list. Passwords and API secrets are never exported."
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <button onClick={handleExport} disabled={busy} className={btnPrimary}>
+          Export JSON
+        </button>
+
+        <div className="flex items-center gap-2">
+          <select
+            value={mode}
+            onChange={e => setMode(e.target.value)}
+            aria-label="Import mode"
+            className="bg-[#0c0c14] border border-white/10 rounded-lg px-2.5 py-2 text-xs text-gray-300 focus:outline-none focus:border-blue-500/50"
+          >
+            <option value="merge">Merge with existing</option>
+            <option value="replace">Replace existing</option>
+          </select>
+          <button onClick={() => fileRef.current?.click()} disabled={busy} className={btnGhost}>
+            {busy ? 'Working…' : 'Import JSON…'}
+          </button>
+          <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={handleFile} />
+        </div>
+      </div>
       <Msg msg={msg} />
     </Section>
   )
@@ -609,13 +891,16 @@ function VersionSection() {
   )
 }
 
-export default function Settings({ theme, setTheme }) {
+export default function Settings({ theme, setTheme, onDataImported }) {
   const [data, setData] = useState(null)
+  const [totpEnabled, setTotpEnabled] = useState(false)
   const [err, setErr] = useState(null)
   const containerRef = useRef(null)
 
   useEffect(() => {
-    getSettings().then(setData).catch(e => setErr(e.message))
+    getSettings()
+      .then((d) => { setData(d); setTotpEnabled(!!d?.totp?.enabled) })
+      .catch(e => setErr(e.message))
   }, [])
 
   useScrollReveal(containerRef, { theme, deps: [Boolean(data)] })
@@ -628,10 +913,12 @@ export default function Settings({ theme, setTheme }) {
       <Section title="Appearance" subtitle="Choose a colour theme.">
         <Themes theme={theme} setTheme={setTheme} embedded />
       </Section>
-      <TwoFASection initial={data.totp} />
+      <PasswordSection totpEnabled={totpEnabled} />
+      <TwoFASection initial={data.totp} onChanged={setTotpEnabled} />
       <ProxmoxSection initial={data.proxmox} />
       <NotifySection initial={data.notify} />
       <PBSSection initial={data.pbs} />
+      <BackupRestoreSection onImported={onDataImported} />
       <VersionSection />
     </div>
   )

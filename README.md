@@ -6,16 +6,18 @@ Built with **Go** + **React (Vite + Tailwind)**, compiled into a single static b
 
 ## Features
 
-- **Live Cluster Monitoring** — Real-time WebSocket stream of CPU, RAM, disk, storage pools, RRD sparklines, guest IPs, tags, and power controls (start, stop, shutdown, reboot) with Proxmox noVNC/xterm console deep-links.
-- **One-Click Host & Batch LXC Updates** — Scan and apply host `apt` upgrades, update individual LXCs, or run a sequential **Update All LXCs** batch queue (`apt-get` / `apk` / `dnf`) with a persisted exclude list and live per-container progress.
-- **Interactive Script Catalog** — Browse, sync, and run Proxmox community scripts inside a real in-browser PTY terminal (`xterm.js`) with full whiptail menu support.
+- **Live Cluster Monitoring** — Real-time WebSocket stream of CPU, RAM, disk, storage pools, interactive 1h/24h/7d RRD charts, guest IPs, tags, and power controls (start, stop, shutdown, reboot, Wake-on-LAN) with Proxmox noVNC/xterm console deep-links.
+- **Hardware Health** — Live thermal & fan sensors (`/sys/class/hwmon`), SMART drive health (NVMe wear, temps, power-on hours, sector/media errors), and ZFS pool status with vdev error trees — on both the local host and paired secondary nodes.
+- **One-Click Host & Batch LXC Updates** — Scan and apply host `apt` upgrades (with `dist-upgrade` option, version diffs, and reboot-required detection), update individual LXCs, or run a sequential **Update All LXCs** batch queue (`apt-get` / `apk` / `dnf`) with persisted excludes, live progress, and job cancellation on local or paired nodes.
+- **Interactive Script Catalog** — Browse, sync, and run Proxmox community scripts inside a real in-browser PTY terminal (`xterm.js`) with full bidirectional whiptail menu support (including on paired secondary nodes).
 - **Multi-Node Pairing** — Install SuperDash in `secondary` agent mode on additional Proxmox hosts and pair them with a single-use code to manage multiple nodes from one UI.
 - **LXC / Standalone API Support** — Auto-provisions a scoped Proxmox API token via `pveum` when installed on a PVE host, or prompts for a Proxmox API URL & token during onboarding and Settings when running inside an LXC container or standalone host.
-- **Backups & PBS Integration** — Track `vzdump` backup coverage per guest alongside Proxmox Backup Server datastore usage and verification status (with TLS fingerprint pinning).
+- **Backups & PBS Integration** — Track `vzdump` backup coverage per guest alongside Proxmox Backup Server datastore usage and verification status (with TLS fingerprint pinning and live connection testing).
 - **Network & Speedtest** — Inspect node interfaces, live throughput stats, connectivity checks, and historical speed tests.
+- **Task Scheduler** — Schedule one-time or recurring updates, Proxmox `vzdump` backups, snapshots, power actions, and speedtests with cron preview and FIFO queueing.
 - **Guest Introspection & Service Links** — View running systemd services and Docker containers inside local LXCs, attach clickable web-UI links with auto-fetched icons, and monitor HTTP health dots.
-- **Lab Notebook & Activity Log** — Keep entity-linked markdown notes on nodes/VMs/LXCs and review both Proxmox cluster tasks and SuperDash job logs.
-- **Alerts, 2FA & Themes** — Push notifications via **ntfy**, **Gotify**, **Discord**, or generic webhooks; TOTP two-factor auth with recovery codes; multiple built-in themes; and PWA support.
+- **Lab Notebook & Activity Log** — Keep entity-linked markdown notes (with interactive checklists) on nodes/VMs/LXCs and review or cancel SuperDash jobs alongside Proxmox cluster tasks.
+- **Alerts, 2FA, Backup/Restore & Themes** — Push notifications via **ntfy**, **Gotify**, **Discord**, or generic webhooks (job failures, offline nodes, unreachable services, storage thresholds, stale backups, PBS verify failures, and apt digests); TOTP 2FA with offline QR code enrollment and recovery codes; password management; non-secret JSON config export/import; multiple built-in themes; and PWA support.
 - **One-Click Self-Update** — Checks GitHub Releases automatically, verifies SHA-256 checksums, atomically swaps the binary, restarts via systemd, and reloads the UI.
 
 ## Quick Install (Proxmox VE Host)

@@ -140,16 +140,18 @@ failure message.
 
 | Method | Path                  | Notes |
 |--------|-----------------------|-------|
-| GET    | `/api/updates/check`  | Runs `apt update`, returns pending package list. Also refreshes the cached badge count. |
-| GET    | `/api/updates/pending`| Cached `{ "count", "checked_at" }` — **never** runs apt. A background ticker refreshes every 12 h; drives the nav badge and the daily "updates available" notification. |
-| POST   | `/api/updates/apply`  | Kicks off `apt upgrade -y` as a job. Returns `{ "job_id": string }` immediately. |
+| GET    | `/api/updates/check`  | Runs `apt update`, returns `{ "count", "packages", "package_details", "reboot_required", "reboot_packages" }`. Also refreshes the cached badge count. |
+| GET    | `/api/updates/pending`| Cached `{ "count", "checked_at", "reboot_required", "reboot_packages" }` — **never** runs apt. A background ticker refreshes every 12 h; drives the nav badge, reboot indicator, and daily "updates available" notification. |
+| POST   | `/api/updates/apply`  | Kicks off `apt-get upgrade -y` (or `apt-get dist-upgrade -y` with `{ "dist_upgrade": true }`) as a job. Returns `{ "job_id": string }` immediately. |
 | POST   | `/api/guests/:vmid/update` | Runs a non-interactive package upgrade (`apt-get` / `apk` / `dnf`) inside a single local LXC via `pct exec`; returns `{ "job_id": string }` (or `409` if busy). |
 | POST   | `/api/guests/update-all` | Runs a sequential package upgrade across all running local LXCs, skipping persisted excludes and stopped containers. Optional JSON body `{ "vmids"?: int[], "exclude"?: int[], "continue_on_error"?: bool }` (`continue_on_error` defaults to `true`). Returns `{ "job_id": string, "queued": [{vmid, name}], "skipped": [{vmid, name, reason}] }`. |
 | GET    | `/api/guests/update-all/excludes` | `{ "excluded": int[] }` — persisted LXC VMIDs excluded from batch updates. |
 | PUT    | `/api/guests/update-all/excludes` | Body `{ "excluded": int[] }` — validates, deduplicates, sorts, and persists the exclude list to `config.yaml`. |
-| WS     | `/api/jobs/:id/stream`| Streams stdout/stderr lines + final exit code for any job (updates or script installs share this). |
-| GET    | `/api/jobs`           | Job history from SQLite (id, type, status, started_at, finished_at, exit_code). |
-| GET    | `/api/jobs/:id`       | Full log + metadata for one job. |
+| WS     | `/api/jobs/:id/stream`| Streams stdout/stderr lines + final exit code (`{ "type": "done", "exit_code", "cancelled"? }`) for any job (updates or script installs share this). |
+| GET    | `/api/jobs/active`    | `{ "active": bool, "job"?: { "id", "type", "started_at" } }` — reports the currently running executor job (for reconnecting/cancelling). |
+| POST   | `/api/jobs/:id/cancel`| Terminates a running job's process group (SIGTERM → SIGKILL) and marks it `cancelled`. 404 if not currently running. |
+| GET    | `/api/jobs`           | Up to 100 most-recent jobs from disk store (pruned automatically on write). |
+| GET    | `/api/jobs/:id`       | Full log (tail-capped at 2 MB) + metadata for one job. |
 
 ### Job stream message shape (WS, one JSON object per line)
 
@@ -186,14 +188,19 @@ These run on the **secondary** agent (port 7575 by default):
 |--------|-----------------------------|------|-------|
 | POST   | `/agent/pair`               | `Authorization: Bearer <pairing-code>` | One-time use. Returns `{ "token": string, "node": string }` (node = the secondary's hostname/PVE node name, stored by main for monitor-only cross-referencing); 401 on bad/expired/spent code. Persists the token and burns the code. |
 | GET    | `/agent/resources`          | Bearer token | Same snapshot shape as `/api/resources`. |
+| GET    | `/agent/hardware`           | Bearer token | Live thermal/fan sensors + cached SMART drives & ZFS pools (`?refresh=1` bypasses cache). |
 | GET    | `/agent/updates/check`      | Bearer token | As `/api/updates/check`. |
+| GET    | `/agent/updates/pending`    | Bearer token | As `/api/updates/pending`. |
 | POST   | `/agent/updates/apply`      | Bearer token | As `/api/updates/apply` → `{ "job_id": string }`. |
 | POST   | `/agent/guests/:vmid/update` | Bearer token | As `/api/guests/:vmid/update` → `{ "job_id": string }`. |
 | POST   | `/agent/guests/update-all`  | Bearer token | As `/api/guests/update-all` → `{ "job_id", "queued", "skipped" }`. |
+| GET/PUT| `/agent/guests/update-all/excludes` | Bearer token | As `/api/guests/update-all/excludes`. |
 | GET    | `/agent/catalog`            | Bearer token | As `/api/catalog`. |
 | POST   | `/agent/catalog/:slug/run`  | Bearer token | As `/api/catalog/:slug/run` → `{ "job_id": string }`. |
+| GET    | `/agent/jobs/active`        | Bearer token | As `/api/jobs/active`. |
 | GET    | `/agent/jobs/:id`           | Bearer token | As `/api/jobs/:id`. |
-| WS     | `/agent/jobs/:id/stream`    | Bearer token (handshake header) | As `/api/jobs/:id/stream`. |
+| POST   | `/agent/jobs/:id/cancel`    | Bearer token | As `/api/jobs/:id/cancel`. |
+| WS     | `/agent/jobs/:id/stream`    | Bearer token (handshake header) | Bidirectional relay (streams output + forwards PTY keystrokes). |
 
 These run on the **main** node (session-gated like the rest of `/api`):
 
@@ -271,16 +278,23 @@ literal `"-"` clears it.
 | Method | Path | Notes |
 |--------|------|-------|
 | GET    | `/api/settings`              | `{ proxmox: { host, token_id, has_secret, local_pve }, notify: {...}, pbs: {...}, totp: { enabled, recovery_codes } }`. |
+| POST   | `/api/settings/password`     | `{ current_password, new_password, code? }`. Verifies current password (+ 2FA code if enabled), updates bcrypt hash, rotates session secret, and issues a fresh session cookie for the caller. |
+| GET    | `/api/settings/export`       | Exports non-secret dashboard data (`service_links`, `notes`, `schedules`, `lxc_update_exclude`) as JSON. |
+| POST   | `/api/settings/import`       | `{ mode: "merge"|"replace", service_links?, notes?, schedules?, lxc_update_exclude? }`. Validates and restores exported dashboard data. |
 | PUT    | `/api/settings/proxmox`      | `{ host, token_id, secret? }`. Updates Proxmox VE API credentials live (empty `host` clears). |
 | POST   | `/api/settings/proxmox/test` | `{ host?, token_id?, secret? }`. Tests Proxmox API connectivity against `/cluster/resources`; returns `{ ok: true, nodes }`. |
-| PUT    | `/api/settings/notify`      | `{ provider: ntfy\|gotify\|discord\|webhook, url, token?, insecure, job_failed, node_offline, updates_available, backup_failed }`. Empty url disables. |
-| POST   | `/api/settings/notify/test` | Sends a test message; surfaces the provider error on failure. |
-| PUT    | `/api/settings/pbs`         | `{ url, token_id, secret?, fingerprint }`. Validated before persisting. |
-| GET    | `/api/pbs`                  | PBS datastore usage + latest-snapshot/verification per guest, cached 5 min. 204 when unconfigured. |
+| PUT    | `/api/settings/notify`       | `{ provider: ntfy\|gotify\|discord\|webhook, url, token?, insecure, job_failed, node_offline, updates_available, backup_failed, service_down, storage_threshold, backup_stale_days, pbs_verify_failed }`. Empty url disables. |
+| POST   | `/api/settings/notify/test`  | Sends a test message; surfaces the provider error on failure. |
+| PUT    | `/api/settings/pbs`          | `{ url, token_id, secret?, fingerprint }`. Validated before persisting. |
+| POST   | `/api/settings/pbs/test`     | `{ url?, token_id?, secret?, fingerprint? }`. Tests PBS connectivity; returns `{ ok: true, datastores, guests }`. |
+| GET    | `/api/pbs`                   | PBS datastore usage + latest-snapshot/verification per guest, cached 5 min. 204 when unconfigured. |
+| GET    | `/api/hardware`              | `{ collected_at, sensors, drives, zfs_pools, smart_note?, zfs_note? }` — live sysfs hwmon/thermal sensors + 60 s cached SMART drives & ZFS pools (`?refresh=1` bypasses cache). |
 
-Notification events: job failed (executor hook), node offline/recovered
-(3 consecutive offline polls ≈ 9 s debounce), apt updates available (daily
-digest), vzdump job failed (12 h sweep, watermarked — no replay of history).
+Notification events: job failed (executor hook, ignores cancelled jobs), node offline/recovered
+(3 consecutive offline polls ≈ 9 s debounce), service down/recovered (3 consecutive health failures ≈ 90 s debounce),
+storage pool high usage (3 ticks at ≥ threshold %, 5 % recovery hysteresis), apt updates available (daily
+digest), vzdump job failed (12 h sweep, watermarked), stale/missing backups (daily digest when `backup_stale_days > 0`),
+and PBS verification failed (daily digest).
 Messages carry hostnames/job types only, never credentials or command output.
 TLS verification is ON by default for notification endpoints; explicit
 `insecure` flag for self-signed self-hosted servers.

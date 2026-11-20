@@ -67,6 +67,16 @@ func (s *ServiceLinksDB) Delete(key string) error {
 	return s.write(m)
 }
 
+// ReplaceAll atomically replaces the entire service-link map (used by config import).
+func (s *ServiceLinksDB) ReplaceAll(m map[string]ServiceLink) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if m == nil {
+		m = map[string]ServiceLink{}
+	}
+	return s.write(m)
+}
+
 func (s *ServiceLinksDB) read() (map[string]ServiceLink, error) {
 	data, err := os.ReadFile(s.path)
 	if err != nil {

@@ -185,10 +185,16 @@ func (s *Server) relayNodeStream(w http.ResponseWriter, r *http.Request, node co
 	}
 	defer down.Close()
 
-	// Drain browser reads so close frames are processed and we notice hangups.
+	// Forward browser messages (e.g. interactive PTY keystrokes for whiptail
+	// menus) upstream to the secondary agent, and tear down on disconnect.
 	go func() {
 		for {
-			if _, _, err := down.ReadMessage(); err != nil {
+			mt, msg, err := down.ReadMessage()
+			if err != nil {
+				up.Close()
+				return
+			}
+			if err := up.WriteMessage(mt, msg); err != nil {
 				up.Close()
 				return
 			}

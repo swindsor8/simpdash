@@ -193,6 +193,22 @@ func runLXCBatch(em *executor.Emitter, queued, skipped []lxcBatchItem, continueO
 
 	succeeded, failed, aborted := 0, 0, 0
 	for i, ct := range queued {
+		if em.Cancelled() {
+			for j := i; j < len(queued); j++ {
+				rem := queued[j]
+				aborted++
+				emitProgress(em, lxcProgressFrame{
+					Type:   "progress",
+					VMID:   rem.VMID,
+					Name:   rem.Name,
+					Status: "skipped",
+					Reason: "cancelled",
+					Index:  j + 1,
+					Total:  total,
+				})
+			}
+			break
+		}
 		idx := i + 1
 		label := formatCTLabel(ct)
 		emitProgress(em, lxcProgressFrame{
@@ -211,6 +227,34 @@ func runLXCBatch(em *executor.Emitter, queued, skipped []lxcBatchItem, continueO
 		code := em.RunCmd(cmd)
 		dur := time.Since(start)
 		codeCopy := code
+
+		if em.Cancelled() {
+			failed++
+			emitProgress(em, lxcProgressFrame{
+				Type:       "progress",
+				VMID:       ct.VMID,
+				Name:       ct.Name,
+				Status:     "failed",
+				ExitCode:   &codeCopy,
+				DurationMs: dur.Milliseconds(),
+				Index:      idx,
+				Total:      total,
+			})
+			for j := i + 1; j < len(queued); j++ {
+				rem := queued[j]
+				aborted++
+				emitProgress(em, lxcProgressFrame{
+					Type:   "progress",
+					VMID:   rem.VMID,
+					Name:   rem.Name,
+					Status: "skipped",
+					Reason: "cancelled",
+					Index:  j + 1,
+					Total:  total,
+				})
+			}
+			break
+		}
 
 		if code == 0 {
 			succeeded++

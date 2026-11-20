@@ -30,7 +30,7 @@ export function useJobStream(jobId, node) {
       try {
         const msg = JSON.parse(e.data)
         if (msg.type === 'done') {
-          setState(msg.exit_code === 0 ? 'succeeded' : 'failed')
+          setState(msg.cancelled ? 'cancelled' : msg.exit_code === 0 ? 'succeeded' : 'failed')
         } else if (msg.type === 'progress') {
           setProgress(prev => {
             const idx = prev.findIndex(item => item.vmid === msg.vmid)

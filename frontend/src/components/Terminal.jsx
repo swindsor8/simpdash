@@ -59,6 +59,7 @@ export default function Terminal({ output, state, sendInput }) {
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs text-gray-600 font-medium">Output</span>
         {state === 'failed' && <span className="text-xs text-red-400">— exited with errors</span>}
+        {state === 'cancelled' && <span className="text-xs text-amber-400">— cancelled</span>}
         {state === 'succeeded' && <span className="text-xs text-emerald-400">— completed successfully</span>}
         {state === 'running' && <span className="text-xs text-gray-600">— use arrow keys / enter for menus</span>}
       </div>

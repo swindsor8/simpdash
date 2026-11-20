@@ -74,6 +74,10 @@ type NotifyConfig struct {
 	NodeOffline      bool `yaml:"node_offline"`
 	UpdatesAvailable bool `yaml:"updates_available"`
 	BackupFailed     bool `yaml:"backup_failed"`
+	ServiceDown      bool `yaml:"service_down,omitempty"`
+	StorageThreshold int  `yaml:"storage_threshold,omitempty"` // 0 = off, else 50..99 (%)
+	BackupStaleDays  int  `yaml:"backup_stale_days,omitempty"` // 0 = off, else days
+	PBSVerifyFailed  bool `yaml:"pbs_verify_failed,omitempty"`
 }
 
 // PBSConfig holds Proxmox Backup Server API credentials.

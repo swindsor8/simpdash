@@ -26,8 +26,14 @@ import (
 type healthChecker struct {
 	links *store.ServiceLinksDB
 
-	mu      sync.Mutex
-	results map[string]healthResult
+	// onChange, when set, fires after 3 consecutive failures (up=false) or on
+	// recovery after an alert (up=true). Runs asynchronously so probes never stall.
+	onChange func(key, label, url string, up bool, status int)
+
+	mu        sync.Mutex
+	results   map[string]healthResult
+	failCount map[string]int
+	alerted   map[string]bool
 
 	kick chan struct{} // wake() nudges the loop after link edits
 }
@@ -54,9 +60,11 @@ var healthClient = &http.Client{
 
 func newHealthChecker(links *store.ServiceLinksDB) *healthChecker {
 	return &healthChecker{
-		links:   links,
-		results: map[string]healthResult{},
-		kick:    make(chan struct{}, 1),
+		links:     links,
+		results:   map[string]healthResult{},
+		failCount: map[string]int{},
+		alerted:   map[string]bool{},
+		kick:      make(chan struct{}, 1),
 	}
 }
 
@@ -85,41 +93,75 @@ func (h *healthChecker) run(ctx context.Context) {
 	}
 }
 
+type healthTarget struct {
+	url   string
+	label string
+}
+
 func (h *healthChecker) sweep(ctx context.Context) {
 	links, err := h.links.GetAll()
 	if err != nil {
 		return
 	}
-	// key → URL for the primary link and each extra ("key" / "key#0", "key#1"…).
-	targets := map[string]string{}
+	// key → target for the primary link and each extra ("key" / "key#0", "key#1"…).
+	targets := map[string]healthTarget{}
 	for key, l := range links {
-		targets[key] = l.URL
+		lbl := key
+		if l.Label != nil && *l.Label != "" {
+			lbl = *l.Label
+		}
+		targets[key] = healthTarget{url: l.URL, label: lbl}
 		for i, e := range l.Extras {
-			targets[fmt.Sprintf("%s#%d", key, i)] = e.URL
+			elbl := e.Label
+			if elbl == "" {
+				elbl = lbl
+			}
+			targets[fmt.Sprintf("%s#%d", key, i)] = healthTarget{url: e.URL, label: elbl}
 		}
 	}
 
 	sem := make(chan struct{}, 8)
 	var wg sync.WaitGroup
-	for key, u := range targets {
+	for key, tgt := range targets {
 		wg.Add(1)
-		go func(key, u string) {
+		go func(key string, tgt healthTarget) {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			res := probe(ctx, u)
+			res := probe(ctx, tgt.url)
+			var notifyUp *bool
 			h.mu.Lock()
 			h.results[key] = res
+			if res.Up {
+				h.failCount[key] = 0
+				if h.alerted[key] {
+					h.alerted[key] = false
+					up := true
+					notifyUp = &up
+				}
+			} else {
+				h.failCount[key]++
+				if h.failCount[key] >= 3 && !h.alerted[key] {
+					h.alerted[key] = true
+					up := false
+					notifyUp = &up
+				}
+			}
 			h.mu.Unlock()
-		}(key, u)
+			if notifyUp != nil && h.onChange != nil {
+				h.onChange(key, tgt.label, tgt.url, *notifyUp, res.Status)
+			}
+		}(key, tgt)
 	}
 	wg.Wait()
 
-	// Drop results for links that no longer exist.
+	// Drop results and alert state for links that no longer exist.
 	h.mu.Lock()
 	for key := range h.results {
 		if _, ok := targets[key]; !ok {
 			delete(h.results, key)
+			delete(h.failCount, key)
+			delete(h.alerted, key)
 		}
 	}
 	h.mu.Unlock()
