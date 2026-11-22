@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react'
 import { setupPassword } from '../lib/api'
-import logo from '../../assets/logo.png'
 import { Card } from './Card'
 import { useStaggerMount, Expandable } from './motion'
-import { ThemedHeading, ShinyText, Magnet, InteractiveGridBg } from './ReactBits'
+import { ThemedHeading, Magnet, InteractiveGridBg } from './ReactBits'
+import { BrandLockup } from './ShapeMagicLogo'
 
 const TOKEN_COMMANDS = `pveum role add SimpDash -privs "VM.Audit,Sys.Audit,Datastore.Audit,VM.PowerMgmt,Sys.PowerMgmt"
 pveum user add simpdash@pve
@@ -61,11 +61,8 @@ export default function SetupPassword({ pveLocal = true, theme, onDone }) {
 
       <div ref={formWrapRef} className={`relative z-10 w-full ${pveLocal ? 'max-w-sm' : 'max-w-md'}`}>
         <Card spotlight className="p-7 sm:p-8 shadow-2xl">
-          <div data-stagger="" className="flex items-center gap-2.5 mb-7">
-            <img src={logo} alt="SuperDash" className="w-8 h-8 rounded-lg object-contain" />
-            <span className="font-semibold text-base tracking-tight text-white">
-              <ShinyText>SuperDash</ShinyText>
-            </span>
+          <div data-stagger="" className="mb-7">
+            <BrandLockup size="lg" theme={theme} subtitle="PROXMOX VE" interactive />
           </div>
 
           <h1 data-stagger="" className="text-2xl font-bold text-white tracking-tight mb-1.5">

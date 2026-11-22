@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/assets/textlogo.png" alt="SuperDash — Proxmox VE Homelab Dashboard" width="680" />
+</p>
+
 # SuperDash
 
 A lightweight, single-binary homelab dashboard for **Proxmox VE** — combining real-time cluster resource monitoring, one-click host & batch LXC updates, interactive community-script installs, Proxmox Backup Server (PBS) visibility, and multi-node management.

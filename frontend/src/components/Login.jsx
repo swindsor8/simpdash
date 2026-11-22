@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react'
 import { login } from '../lib/api'
-import logo from '../../assets/logo.png'
 import { Card } from './Card'
 import { useStaggerMount } from './motion'
-import { ThemedHeading, ShinyText, Magnet, InteractiveGridBg } from './ReactBits'
+import { ThemedHeading, Magnet, InteractiveGridBg } from './ReactBits'
+import { BrandLockup } from './ShapeMagicLogo'
 
 export default function Login({ theme, onDone }) {
   const [pw, setPw] = useState('')
@@ -38,11 +38,8 @@ export default function Login({ theme, onDone }) {
 
       <div ref={formWrapRef} className="relative z-10 w-full max-w-sm">
         <Card spotlight className="p-7 sm:p-8 shadow-2xl">
-          <div data-stagger="" className="flex items-center gap-2.5 mb-7">
-            <img src={logo} alt="SuperDash" className="w-8 h-8 rounded-lg object-contain" />
-            <span className="font-semibold text-base tracking-tight text-white">
-              <ShinyText>SuperDash</ShinyText>
-            </span>
+          <div data-stagger="" className="mb-7">
+            <BrandLockup size="lg" theme={theme} subtitle="PROXMOX VE" interactive />
           </div>
 
           <h1 data-stagger="" className="text-2xl font-bold text-white tracking-tight mb-1.5">

@@ -5,7 +5,7 @@ import {
   getUpdateCheck, getActiveJob, cancelJob,
 } from '../lib/api'
 import { THEMES } from '../hooks/useTheme'
-import logo from '../../assets/logo.png'
+import { ShapeMagicLogo } from './ShapeMagicLogo'
 import { useResourceStream } from '../hooks/useResourceStream'
 import { useJobStream } from '../hooks/useJobStream'
 import Terminal from './Terminal'
@@ -816,8 +816,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
         >
           <IconMenu />
         </button>
-        <img src={logo} alt="" className="w-6 h-6 rounded-lg object-contain" />
-        <span className="font-semibold text-sm tracking-tight"><ShinyText>SuperDash</ShinyText></span>
+        <ShapeMagicLogo size={24} theme={theme} label="" />
+        <span className="font-bold text-sm tracking-tight"><ShinyText>SuperDash</ShinyText></span>
         <span className="ml-auto flex items-center gap-2">
           <button
             type="button"
@@ -847,8 +847,8 @@ export default function Dashboard({ onLogout, theme, setTheme }) {
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 md:static md:z-auto md:w-56 shrink-0 bg-[#101018] border-r border-white/[0.06] flex flex-col py-4 transform transition-transform duration-200 md:transform-none ${navOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         {/* Brand */}
         <div className="px-4 mb-5 flex items-center gap-2.5">
-          <img src={logo} alt="SuperDash" className="w-7 h-7 rounded-lg object-contain shrink-0" />
-          <span className="font-semibold text-sm tracking-tight flex-1">
+          <ShapeMagicLogo size={30} theme={theme} interactive label="SuperDash" />
+          <span className="font-bold text-[15px] tracking-tight flex-1">
             <ShinyText>SuperDash</ShinyText>
           </span>
           <button

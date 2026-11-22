@@ -11,8 +11,8 @@ export default defineConfig({
         name: 'SuperDash',
         short_name: 'SuperDash',
         description: 'Self-hosted Proxmox VE homelab dashboard',
-        theme_color: '#0a0b0f',
-        background_color: '#0a0b0f',
+        theme_color: '#09090e',
+        background_color: '#09090e',
         display: 'standalone',
         start_url: '/',
         icons: [
@@ -22,9 +22,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Precache the app shell only — JS/CSS/HTML/fonts + the PWA icons.
-        // Deliberately NOT '**/*.png' so the ~2MB favicon logo isn't precached.
-        globPatterns: ['**/*.{js,css,html,woff,woff2,ttf}', 'icons/*.png'],
+        // Precache the app shell only — JS/CSS/HTML/fonts + the vector favicon & PWA icons.
+        globPatterns: ['**/*.{js,css,html,woff,woff2,ttf}', 'favicon.{svg,ico}', 'icons/*.png'],
         navigateFallback: '/index.html',
         // Every /api/* request (REST + the WebSocket streams under /api/.../stream)
         // must always hit the network. No runtimeCaching rule is defined, so nothing

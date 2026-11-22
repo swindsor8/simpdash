@@ -3,6 +3,7 @@ import SetupPassword from './components/SetupPassword'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import BootSequence from './components/BootSequence'
+import { ShapeMagicLogo } from './components/ShapeMagicLogo'
 import { getSetupStatus, getMe } from './lib/api'
 import { useTheme } from './hooks/useTheme'
 import { loadingText } from './lib/copy'
@@ -25,8 +26,9 @@ export default function App() {
   let screenEl
   if (screen === 'loading') {
     screenEl = (
-      <div className="min-h-screen bg-[#0c0c14] flex items-center justify-center">
-        <span className="text-gray-500 text-sm">{loadingText('Loading…')}</span>
+      <div className="min-h-screen bg-[#0c0c14] flex flex-col items-center justify-center gap-4">
+        <ShapeMagicLogo size={52} theme={theme} glow />
+        <span className="text-gray-500 text-xs font-mono tracking-wider uppercase">{loadingText('Loading…')}</span>
       </div>
     )
   } else if (screen === 'setup') {

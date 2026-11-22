@@ -38,6 +38,16 @@ export const THEMES = [
   },
 ]
 
+export const THEME_META_COLORS = {
+  nocturne: '#09090e',
+  default: '#f5f6fb',
+  retro: '#ebe6ef',
+  mario: '#5c94fc',
+  win98: '#008080',
+  terminal: '#020a02',
+  glass: '#0b0e1e',
+}
+
 export function useTheme() {
   const [theme, setThemeState] = useState(() => {
     const saved = localStorage.getItem('sd-theme')
@@ -50,6 +60,8 @@ export function useTheme() {
     // [data-theme] override block; the raw un-themed base is only the pre-JS state.
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('sd-theme', theme)
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute('content', THEME_META_COLORS[theme] || '#09090e')
   }, [theme])
 
   return { theme, setTheme: setThemeState }

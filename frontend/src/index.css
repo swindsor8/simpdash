@@ -1620,11 +1620,11 @@ code, pre, kbd, .font-mono {
   50% { filter: brightness(1.55); }
 }
 
-/* (6) Icon retint — recolour service favicons (inside cards only; the sidebar
-   logo is left alone) to the green palette via a filter recipe, keeping them
+/* (6) Icon retint — recolour service favicons (inside cards only; brand marks
+   are excluded) to the green palette via a filter recipe, keeping them
    distinguishable rather than uniformly washed out. ponytail: tune these values
    if a particular favicon reads flat — it's one declaration. */
-[data-theme="terminal"] .bg-\[\#13131e\] img {
+[data-theme="terminal"] .bg-\[\#13131e\] img:not(.sd-brand-mark img) {
   filter: grayscale(1) sepia(1) hue-rotate(65deg) saturate(3) brightness(1.1) contrast(1.1);
 }
 
@@ -2044,3 +2044,62 @@ code, pre, kbd, .font-mono {
 [data-theme="retro"]    .rb-star-border::before,
 [data-theme="mario"]    .rb-star-border::before,
 [data-theme="win98"]    .rb-star-border::before { display: none; }
+
+/* ===========================================================================
+   SHAPE MAGIC BRAND MARK — 7-theme drop-shadows, ambient halos & hover polish
+   =========================================================================== */
+.sd-brand-mark {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), filter 0.25s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sd-brand-interactive:hover {
+    transform: translateY(-1px) scale(1.06);
+  }
+  [data-theme="win98"] .sd-brand-interactive:hover {
+    transform: none;
+  }
+}
+
+/* Nocturne & Liquid Glass: luminous indigo→teal brand ambient halo */
+[data-theme="nocturne"] .sd-brand-mark,
+[data-theme="glass"] .sd-brand-mark {
+  filter: drop-shadow(0 2px 10px rgba(155, 153, 254, 0.28))
+          drop-shadow(0 4px 14px rgba(43, 200, 183, 0.20));
+}
+[data-theme="nocturne"] .sd-brand-glow,
+[data-theme="glass"] .sd-brand-glow {
+  filter: drop-shadow(0 0 18px rgba(155, 153, 254, 0.42))
+          drop-shadow(0 6px 24px rgba(43, 200, 183, 0.30));
+}
+
+/* Midnight (light): crisp grounded brand shadow */
+[data-theme="default"] .sd-brand-mark {
+  filter: drop-shadow(0 2px 6px rgba(79, 70, 229, 0.22));
+}
+[data-theme="default"] .sd-brand-glow {
+  filter: drop-shadow(0 6px 16px rgba(79, 70, 229, 0.26))
+          drop-shadow(0 2px 8px rgba(13, 148, 136, 0.18));
+}
+
+/* Retro & Super: crisp hard offset comic/pixel drop shadow */
+[data-theme="retro"] .sd-brand-mark {
+  filter: drop-shadow(2px 2px 0 #121331);
+}
+[data-theme="mario"] .sd-brand-mark {
+  filter: drop-shadow(2px 2px 0 #000000);
+}
+
+/* Win98: raised silver bezel frame */
+[data-theme="win98"] .sd-brand-mark {
+  background: #c0c0c0;
+  padding: 2px;
+  box-shadow: var(--raised);
+}
+
+/* Terminal CRT: green-phosphor bloom */
+[data-theme="terminal"] .sd-brand-mark {
+  filter: drop-shadow(0 0 6px rgba(26, 255, 64, 0.55));
+}
+[data-theme="terminal"] .sd-brand-glow {
+  filter: drop-shadow(0 0 14px rgba(26, 255, 64, 0.72));
+}

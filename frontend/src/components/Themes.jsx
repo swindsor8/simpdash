@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { THEMES } from '../hooks/useTheme'
 import { useCardSpotlight, usePopPulse, useScrollReveal } from './motion'
 import { TiltedCard } from './ReactBits'
+import { SUPERDASH_MARK_PATH } from './ShapeMagicLogo'
 
 // The Switch widget from the design brief — used as the live toggle for the
 // retro theme. Colours are the retro palette itself (#121331, #f24c00, #ebe6ef).
@@ -132,7 +133,16 @@ function BrandPreview({ id }) {
           `radial-gradient(55% 50% at 0% 100%, ${p.glowB}, transparent 60%)`,
       }} />
       <div className="w-9 shrink-0 relative flex flex-col gap-1.5 p-1.5 pt-2" style={{ background: p.panel }}>
-        <div className="h-1.5 w-4 rounded-full" style={{ background: 'linear-gradient(90deg,#9B99FE,#2BC8B7)' }} />
+        <svg viewBox="0 0 512 512" className="w-3.5 h-3.5 shrink-0" aria-hidden="true">
+          <defs>
+            <linearGradient id={`bp-mark-${id}`} x1="88" y1="60" x2="432" y2="460" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#6366f1" />
+              <stop offset="40%" stopColor="#9B99FE" />
+              <stop offset="100%" stopColor="#2BC8B7" />
+            </linearGradient>
+          </defs>
+          <path d={SUPERDASH_MARK_PATH} fill={`url(#bp-mark-${id})`} />
+        </svg>
         <div className="h-1.5 w-6 rounded-full" style={{ background: p.bar }} />
         <div className="h-1.5 w-5 rounded-full" style={{ background: p.bar }} />
       </div>
