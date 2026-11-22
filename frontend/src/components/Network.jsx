@@ -339,7 +339,7 @@ export default function Network() {
         </div>
 
         {!stResult && !stErr && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <SpeedMetric icon={<IconDown />} label="Download" value={stRunning ? '···' : '—'} unit="Mbps" color="text-emerald-400" glow="bg-emerald-500" />
             <SpeedMetric icon={<IconUp />} label="Upload" value={stRunning ? '···' : '—'} unit="Mbps" color="text-blue-400" glow="bg-blue-500" />
             <SpeedMetric icon={<IconPing />} label="Ping" value={stRunning ? '···' : '—'} unit="ms" color="text-yellow-400" glow="bg-yellow-500" />
@@ -356,7 +356,7 @@ export default function Network() {
 
         {stResult && (
           <div ref={speedResRef} className="space-y-3">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <SpeedMetric icon={<IconDown />} label="Download" numericValue={stResult.download / 1_000_000} format={n => n.toFixed(1)} unit="Mbps" color="text-emerald-400" glow="bg-emerald-500" />
               <SpeedMetric icon={<IconUp />} label="Upload" numericValue={stResult.upload / 1_000_000} format={n => n.toFixed(1)} unit="Mbps" color="text-blue-400" glow="bg-blue-500" />
               <SpeedMetric icon={<IconPing />} label="Ping" numericValue={stResult.ping} format={n => n.toFixed(1)} unit="ms" color="text-yellow-400" glow="bg-yellow-500" />
@@ -398,6 +398,7 @@ export default function Network() {
           </div>
         ) : (
         <div className="rounded-2xl border border-white/[0.06] bg-[#13131e] overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/[0.06] text-xs text-gray-500 uppercase tracking-wider">
@@ -451,6 +452,7 @@ export default function Network() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
         )}
       </div>
@@ -462,6 +464,7 @@ export default function Network() {
           {guestsSorted.length === 0 ? (
             <p className="px-4 py-6 text-xs text-gray-600">No guests reporting — Proxmox may be unavailable.</p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/[0.06] text-xs text-gray-500 uppercase tracking-wider">
@@ -503,6 +506,7 @@ export default function Network() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

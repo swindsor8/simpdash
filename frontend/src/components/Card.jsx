@@ -2,16 +2,15 @@
 //
 // IMPORTANT: every surface here emits the literal classes the theme system keys
 // on — `bg-[#13131e]` + `rounded-2xl` for the card, and `text-emerald/amber/red-400`
-// + `bg-white/8` for pills. The 5 alternate themes (retro/mario/win98/terminal/
-// glass) override those class names by name in index.css, so reusing them keeps
-// every theme working with zero extra CSS. Don't swap in raw hex or new colors.
+// + `bg-white/8` for pills. All 7 themes (nocturne/default/retro/mario/win98/
+// terminal/glass) override those class names by name in index.css, so reusing
+// them keeps every template cohesive with zero per-component theme branching.
 
 import { useRef } from 'react'
 import { AnimatedNumber, useChangeFlash, useCardSpotlight } from './motion'
 
-// Card — the one elevated dark surface used across the dashboard. Pass
-// icon/title/subtitle/action to get the standard header row; omit them and it's
-// just chrome around `children` (used by the bespoke node/guest cards).
+// Card — the elevated surface used across the dashboard. Pass icon/title/
+// subtitle/action to get the standard header row; omit them for bespoke cards.
 export function Card({ icon, title, subtitle, action, className = '', onClick, spotlight = false, children, ...rest }) {
   const titled = title || action
   const ref = useRef(null)
@@ -24,12 +23,16 @@ export function Card({ icon, title, subtitle, action, className = '', onClick, s
       {...rest}
     >
       {titled && (
-        <div className="flex items-center justify-between gap-2 px-6 py-4 border-b border-white/[0.06]">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {icon && <span className="text-gray-500 shrink-0">{icon}</span>}
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-3 min-w-0">
+            {icon && (
+              <span className="w-8 h-8 rounded-xl bg-white/5 border border-white/[0.06] flex items-center justify-center text-gray-400 shrink-0">
+                {icon}
+              </span>
+            )}
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-white truncate">{title}</h2>
-              {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+              <h2 className="text-sm font-semibold text-white tracking-tight truncate">{title}</h2>
+              {subtitle && <p className="text-xs text-gray-500 mt-0.5 truncate">{subtitle}</p>}
             </div>
           </div>
           {action && <div className="shrink-0">{action}</div>}
@@ -44,14 +47,14 @@ const PILL = {
   success: 'bg-emerald-500/15 text-emerald-400',
   warning: 'bg-amber-500/15 text-amber-400',
   error: 'bg-red-500/15 text-red-400',
+  info: 'bg-blue-500/15 text-blue-300',
   neutral: 'bg-white/8 text-gray-400',
 }
 
-// StatusPill — soft tinted badge for any status/outcome. AA-contrast on the dark
-// card surface (emerald-400 ~7:1, amber-400 ~9:1, red-400 ~6:1, gray-400 ~6:1).
+// StatusPill — soft tinted badge for any status/outcome.
 export function StatusPill({ variant = 'neutral', className = '', title, children }) {
   return (
-    <span title={title} className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium ${PILL[variant]} ${className}`}>
+    <span title={title} className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium ${PILL[variant] ?? PILL.neutral} ${className}`}>
       {children}
     </span>
   )
@@ -60,10 +63,6 @@ export function StatusPill({ variant = 'neutral', className = '', title, childre
 // statusVariant maps a Proxmox running/online string to a pill variant.
 export const statusVariant = (s) => (s === 'running' || s === 'online' ? 'success' : 'neutral')
 
-// TrendPill — up/down % vs a prior period. Rendered by StatCard ONLY when given
-// real comparison data; SuperDash has no historical metrics yet, so nothing
-// passes `trend` today. Kept here so adding history later is a one-prop change,
-// never a fabricated number. (See acceptance note in the task brief.)
 export function TrendPill({ dir, pct }) {
   const up = dir === 'up'
   return (
@@ -75,35 +74,45 @@ export function TrendPill({ dir, pct }) {
   )
 }
 
-// StatCard — icon+label header (optional kebab `action`), large number, optional
-// sub line, optional trend pill. Dark surface, not the old light-pastel tiles.
-// A numeric `value` tweens between values (--motion-medium) and flashes the card
-// on change; a string `value` (e.g. "3 / 4") renders as-is. `format` styles the
-// tweened number; `loading` shows a shimmer skeleton before the first frame.
-export function StatCard({ icon, label, value, format, sub, trend, action, loading, ...rest }) {
+// StatCard — KPI tile with icon, live numeric tween, optional micro progress
+// footer (`meter`: 0..100), and subtle change flash.
+export function StatCard({ icon, label, value, format, sub, trend, action, loading, meter, ...rest }) {
   const numeric = typeof value === 'number'
   const flashKey = useChangeFlash(numeric ? value : null)
+  const meterPct = typeof meter === 'number' ? Math.max(0, Math.min(100, meter)) : null
+  const meterTone = meterPct != null
+    ? (meterPct >= 90 ? 'bg-red-400/80' : meterPct >= 75 ? 'bg-amber-400/80' : 'bg-blue-500')
+    : ''
   return (
-    <Card spotlight className="relative p-5 card-lift hover:border-white/20" {...rest}>
+    <Card spotlight className="relative p-5 card-lift hover:border-white/20 flex flex-col justify-between" {...rest}>
       {flashKey && <span key={flashKey} className="stat-flash-overlay" />}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 text-gray-500">{icon}</span>
-          <span className="text-xs font-medium text-gray-500 truncate">{label}</span>
+      <div>
+        <div className="flex items-start justify-between gap-2 mb-3.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-9 h-9 rounded-xl bg-white/5 border border-white/[0.06] flex items-center justify-center shrink-0 text-gray-400">
+              {icon}
+            </span>
+            <span className="text-xs font-medium text-gray-500 truncate">{label}</span>
+          </div>
+          {action}
         </div>
-        {action}
+        <div className="flex items-baseline gap-2">
+          {loading ? (
+            <span className="skeleton block h-7 w-24 my-0.5" />
+          ) : (
+            <p className="text-2xl font-bold text-white tracking-tight tabular-nums">
+              {numeric ? <AnimatedNumber value={value} format={format} /> : value}
+            </p>
+          )}
+          {trend && <TrendPill {...trend} />}
+        </div>
+        {sub && <p className="text-xs text-gray-500 mt-1 truncate">{sub}</p>}
       </div>
-      <div className="flex items-end gap-2">
-        {loading ? (
-          <span className="skeleton block h-7 w-20 my-0.5" />
-        ) : (
-          <p className="text-2xl font-bold text-white tabular-nums">
-            {numeric ? <AnimatedNumber value={value} format={format} /> : value}
-          </p>
-        )}
-        {trend && <TrendPill {...trend} />}
-      </div>
-      {sub && <p className="text-xs text-gray-600 mt-1">{sub}</p>}
+      {meterPct != null && (
+        <div className="mt-3 h-1 rounded-full bg-white/8 overflow-hidden">
+          <div className={`h-full rounded-full bar-fill ${meterTone}`} style={{ width: `${meterPct}%` }} />
+        </div>
+      )}
     </Card>
   )
 }

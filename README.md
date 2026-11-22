@@ -6,7 +6,8 @@ Built with **Go** + **React (Vite + Tailwind)**, compiled into a single static b
 
 ## Features
 
-- **Live Cluster Monitoring** — Real-time WebSocket stream of CPU, RAM, disk, storage pools, interactive 1h/24h/7d RRD charts, guest IPs, tags, and power controls (start, stop, shutdown, reboot, Wake-on-LAN) with Proxmox noVNC/xterm console deep-links.
+- **Live Cluster Monitoring** — Real-time WebSocket stream of CPU, RAM, disk, storage pools, interactive 1h/24h/7d RRD charts, guest IPs, tags, Grid/List views with search/sort/type filters, and power controls (start, stop, shutdown, reboot, Wake-on-LAN) with Proxmox noVNC/xterm console deep-links.
+- **Command Palette & Slide-Over Guest Inspector** — Press `⌘K` / `Ctrl+K` from anywhere to jump to any VM/CT, open web services or consoles, switch views, or live-switch themes; open any guest's slide-over drawer for live gauges, power/package actions, Docker containers, and searchable systemd services.
 - **Hardware Health** — Live thermal & fan sensors (`/sys/class/hwmon`), SMART drive health (NVMe wear, temps, power-on hours, sector/media errors), and ZFS pool status with vdev error trees — on both the local host and paired secondary nodes.
 - **One-Click Host & Batch LXC Updates** — Scan and apply host `apt` upgrades (with `dist-upgrade` option, version diffs, and reboot-required detection), update individual LXCs, or run a sequential **Update All LXCs** batch queue (`apt-get` / `apk` / `dnf`) with persisted excludes, live progress, and job cancellation on local or paired nodes.
 - **Interactive Script Catalog** — Browse, sync, and run Proxmox community scripts inside a real in-browser PTY terminal (`xterm.js`) with full bidirectional whiptail menu support (including on paired secondary nodes).

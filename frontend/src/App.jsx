@@ -25,14 +25,14 @@ export default function App() {
   let screenEl
   if (screen === 'loading') {
     screenEl = (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <span className="text-gray-600 text-sm">{loadingText('Loading…')}</span>
+      <div className="min-h-screen bg-[#0c0c14] flex items-center justify-center">
+        <span className="text-gray-500 text-sm">{loadingText('Loading…')}</span>
       </div>
     )
   } else if (screen === 'setup') {
-    screenEl = <SetupPassword pveLocal={pveLocal} onDone={() => setScreen('login')} />
+    screenEl = <SetupPassword pveLocal={pveLocal} theme={theme} onDone={() => setScreen('login')} />
   } else if (screen === 'login') {
-    screenEl = <Login onDone={() => setScreen('dashboard')} />
+    screenEl = <Login theme={theme} onDone={() => setScreen('dashboard')} />
   } else {
     screenEl = <Dashboard onLogout={() => setScreen('login')} theme={theme} setTheme={setTheme} />
   }

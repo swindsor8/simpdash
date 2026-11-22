@@ -39,7 +39,7 @@ export default function Nodes({ nodes, onChange }) {
   }
 
   return (
-    <main ref={containerRef} className="p-8 space-y-6 max-w-3xl">
+    <main ref={containerRef} className="p-4 sm:p-8 space-y-6 max-w-3xl">
       {/* Add node */}
       <div data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-white mb-1">Add a node</h2>

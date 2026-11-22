@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { THEMES } from '../hooks/useTheme'
 import { useCardSpotlight, usePopPulse, useScrollReveal } from './motion'
+import { TiltedCard } from './ReactBits'
 
 // The Switch widget from the design brief — used as the live toggle for the
 // retro theme. Colours are the retro palette itself (#121331, #f24c00, #ebe6ef).
@@ -146,7 +147,7 @@ function BrandPreview({ id }) {
   )
 }
 
-function ThemeCard({ t, active, onSelect }) {
+function ThemeCard({ t, active, activeTheme, onSelect }) {
   const cardRef = useRef(null)
   const badgeRef = useRef(null)
   useCardSpotlight(cardRef)
@@ -158,10 +159,11 @@ function ThemeCard({ t, active, onSelect }) {
   const isTerminal = t.id === 'terminal'
   const isGlass = t.id === 'glass'
   return (
+    <TiltedCard theme={activeTheme} maxTilt={4} className="h-full">
     <div
       ref={cardRef}
       data-reveal=""
-      className={`bg-[#13131e] border rounded-2xl p-5 flex flex-col gap-4 transition-colors cursor-pointer card-lift card-spot ${
+      className={`h-full bg-[#13131e] border rounded-2xl p-5 flex flex-col gap-4 transition-colors cursor-pointer card-lift card-spot ${
         active
           ? 'border-white/30 ring-1 ring-white/20'
           : 'border-white/[0.07] hover:border-white/20'
@@ -235,6 +237,7 @@ function ThemeCard({ t, active, onSelect }) {
         </button>
       )}
     </div>
+    </TiltedCard>
   )
 }
 
@@ -244,7 +247,7 @@ export default function Themes({ theme, setTheme, embedded = false }) {
   const grid = (
     <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {THEMES.map(t => (
-        <ThemeCard key={t.id} t={t} active={theme === t.id} onSelect={setTheme} />
+        <ThemeCard key={t.id} t={t} active={theme === t.id} activeTheme={theme} onSelect={setTheme} />
       ))}
     </div>
   )

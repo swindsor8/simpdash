@@ -130,21 +130,22 @@ export default function Activity() {
               No jobs yet — updates and script installs will appear here.
             </p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <tbody>
                 {(jobs ?? []).slice(0, 30).map(j => (
                   <tr key={j.id} className="border-t border-white/[0.05] first:border-t-0 hover:bg-white/5">
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-3 whitespace-nowrap">
                       <StatusPill variant={j.status === 'succeeded' ? 'success' : j.status === 'running' ? 'neutral' : j.status === 'cancelled' ? 'warning' : 'error'}>
                         {j.status}
                       </StatusPill>
                     </td>
-                    <td className="px-5 py-3 text-gray-300">{JOB_LABELS[j.type] ?? j.type}</td>
-                    <td className="px-5 py-3 text-gray-500">{fmtAgo(new Date(j.started_at).getTime() / 1000)}</td>
-                    <td className="px-5 py-3 text-gray-600 text-xs">
+                    <td className="px-5 py-3 text-gray-300 whitespace-nowrap">{JOB_LABELS[j.type] ?? j.type}</td>
+                    <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{fmtAgo(new Date(j.started_at).getTime() / 1000)}</td>
+                    <td className="px-5 py-3 text-gray-600 text-xs whitespace-nowrap">
                       {j.exit_code !== undefined && j.exit_code !== null && j.exit_code !== 0 ? `exit ${j.exit_code}` : ''}
                     </td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="px-5 py-3 text-right whitespace-nowrap">
                       <button
                         onClick={() => setOpenJob(j)}
                         className="text-xs px-3 py-1 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-white/20 transition-colors"
@@ -156,6 +157,7 @@ export default function Activity() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </section>

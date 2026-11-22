@@ -95,22 +95,23 @@ function PBSSection() {
             })}
           </div>
           {guests.length > 0 && (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-gray-600">
                   {['Guest', 'Datastore', 'Last backup', 'Snapshots', 'Verified'].map(h => (
-                    <th key={h} className="text-left font-medium py-2">{h}</th>
+                    <th key={h} className="text-left font-medium py-2 pr-3 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {guests.map(g => (
-                  <tr key={`${g.store}/${g.type}/${g.id}`} className="border-t border-white/[0.05]">
-                    <td className="py-2.5 text-gray-300 font-mono text-xs">{g.type === 'vm' ? 'VM' : 'CT'}{g.id}</td>
-                    <td className="py-2.5 text-gray-500 text-xs">{g.store}</td>
-                    <td className="py-2.5 text-gray-400 text-xs">{fmtAge(g.last_backup) ?? '—'}</td>
-                    <td className="py-2.5 text-gray-600 text-xs">{g.count}</td>
-                    <td className="py-2.5">
+                  <tr key={`${g.store}/${g.type}/${g.id}`} className="border-t border-white/[0.05] hover:bg-white/5">
+                    <td className="py-2.5 pr-3 text-gray-300 font-mono text-xs whitespace-nowrap">{g.type === 'vm' ? 'VM' : 'CT'}{g.id}</td>
+                    <td className="py-2.5 pr-3 text-gray-500 text-xs">{g.store}</td>
+                    <td className="py-2.5 pr-3 text-gray-400 text-xs whitespace-nowrap">{fmtAge(g.last_backup) ?? '—'}</td>
+                    <td className="py-2.5 pr-3 text-gray-600 text-xs">{g.count}</td>
+                    <td className="py-2.5 whitespace-nowrap">
                       {g.verified === 'ok' ? <StatusPill variant="success">verified</StatusPill>
                         : g.verified === 'failed' ? <StatusPill variant="error">verify failed</StatusPill>
                         : <StatusPill variant="neutral">not verified</StatusPill>}
@@ -119,6 +120,7 @@ function PBSSection() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       )}
@@ -142,8 +144,8 @@ export default function Backups() {
 
   useScrollReveal(containerRef, { deps: [Boolean(data)] })
 
-  if (err) return <div className="p-8"><Degraded msg={err} /></div>
-  if (!data) return <div className="p-8 text-sm text-gray-600">{loadingMsg}</div>
+  if (err) return <div className="p-4 sm:p-8"><Degraded msg={err} /></div>
+  if (!data) return <div className="p-4 sm:p-8 text-sm text-gray-600">{loadingMsg}</div>
 
   // Most concerning first: never-backed-up, then oldest backups.
   const guests = [...data.guests].sort((a, b) => (a.last_backup || 0) - (b.last_backup || 0))
@@ -160,27 +162,28 @@ export default function Backups() {
       )}
 
       <section data-reveal="" className="bg-[#13131e] border border-white/[0.07] rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-gray-600">
               {['Guest', 'Node', 'Last backup', 'Size', 'Status'].map(h => (
-                <th key={h} className="text-left font-medium px-5 py-3">{h}</th>
+                <th key={h} className="text-left font-medium px-5 py-3 whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {guests.map(g => (
-              <tr key={g.vmid} className="border-t border-white/[0.05]">
-                <td className="px-5 py-3 text-gray-200">
+              <tr key={g.vmid} className="border-t border-white/[0.05] hover:bg-white/5">
+                <td className="px-5 py-3 text-gray-200 whitespace-nowrap">
                   {g.name}{' '}
                   <span className="text-xs text-gray-600 font-mono">{g.type === 'qemu' ? 'VM' : 'CT'}{g.vmid}</span>
                 </td>
-                <td className="px-5 py-3 text-gray-500">{g.node}</td>
-                <td className="px-5 py-3 text-gray-400">
+                <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{g.node}</td>
+                <td className="px-5 py-3 text-gray-400 whitespace-nowrap">
                   {g.last_backup ? fmtAge(g.last_backup) : <span className="text-amber-400">never</span>}
                 </td>
-                <td className="px-5 py-3 text-gray-600">{fmtBytes(g.size) || '—'}</td>
-                <td className="px-5 py-3"><BackupBadge backup={g} /></td>
+                <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{fmtBytes(g.size) || '—'}</td>
+                <td className="px-5 py-3 whitespace-nowrap"><BackupBadge backup={g} /></td>
               </tr>
             ))}
             {guests.length === 0 && (
@@ -188,6 +191,7 @@ export default function Backups() {
             )}
           </tbody>
         </table>
+        </div>
       </section>
 
       <section data-reveal="">
@@ -196,20 +200,21 @@ export default function Backups() {
           {data.jobs.length === 0 ? (
             <p className="px-5 py-8 text-center text-sm text-gray-600">No backup jobs recorded.</p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <tbody>
                 {data.jobs.slice(0, 20).map(j => {
                   const st = jobState(j.status)
                   return (
-                    <tr key={j.upid} className="border-t border-white/[0.05] first:border-t-0">
-                      <td className="px-5 py-3">
+                    <tr key={j.upid} className="border-t border-white/[0.05] first:border-t-0 hover:bg-white/5">
+                      <td className="px-5 py-3 whitespace-nowrap">
                         <StatusPill variant={st === 'ok' ? 'success' : st === 'failed' ? 'error' : 'neutral'}>
                           {st === 'ok' ? 'OK' : st === 'failed' ? 'failed' : 'running'}
                         </StatusPill>
                       </td>
-                      <td className="px-5 py-3 text-gray-500">{j.node}</td>
-                      <td className="px-5 py-3 text-gray-400">{fmtAge(j.starttime)}</td>
-                      <td className="px-5 py-3 text-gray-600">{fmtDur(j.starttime, j.endtime)}</td>
+                      <td className="px-5 py-3 text-gray-500 whitespace-nowrap">{j.node}</td>
+                      <td className="px-5 py-3 text-gray-400 whitespace-nowrap">{fmtAge(j.starttime)}</td>
+                      <td className="px-5 py-3 text-gray-600 whitespace-nowrap">{fmtDur(j.starttime, j.endtime)}</td>
                       <td className="px-5 py-3 text-gray-700 text-xs font-mono truncate max-w-xs" title={j.status}>
                         {st === 'failed' ? j.status : ''}
                       </td>
@@ -218,6 +223,7 @@ export default function Backups() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </section>

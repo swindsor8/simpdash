@@ -15,6 +15,41 @@
   --motion-slow: 500ms ease-out;
   --pulse-duration: 2.4s;
   --pulse-easing: ease-in-out;
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+code, pre, kbd, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Subtle custom scrollbars across modern browsers */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148,163,184,0.22) transparent;
+}
+[data-theme="terminal"] * { scrollbar-color: rgba(26,255,64,0.35) transparent; }
+[data-theme="win98"] *    { scrollbar-width: auto; scrollbar-color: auto; }
+
+/* Semantic sticky-note surfaces (overridden cleanly by every theme template) */
+.note-yellow { background-color: rgba(252,211,77,0.09); border-color: rgba(252,211,77,0.26); }
+.note-teal   { background-color: rgba(94,234,212,0.09); border-color: rgba(94,234,212,0.26); }
+.note-pink   { background-color: rgba(249,168,212,0.09); border-color: rgba(249,168,212,0.26); }
+.note-blue   { background-color: rgba(125,211,252,0.09); border-color: rgba(125,211,252,0.26); }
+
+/* Slide-over drawer entrance */
+@keyframes drawer-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .animate-drawer-in { animation: drawer-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  [data-theme="win98"] .animate-drawer-in { animation: none; }
 }
 
 /* Usage bars (CPU/RAM/disk) animate their fill width, never snap. */
@@ -202,24 +237,37 @@
 
 /* --- Surfaces --- */
 [data-theme="retro"] .bg-\[\#0c0c14\]       { background-color: #dcd5e8; }   /* canvas */
+[data-theme="retro"] .bg-\[\#0c0c14\]\/70   { background-color: rgba(220,213,232,0.72); }
 [data-theme="retro"] .bg-\[\#0c0c14\]\/90   { background-color: rgba(220,213,232,0.92); }
 [data-theme="retro"] .bg-\[\#101018\]       { background-color: #e9e4f0; }   /* sidebar */
 [data-theme="retro"] .bg-\[\#13131e\]       { background-color: #f4f0f8; }   /* cards + inputs */
 
 /* --- Borders → solid ink (faint ones kept lighter for table rules) --- */
-[data-theme="retro"] .border-white\/\[0\.04\] { border-color: rgba(18,19,49,0.18); }
-[data-theme="retro"] .border-white\/\[0\.06\] { border-color: rgba(18,19,49,0.30); }
+[data-theme="retro"] .border-white\/\[0\.04\],
+[data-theme="retro"] .border-white\/\[0\.05\] { border-color: rgba(18,19,49,0.18); }
+[data-theme="retro"] .border-white\/\[0\.06\],
+[data-theme="retro"] .border-white\/\[0\.08\] { border-color: rgba(18,19,49,0.30); }
 [data-theme="retro"] .border-white\/\[0\.07\],
 [data-theme="retro"] .border-white\/10,
+[data-theme="retro"] .border-white\/15,
 [data-theme="retro"] .border-white\/20,
 [data-theme="retro"] .border-white\/30      { border-color: #121331; }
+[data-theme="retro"] .divide-white\/\[0\.04\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="retro"] .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="retro"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) { border-color: rgba(18,19,49,0.22); }
 
-/* --- The signature: cards get a chunky ink outline + hard offset shadow --- */
+/* --- The signature: cards, drawers & palette get a chunky ink outline + hard offset shadow --- */
 [data-theme="retro"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="retro"] .drawer-panel,
+[data-theme="retro"] .cmd-palette,
 [data-theme="retro"] .bg-\[\#c6edda\], [data-theme="retro"] .bg-\[\#e8e8f4\],
 [data-theme="retro"] .bg-\[\#fef9c3\], [data-theme="retro"] .bg-\[\#e4dcf8\] {
   border: 2px solid #121331;
   box-shadow: 5px 5px 0 #121331;
+}
+[data-theme="retro"] .drawer-panel {
+  border-right: none;
+  box-shadow: -6px 0 0 #121331;
 }
 
 /* Sharper corners read more "retro" than the soft 2xl/xl (dots/pills keep full) */
@@ -227,32 +275,62 @@
 [data-theme="retro"] .rounded-xl  { border-radius: 0.375rem; }
 
 /* --- Translucent fills → ink tints (bars, hover states, off pills) --- */
-[data-theme="retro"] .bg-white\/10 { background-color: rgba(18,19,49,0.12); }
+[data-theme="retro"] .bg-white\/10,
+[data-theme="retro"] .hover\:bg-white\/10:hover { background-color: rgba(18,19,49,0.12); }
 [data-theme="retro"] .bg-white\/8  { background-color: rgba(18,19,49,0.10); }
-[data-theme="retro"] .bg-white\/5  { background-color: rgba(18,19,49,0.06); }
+[data-theme="retro"] .bg-white\/5,
+[data-theme="retro"] .hover\:bg-white\/5:hover { background-color: rgba(18,19,49,0.06); }
+[data-theme="retro"] .bg-white\/\[0\.015\],
+[data-theme="retro"] .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(18,19,49,0.04); }
+[data-theme="retro"] .bg-black\/20,
+[data-theme="retro"] .bg-black\/25,
+[data-theme="retro"] .bg-black\/30 { background-color: rgba(18,19,49,0.08); }
+[data-theme="retro"] .skeleton { background-color: rgba(18,19,49,0.10); }
 
 /* --- Text → ink scale on light surfaces --- */
-[data-theme="retro"] .text-white    { color: #121331; }
-[data-theme="retro"] .text-gray-300 { color: #2a2442; }
+[data-theme="retro"] .text-white,
+[data-theme="retro"] .hover\:text-white:hover { color: #121331; }
+[data-theme="retro"] .text-gray-100 { color: #181738; }
+[data-theme="retro"] .text-gray-200 { color: #222040; }
+[data-theme="retro"] .text-gray-300,
+[data-theme="retro"] .hover\:text-gray-300:hover { color: #2a2442; }
 [data-theme="retro"] .text-gray-400 { color: #3f3957; }
 [data-theme="retro"] .text-gray-500 { color: #5f5872; }
-[data-theme="retro"] .text-gray-600 { color: #7c7589; }
+[data-theme="retro"] .text-gray-600 { color: #726b84; }
+[data-theme="retro"] .text-gray-700 { color: #837c96; }
 
 /* Semantic colours darkened for contrast on cream */
-[data-theme="retro"] .text-emerald-400 { color: #0a7a4f; }
-[data-theme="retro"] .text-red-400     { color: #c81e1e; }
+[data-theme="retro"] .text-emerald-400,
+[data-theme="retro"] .text-emerald-300 { color: #0a7a4f; }
+[data-theme="retro"] .text-red-400,
+[data-theme="retro"] .text-red-300     { color: #c81e1e; }
 [data-theme="retro"] .text-amber-400   { color: #b45309; }
-[data-theme="retro"] .text-amber-300   { color: #92400e; }
+[data-theme="retro"] .text-amber-300,
+[data-theme="retro"] .text-amber-200   { color: #92400e; }
+[data-theme="retro"] .text-yellow-400  { color: #a16207; }
+[data-theme="retro"] .text-purple-400,
+[data-theme="retro"] .text-purple-300  { color: #6d28d9; }
+[data-theme="retro"] .text-orange-300  { color: #c2410c; }
+[data-theme="retro"] .text-sky-300     { color: #0369a1; }
 
 /* --- Accent: blue → burnt orange --- */
-[data-theme="retro"] .bg-blue-600        { background-color: #f24c00; }
+[data-theme="retro"] .bg-blue-600        { background-color: #f24c00; color: #ffffff; }
 [data-theme="retro"] .bg-blue-600\/60    { background-color: rgba(242,76,0,0.6); }
 [data-theme="retro"] .bg-blue-500        { background-color: #f24c00; }
+[data-theme="retro"] .bg-blue-500\/10    { background-color: rgba(242,76,0,0.12); }
 [data-theme="retro"] .bg-blue-500\/15    { background-color: rgba(242,76,0,0.18); }
-[data-theme="retro"] .text-blue-300      { color: #9a3500; }
+[data-theme="retro"] .bg-blue-500\/20,
+[data-theme="retro"] .bg-blue-500\/25    { background-color: rgba(242,76,0,0.22); }
+[data-theme="retro"] .text-blue-200,
+[data-theme="retro"] .text-blue-300,
+[data-theme="retro"] .text-blue-400      { color: #9a3500; }
 [data-theme="retro"] .hover\:bg-blue-700:hover { background-color: #c44002; }
+[data-theme="retro"] .border-blue-500\/30,
+[data-theme="retro"] .border-blue-500\/40,
 [data-theme="retro"] .border-blue-500\/60,
+[data-theme="retro"] .focus\:border-blue-500\/50:focus,
 [data-theme="retro"] .focus\:border-blue-500\/60:focus { border-color: #f24c00; }
+[data-theme="retro"] .bg-red-600.text-white { color: #ffffff; border: 2px solid #121331; box-shadow: 3px 3px 0 #121331; }
 
 /* Buttons/logo: ink outline + hard shadow, with a tactile press */
 [data-theme="retro"] .bg-blue-600 {
@@ -267,14 +345,27 @@
 /* Active sidebar item → orange tint chip */
 [data-theme="retro"] aside .bg-white\/10 { background-color: rgba(242,76,0,0.18); }
 
+/* Gauge tracks visible on light cream cards */
+[data-theme="retro"] .gauge-track { stroke: rgba(18,19,49,0.14); }
+[data-theme="retro"] .radial-gauge[data-level="na"] .gauge-track,
+[data-theme="retro"] .radial-gauge[data-level="idle"] .gauge-track { stroke: rgba(18,19,49,0.08); }
+
+/* Sticky notes — warm paper cards with signature ink outline */
+[data-theme="retro"] .note-yellow { background-color: #fef3c7; border: 2px solid #121331; box-shadow: 4px 4px 0 #121331; }
+[data-theme="retro"] .note-teal   { background-color: #ccfbf1; border: 2px solid #121331; box-shadow: 4px 4px 0 #121331; }
+[data-theme="retro"] .note-pink   { background-color: #fce7f3; border: 2px solid #121331; box-shadow: 4px 4px 0 #121331; }
+[data-theme="retro"] .note-blue   { background-color: #e0f2fe; border: 2px solid #121331; box-shadow: 4px 4px 0 #121331; }
+
 /* --- Terminal stays a dark inset (intentional CRT panel) --- */
 [data-theme="retro"] .font-mono.bg-\[\#0c0c14\] {
   background-color: #1a1833;
   border-color: #121331;
+  color: #e8e4f5;
 }
 [data-theme="retro"] .font-mono .text-gray-400 { color: #cfc7dd; }
 [data-theme="retro"] .font-mono .text-gray-600 { color: #8a83a0; }
 [data-theme="retro"] .font-mono .text-gray-700 { color: #6a6480; }
+[data-theme="retro"] pre.bg-\[\#0c0c14\] { background-color: #1a1833; color: #5eead4; }
 
 /* ===========================================================================
    MARIO THEME — 8-bit NES skin (sky-blue canvas, pure-black pixel outlines,
@@ -297,49 +388,87 @@
 
 /* --- Surfaces --- */
 [data-theme="mario"] .bg-\[\#0c0c14\]     { background-color: #5c94fc; }   /* sky */
+[data-theme="mario"] .bg-\[\#0c0c14\]\/70 { background-color: rgba(247,226,184,0.88); }
 [data-theme="mario"] .bg-\[\#0c0c14\]\/90 { background-color: rgba(92,148,252,0.92); }
 [data-theme="mario"] .bg-\[\#101018\]     { background-color: #f7e2b8; }   /* sand sidebar */
 [data-theme="mario"] .bg-\[\#13131e\]     { background-color: #ffffff; }   /* cards + inputs */
+[data-theme="mario"] input.bg-\[\#0c0c14\],
+[data-theme="mario"] select.bg-\[\#0c0c14\],
+[data-theme="mario"] textarea.bg-\[\#0c0c14\] { background-color: #fffef7; color: #000; }
 
 /* --- Borders → pure black pixel outlines --- */
-[data-theme="mario"] .border-white\/\[0\.04\] { border-color: rgba(0,0,0,0.20); }
-[data-theme="mario"] .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.35); }
+[data-theme="mario"] .border-white\/\[0\.04\],
+[data-theme="mario"] .border-white\/\[0\.05\] { border-color: rgba(0,0,0,0.20); }
+[data-theme="mario"] .border-white\/\[0\.06\],
+[data-theme="mario"] .border-white\/\[0\.08\] { border-color: rgba(0,0,0,0.35); }
 [data-theme="mario"] .border-white\/\[0\.07\],
 [data-theme="mario"] .border-white\/10,
+[data-theme="mario"] .border-white\/15,
 [data-theme="mario"] .border-white\/20,
 [data-theme="mario"] .border-white\/30      { border-color: #000; }
+[data-theme="mario"] .divide-white\/\[0\.04\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="mario"] .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="mario"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) { border-color: rgba(0,0,0,0.25); }
 
-/* --- Cards & stat tiles: heavy black outline + hard shadow, blocky corners --- */
+/* --- Cards, drawers, palette & stat tiles: heavy black outline + hard shadow, blocky corners --- */
 [data-theme="mario"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="mario"] .drawer-panel,
+[data-theme="mario"] .cmd-palette,
 [data-theme="mario"] .bg-\[\#c6edda\], [data-theme="mario"] .bg-\[\#e8e8f4\],
 [data-theme="mario"] .bg-\[\#fef9c3\], [data-theme="mario"] .bg-\[\#e4dcf8\] {
   border: 3px solid #000;
   box-shadow: 4px 4px 0 #000;
 }
+[data-theme="mario"] .drawer-panel {
+  border-right: none;
+  box-shadow: -5px 0 0 #000;
+}
 [data-theme="mario"] .rounded-2xl { border-radius: 0.25rem; }
 [data-theme="mario"] .rounded-xl  { border-radius: 0.125rem; }
 
 /* --- Translucent fills → black tints --- */
-[data-theme="mario"] .bg-white\/10 { background-color: rgba(0,0,0,0.12); }
+[data-theme="mario"] .bg-white\/10,
+[data-theme="mario"] .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.12); }
 [data-theme="mario"] .bg-white\/8  { background-color: rgba(0,0,0,0.10); }
-[data-theme="mario"] .bg-white\/5  { background-color: rgba(0,0,0,0.05); }
+[data-theme="mario"] .bg-white\/5,
+[data-theme="mario"] .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.05); }
+[data-theme="mario"] .bg-white\/\[0\.015\],
+[data-theme="mario"] .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(0,0,0,0.04); }
+[data-theme="mario"] .bg-black\/20,
+[data-theme="mario"] .bg-black\/25,
+[data-theme="mario"] .bg-black\/30 { background-color: rgba(0,0,0,0.08); }
+[data-theme="mario"] .skeleton { background-color: rgba(0,0,0,0.10); }
 
 /* --- Text → black scale --- */
-[data-theme="mario"] .text-white    { color: #000; }
-[data-theme="mario"] .text-gray-300 { color: #1a1a1a; }
+[data-theme="mario"] .text-white,
+[data-theme="mario"] .hover\:text-white:hover { color: #000; }
+[data-theme="mario"] .text-gray-100 { color: #0b0b0b; }
+[data-theme="mario"] .text-gray-200 { color: #141414; }
+[data-theme="mario"] .text-gray-300,
+[data-theme="mario"] .hover\:text-gray-300:hover { color: #1a1a1a; }
 [data-theme="mario"] .text-gray-400 { color: #333333; }
-[data-theme="mario"] .text-gray-500 { color: #555555; }
-[data-theme="mario"] .text-gray-600 { color: #6f6f6f; }
+[data-theme="mario"] .text-gray-500 { color: #4d4d4d; }
+[data-theme="mario"] .text-gray-600 { color: #616161; }
+[data-theme="mario"] .text-gray-700 { color: #757575; }
 
 /* Semantic */
-[data-theme="mario"] .text-emerald-400 { color: #1a7a1a; }
-[data-theme="mario"] .text-red-400     { color: #c81e1e; }
+[data-theme="mario"] .text-emerald-400,
+[data-theme="mario"] .text-emerald-300 { color: #157a15; }
+[data-theme="mario"] .text-red-400,
+[data-theme="mario"] .text-red-300     { color: #c81e1e; }
 [data-theme="mario"] .text-amber-400   { color: #a86a00; }
-[data-theme="mario"] .text-amber-300   { color: #875200; }
+[data-theme="mario"] .text-amber-300,
+[data-theme="mario"] .text-amber-200   { color: #875200; }
+[data-theme="mario"] .text-yellow-400  { color: #8a5600; }
+[data-theme="mario"] .text-purple-400,
+[data-theme="mario"] .text-purple-300  { color: #6d28d9; }
+[data-theme="mario"] .text-orange-300  { color: #c2410c; }
+[data-theme="mario"] .text-sky-300     { color: #0369a1; }
 
 /* --- Accent: coin-gold blocks (buttons/logo) w/ black outline + press --- */
 [data-theme="mario"] .bg-blue-600 {
   background-color: #fbd000;
+  color: #000;
   border: 3px solid #000;
   box-shadow: 3px 3px 0 #000;
 }
@@ -349,22 +478,43 @@
   box-shadow: 1px 1px 0 #000;
   transform: translate(2px, 2px);
 }
+[data-theme="mario"] .bg-red-600.text-white { color: #ffffff; border: 3px solid #000; box-shadow: 3px 3px 0 #000; }
 
 /* Bars (low usage) → pipe green; category badges → mario red */
 [data-theme="mario"] .bg-blue-500     { background-color: #1aa000; }
+[data-theme="mario"] .bg-blue-500\/10,
 [data-theme="mario"] .bg-blue-500\/15 { background-color: rgba(229,37,33,0.15); }
-[data-theme="mario"] .text-blue-300   { color: #b81d1a; }
+[data-theme="mario"] .bg-blue-500\/20,
+[data-theme="mario"] .bg-blue-500\/25 { background-color: rgba(251,208,0,0.45); }
+[data-theme="mario"] .text-blue-200,
+[data-theme="mario"] .text-blue-300,
+[data-theme="mario"] .text-blue-400   { color: #b81d1a; }
+[data-theme="mario"] .border-blue-500\/30,
+[data-theme="mario"] .border-blue-500\/40,
 [data-theme="mario"] .border-blue-500\/60,
+[data-theme="mario"] .focus\:border-blue-500\/50:focus,
 [data-theme="mario"] .focus\:border-blue-500\/60:focus { border-color: #e52521; }
 
 /* Active sidebar item → gold chip */
 [data-theme="mario"] aside .bg-white\/10 { background-color: rgba(251,208,0,0.55); }
 
+/* Gauge tracks visible on white blocks */
+[data-theme="mario"] .gauge-track { stroke: rgba(0,0,0,0.14); }
+[data-theme="mario"] .radial-gauge[data-level="na"] .gauge-track,
+[data-theme="mario"] .radial-gauge[data-level="idle"] .gauge-track { stroke: rgba(0,0,0,0.08); }
+
+/* Sticky notes — 8-bit pastel blocks */
+[data-theme="mario"] .note-yellow { background-color: #fff3b0; border: 3px solid #000; box-shadow: 4px 4px 0 #000; }
+[data-theme="mario"] .note-teal   { background-color: #b8f2e6; border: 3px solid #000; box-shadow: 4px 4px 0 #000; }
+[data-theme="mario"] .note-pink   { background-color: #ffd6e0; border: 3px solid #000; box-shadow: 4px 4px 0 #000; }
+[data-theme="mario"] .note-blue   { background-color: #cde4ff; border: 3px solid #000; box-shadow: 4px 4px 0 #000; }
+
 /* --- Terminal: black CRT inset --- */
-[data-theme="mario"] .font-mono.bg-\[\#0c0c14\] { background-color: #0a0a0a; border-color: #000; }
+[data-theme="mario"] .font-mono.bg-\[\#0c0c14\] { background-color: #0a0a0a; border-color: #000; color: #f0f0f0; }
 [data-theme="mario"] .font-mono .text-gray-400 { color: #e6e6e6; }
 [data-theme="mario"] .font-mono .text-gray-600 { color: #9a9a9a; }
 [data-theme="mario"] .font-mono .text-gray-700 { color: #6a6a6a; }
+[data-theme="mario"] pre.bg-\[\#0c0c14\] { background-color: #0a0a0a; color: #5eead4; }
 
 /* ===========================================================================
    Mario pixel-art sprite — used as the Mario theme's preview card. Box-shadow
@@ -664,12 +814,15 @@
 [data-theme="win98"] .rounded-full { border-radius: 0; }
 
 /* --- Surfaces --- */
-[data-theme="win98"] .bg-\[\#0c0c14\]  { background-color: #008080; }   /* teal desktop */
-[data-theme="win98"] .bg-\[\#101018\]  { background-color: #c0c0c0; box-shadow: var(--raised); } /* taskbar */
-[data-theme="win98"] .bg-\[\#13131e\]  { background-color: #c0c0c0; }   /* windows */
+[data-theme="win98"] .bg-\[\#0c0c14\]     { background-color: #008080; }   /* teal desktop */
+[data-theme="win98"] .bg-\[\#0c0c14\]\/70 { background-color: #b4b4b4; box-shadow: var(--sunken); }
+[data-theme="win98"] .bg-\[\#101018\]     { background-color: #c0c0c0; box-shadow: var(--raised); } /* taskbar */
+[data-theme="win98"] .bg-\[\#13131e\]     { background-color: #c0c0c0; }   /* windows */
 
-/* Cards & stat tiles → raised silver windows */
+/* Cards, drawers, palette & stat tiles → raised silver windows */
 [data-theme="win98"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="win98"] .drawer-panel,
+[data-theme="win98"] .cmd-palette,
 [data-theme="win98"] .bg-\[\#c6edda\], [data-theme="win98"] .bg-\[\#e8e8f4\],
 [data-theme="win98"] .bg-\[\#fef9c3\], [data-theme="win98"] .bg-\[\#e4dcf8\] {
   border: none;
@@ -681,34 +834,66 @@
 }
 
 /* --- Borders → win98 dark edge --- */
-[data-theme="win98"] .border-white\/\[0\.04\] { border-color: #9a9a9a; }
-[data-theme="win98"] .border-white\/\[0\.06\] { border-color: #808080; }
+[data-theme="win98"] .border-white\/\[0\.04\],
+[data-theme="win98"] .border-white\/\[0\.05\] { border-color: #9a9a9a; }
+[data-theme="win98"] .border-white\/\[0\.06\],
+[data-theme="win98"] .border-white\/\[0\.08\] { border-color: #808080; }
 [data-theme="win98"] .border-white\/\[0\.07\],
 [data-theme="win98"] .border-white\/10,
+[data-theme="win98"] .border-white\/15,
 [data-theme="win98"] .border-white\/20,
 [data-theme="win98"] .border-white\/30      { border-color: #808080; }
+[data-theme="win98"] .divide-white\/\[0\.04\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="win98"] .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="win98"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) { border-color: #808080; }
 
 /* --- Title-bar headers (navy) --- */
 [data-theme="win98"] header { background-color: #000080; border-bottom: 2px solid #000; }
-[data-theme="win98"] header h1 { color: #ffffff; }
-[data-theme="win98"] header .text-gray-500 { color: #c8c8e4; }
+[data-theme="win98"] header h1,
+[data-theme="win98"] header .text-white,
+[data-theme="win98"] header .text-gray-300,
+[data-theme="win98"] header .text-gray-400 { color: #ffffff; }
+[data-theme="win98"] header .text-gray-500,
+[data-theme="win98"] header .text-gray-600 { color: #c8c8e4; }
+[data-theme="win98"] header button.cmd-trigger {
+  background-color: #c0c0c0;
+  color: #000000;
+  box-shadow: var(--raised);
+  border: none;
+}
+[data-theme="win98"] header button.cmd-trigger .text-gray-500,
+[data-theme="win98"] header button.cmd-trigger .text-gray-400 { color: #202020; }
 
 /* --- Text → black on silver --- */
-[data-theme="win98"] .text-white    { color: #000000; }
-[data-theme="win98"] .text-gray-300 { color: #000000; }
+[data-theme="win98"] .text-white,
+[data-theme="win98"] .hover\:text-white:hover { color: #000000; }
+[data-theme="win98"] .text-gray-100 { color: #000000; }
+[data-theme="win98"] .text-gray-200 { color: #0a0a0a; }
+[data-theme="win98"] .text-gray-300,
+[data-theme="win98"] .hover\:text-gray-300:hover { color: #000000; }
 [data-theme="win98"] .text-gray-400 { color: #202020; }
 [data-theme="win98"] .text-gray-500 { color: #404040; }
 [data-theme="win98"] .text-gray-600 { color: #555555; }
+[data-theme="win98"] .text-gray-700 { color: #666666; }
 
 /* Semantic → VGA 16-colour palette */
-[data-theme="win98"] .text-emerald-400 { color: #008000; }
-[data-theme="win98"] .text-red-400     { color: #aa0000; }
-[data-theme="win98"] .text-amber-400   { color: #808000; }
-[data-theme="win98"] .text-amber-300   { color: #808000; }
+[data-theme="win98"] .text-emerald-400,
+[data-theme="win98"] .text-emerald-300 { color: #008000; }
+[data-theme="win98"] .text-red-400,
+[data-theme="win98"] .text-red-300     { color: #aa0000; }
+[data-theme="win98"] .text-amber-400   { color: #806000; }
+[data-theme="win98"] .text-amber-300,
+[data-theme="win98"] .text-amber-200   { color: #705000; }
+[data-theme="win98"] .text-yellow-400  { color: #806000; }
+[data-theme="win98"] .text-purple-400,
+[data-theme="win98"] .text-purple-300  { color: #800080; }
+[data-theme="win98"] .text-orange-300  { color: #9a3412; }
+[data-theme="win98"] .text-sky-300     { color: #000080; }
 
 /* --- Buttons & logo → raised silver, sunken on press --- */
 [data-theme="win98"] .bg-blue-600 {
   background-color: #c0c0c0;
+  color: #000000;
   border: none;
   box-shadow: var(--raised);
 }
@@ -718,24 +903,60 @@
   box-shadow: var(--sunken);
   padding-top: calc(0.375rem + 1px);
 }
+[data-theme="win98"] .bg-red-600.text-white {
+  background-color: #aa0000;
+  color: #ffffff;
+  border: none;
+  box-shadow: var(--raised);
+}
 
 /* Bars: navy fill in a sunken white well */
 [data-theme="win98"] .bg-blue-500     { background-color: #000080; }
 [data-theme="win98"] .h-1\.5.bg-white\/10 { background-color: #ffffff; box-shadow: var(--sunken); }
+[data-theme="win98"] .bg-blue-500\/10,
 [data-theme="win98"] .bg-blue-500\/15 { background-color: rgba(0,0,128,0.12); }
-[data-theme="win98"] .text-blue-300   { color: #000080; }
+[data-theme="win98"] .bg-blue-500\/20,
+[data-theme="win98"] .bg-blue-500\/25 { background-color: rgba(0,0,128,0.18); }
+[data-theme="win98"] .text-blue-200,
+[data-theme="win98"] .text-blue-300,
+[data-theme="win98"] .text-blue-400   { color: #000080; }
+[data-theme="win98"] .border-blue-500\/30,
+[data-theme="win98"] .border-blue-500\/40,
 [data-theme="win98"] .border-blue-500\/60,
+[data-theme="win98"] .focus\:border-blue-500\/50:focus,
 [data-theme="win98"] .focus\:border-blue-500\/60:focus { border-color: #000080; }
 
 /* Other translucent fills → gray */
+[data-theme="win98"] .bg-white\/10,
+[data-theme="win98"] .hover\:bg-white\/10:hover { background-color: rgba(0,0,0,0.12); }
 [data-theme="win98"] .bg-white\/8 { background-color: rgba(0,0,0,0.10); }
-[data-theme="win98"] .bg-white\/5 { background-color: rgba(0,0,0,0.05); }
+[data-theme="win98"] .bg-white\/5,
+[data-theme="win98"] .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.06); }
+[data-theme="win98"] .bg-white\/\[0\.015\],
+[data-theme="win98"] .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(0,0,0,0.04); }
+[data-theme="win98"] .bg-black\/20,
+[data-theme="win98"] .bg-black\/25,
+[data-theme="win98"] .bg-black\/30 { background-color: rgba(0,0,0,0.08); }
+[data-theme="win98"] .skeleton { background-color: #a8a8a8; }
 
 /* Selected sidebar item → classic navy highlight with white text */
 [data-theme="win98"] aside .bg-white\/10 { background-color: #000080; color: #ffffff; }
 
-/* Text fields → white, sunken */
-[data-theme="win98"] input {
+/* Gauge tracks visible on silver windows */
+[data-theme="win98"] .gauge-track { stroke: rgba(0,0,0,0.18); }
+[data-theme="win98"] .radial-gauge[data-level="na"] .gauge-track,
+[data-theme="win98"] .radial-gauge[data-level="idle"] .gauge-track { stroke: rgba(0,0,0,0.10); }
+
+/* Sticky notes — classic raised pastel note pads */
+[data-theme="win98"] .note-yellow { background-color: #ffffc8; border: none; box-shadow: var(--raised); }
+[data-theme="win98"] .note-teal   { background-color: #c8f5e8; border: none; box-shadow: var(--raised); }
+[data-theme="win98"] .note-pink   { background-color: #ffdce8; border: none; box-shadow: var(--raised); }
+[data-theme="win98"] .note-blue   { background-color: #d4e8ff; border: none; box-shadow: var(--raised); }
+
+/* Text fields, selects, textareas → white, sunken */
+[data-theme="win98"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="win98"] select,
+[data-theme="win98"] textarea {
   background-color: #ffffff !important; /* beat the .bg-[#13131e] surface rule */
   color: #000000;
   border: none;
@@ -745,12 +966,14 @@
 /* Terminal → sunken black console */
 [data-theme="win98"] .font-mono.bg-\[\#0c0c14\] {
   background-color: #000000;
+  color: #e0e0e0;
   border: none;
   box-shadow: var(--sunken);
 }
 [data-theme="win98"] .font-mono .text-gray-400 { color: #c0c0c0; }
 [data-theme="win98"] .font-mono .text-gray-600 { color: #909090; }
 [data-theme="win98"] .font-mono .text-gray-700 { color: #707070; }
+[data-theme="win98"] pre.bg-\[\#0c0c14\] { background-color: #000000; color: #00ff00; box-shadow: var(--sunken); }
 
 /* ===========================================================================
    TERMINAL THEME — original green-phosphor CRT skin (phosphor-green text on
@@ -782,11 +1005,12 @@
   background-attachment: fixed;
 }
 
-/* The whole app (sidebar = menu, main = readout) becomes the CRT screen:
-   thick dark bezel floating in the plastic chassis, rounded glass, inner glow. */
-[data-theme="terminal"] .h-screen.bg-\[\#0c0c14\] {
+/* The whole app (sidebar = menu, main = readout) and auth screens become the
+   CRT screen: thick dark bezel floating in the plastic chassis, rounded glass. */
+[data-theme="terminal"] .h-screen.bg-\[\#0c0c14\],
+[data-theme="terminal"] .min-h-screen.bg-\[\#0c0c14\] {
   position: relative;
-  height: calc(100vh - 2.5rem);
+  min-height: calc(100vh - 2.5rem);
   margin: 1.25rem;
   border: 10px solid #0a0a0a;
   border-radius: 1.5rem;
@@ -796,8 +1020,12 @@
     0 0 0 2px #333,
     0 20px 50px rgba(0,0,0,0.8);
 }
+[data-theme="terminal"] .h-screen.bg-\[\#0c0c14\] {
+  height: calc(100vh - 2.5rem);
+}
 /* Four bezel screws painted at the screen corners (one layer, no markup) */
-[data-theme="terminal"] .h-screen.bg-\[\#0c0c14\]::before {
+[data-theme="terminal"] .h-screen.bg-\[\#0c0c14\]::before,
+[data-theme="terminal"] .min-h-screen.bg-\[\#0c0c14\]::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -837,24 +1065,33 @@
 
 /* --- Surfaces --- */
 [data-theme="terminal"] .bg-\[\#0c0c14\]     { background-color: #020a02; }   /* canvas */
+[data-theme="terminal"] .bg-\[\#0c0c14\]\/70 { background-color: rgba(2,10,2,0.82); }
 [data-theme="terminal"] .bg-\[\#0c0c14\]\/90 { background-color: rgba(2,10,2,0.92); }
 [data-theme="terminal"] .bg-\[\#101018\]     { background-color: #04140a; }   /* sidebar */
 [data-theme="terminal"] .bg-\[\#13131e\]     { background-color: #04130a; }   /* cards + inputs */
 
 /* --- Borders → phosphor green --- */
-[data-theme="terminal"] .border-white\/\[0\.04\] { border-color: rgba(26,255,64,0.15); }
-[data-theme="terminal"] .border-white\/\[0\.06\] { border-color: rgba(26,255,64,0.25); }
+[data-theme="terminal"] .border-white\/\[0\.04\],
+[data-theme="terminal"] .border-white\/\[0\.05\] { border-color: rgba(26,255,64,0.15); }
+[data-theme="terminal"] .border-white\/\[0\.06\],
+[data-theme="terminal"] .border-white\/\[0\.08\] { border-color: rgba(26,255,64,0.25); }
 [data-theme="terminal"] .border-white\/\[0\.07\],
 [data-theme="terminal"] .border-white\/10,
+[data-theme="terminal"] .border-white\/15,
 [data-theme="terminal"] .border-white\/20,
 [data-theme="terminal"] .border-white\/30      { border-color: rgba(26,255,64,0.4); }
+[data-theme="terminal"] .divide-white\/\[0\.04\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="terminal"] .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="terminal"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) { border-color: rgba(26,255,64,0.22); }
 
-/* Cards & stat tiles → green-edged terminal panels with a soft glow */
+/* Cards, drawers, palette & stat tiles → green-edged terminal panels with a soft glow */
 [data-theme="terminal"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="terminal"] .drawer-panel,
+[data-theme="terminal"] .cmd-palette,
 [data-theme="terminal"] .bg-\[\#c6edda\], [data-theme="terminal"] .bg-\[\#e8e8f4\],
 [data-theme="terminal"] .bg-\[\#fef9c3\], [data-theme="terminal"] .bg-\[\#e4dcf8\] {
-  border: 1px solid rgba(26,255,64,0.4);
-  box-shadow: inset 0 0 20px rgba(26,255,64,0.06), 0 0 8px rgba(26,255,64,0.08);
+  border: 1px solid rgba(26,255,64,0.45);
+  box-shadow: inset 0 0 20px rgba(26,255,64,0.06), 0 0 12px rgba(26,255,64,0.10);
 }
 [data-theme="terminal"] .bg-\[\#c6edda\], [data-theme="terminal"] .bg-\[\#e8e8f4\],
 [data-theme="terminal"] .bg-\[\#fef9c3\], [data-theme="terminal"] .bg-\[\#e4dcf8\] {
@@ -862,22 +1099,31 @@
 }
 
 /* --- Translucent fills → green tints --- */
-[data-theme="terminal"] .bg-white\/10 { background-color: rgba(26,255,64,0.12); }
+[data-theme="terminal"] .bg-white\/10,
+[data-theme="terminal"] .hover\:bg-white\/10:hover { background-color: rgba(26,255,64,0.12); }
 [data-theme="terminal"] .bg-white\/8  { background-color: rgba(26,255,64,0.10); }
-[data-theme="terminal"] .bg-white\/5  { background-color: rgba(26,255,64,0.06); }
+[data-theme="terminal"] .bg-white\/5,
+[data-theme="terminal"] .hover\:bg-white\/5:hover { background-color: rgba(26,255,64,0.06); }
+[data-theme="terminal"] .skeleton { background-color: rgba(26,255,64,0.10); }
 
 /* --- Text → phosphor-green scale, with a subtle glow on headings/values --- */
 [data-theme="terminal"] .text-white    { color: #2bff52; text-shadow: 0 0 4px var(--pip-glow); }
+[data-theme="terminal"] .text-gray-100 { color: #2bff52; }
+[data-theme="terminal"] .text-gray-200 { color: #2de64e; }
 [data-theme="terminal"] .text-gray-300 { color: #2bd94a; }
 [data-theme="terminal"] .text-gray-400 { color: #1fb53c; }
 [data-theme="terminal"] .text-gray-500 { color: #169a30; }
-[data-theme="terminal"] .text-gray-600 { color: #117a26; }
+[data-theme="terminal"] .text-gray-600 { color: #138229; }
+[data-theme="terminal"] .text-gray-700 { color: #106c22; }
 
 /* Semantic — keep red/amber legible for warnings, healthy stays green */
-[data-theme="terminal"] .text-emerald-400 { color: #1aff40; }
-[data-theme="terminal"] .text-red-400     { color: #ff5a3c; }
+[data-theme="terminal"] .text-emerald-400,
+[data-theme="terminal"] .text-emerald-300 { color: #1aff40; }
+[data-theme="terminal"] .text-red-400,
+[data-theme="terminal"] .text-red-300     { color: #ff5a3c; }
 [data-theme="terminal"] .text-amber-400   { color: #ffb03a; }
-[data-theme="terminal"] .text-amber-300   { color: #ffc966; }
+[data-theme="terminal"] .text-amber-300,
+[data-theme="terminal"] .text-amber-200   { color: #ffc966; }
 
 /* --- Accent: buttons/logo → outlined green terminal keys, fill on hover --- */
 [data-theme="terminal"] .bg-blue-600 {
@@ -892,9 +1138,17 @@
 
 /* Bars → green fill; category badges → green chip */
 [data-theme="terminal"] .bg-blue-500     { background-color: var(--pip); }
+[data-theme="terminal"] .bg-blue-500\/10,
 [data-theme="terminal"] .bg-blue-500\/15 { background-color: rgba(26,255,64,0.15); }
-[data-theme="terminal"] .text-blue-300   { color: #2bff52; }
+[data-theme="terminal"] .bg-blue-500\/20,
+[data-theme="terminal"] .bg-blue-500\/25 { background-color: rgba(26,255,64,0.22); }
+[data-theme="terminal"] .text-blue-200,
+[data-theme="terminal"] .text-blue-300,
+[data-theme="terminal"] .text-blue-400   { color: #2bff52; }
+[data-theme="terminal"] .border-blue-500\/30,
+[data-theme="terminal"] .border-blue-500\/40,
 [data-theme="terminal"] .border-blue-500\/60,
+[data-theme="terminal"] .focus\:border-blue-500\/50:focus,
 [data-theme="terminal"] .focus\:border-blue-500\/60:focus { border-color: var(--pip); }
 
 /* Active sidebar item → solid phosphor highlight with dark text (HUD nav) */
@@ -903,6 +1157,12 @@
   color: #020a02;
   box-shadow: 0 0 10px var(--pip-glow);
 }
+
+/* Sticky notes — phosphor CRT data cards */
+[data-theme="terminal"] .note-yellow { background-color: #061808; border-color: rgba(255,201,102,0.55); box-shadow: inset 0 0 16px rgba(255,201,102,0.06); }
+[data-theme="terminal"] .note-teal   { background-color: #04190c; border-color: rgba(26,255,64,0.60); box-shadow: inset 0 0 16px rgba(26,255,64,0.08); }
+[data-theme="terminal"] .note-pink   { background-color: #160a0d; border-color: rgba(255,105,130,0.55); box-shadow: inset 0 0 16px rgba(255,105,130,0.06); }
+[data-theme="terminal"] .note-blue   { background-color: #051618; border-color: rgba(90,230,255,0.50); box-shadow: inset 0 0 16px rgba(90,230,255,0.06); }
 
 /* Terminal → deep-green phosphor console */
 [data-theme="terminal"] .font-mono.bg-\[\#0c0c14\] {
@@ -931,9 +1191,9 @@
    =========================================================================== */
 [data-theme="glass"] { color-scheme: dark; }
 
-/* Drifting aurora behind the whole app. Scoped to the root (.h-screen) so the
-   terminal and select — which also use bg-[#0c0c14] — stay dark. */
-[data-theme="glass"] .h-screen.bg-\[\#0c0c14\] {
+/* Drifting aurora behind the whole app & auth screens. */
+[data-theme="glass"] .h-screen.bg-\[\#0c0c14\],
+[data-theme="glass"] .min-h-screen.bg-\[\#0c0c14\] {
   background: linear-gradient(135deg, #2a1758, #14306e, #0c5d57, #5e1f6e, #2a1758);
   background-size: 400% 400%;
   animation: glassbg 30s ease infinite;
@@ -954,24 +1214,52 @@
   -webkit-backdrop-filter: blur(16px) saturate(1.6);
 }
 
-/* The signature: cards & stat tiles get a bright inset rim + soft drop shadow */
+/* Recessed inner wells/inputs/selects stay frosted dark glass instead of opaque black */
+[data-theme="glass"] .bg-\[\#0c0c14\]:not(.h-screen):not(.min-h-screen):not(.font-mono),
+[data-theme="glass"] .bg-\[\#0c0c14\]\/70 {
+  background-color: rgba(12,16,36,0.34);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* The signature: cards, drawers, palette & stat tiles get a bright inset rim + soft drop shadow */
 [data-theme="glass"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="glass"] .drawer-panel,
+[data-theme="glass"] .cmd-palette,
 [data-theme="glass"] .bg-\[\#c6edda\], [data-theme="glass"] .bg-\[\#e8e8f4\],
 [data-theme="glass"] .bg-\[\#fef9c3\], [data-theme="glass"] .bg-\[\#e4dcf8\] {
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.20);
   box-shadow:
     inset 2px 2px 1px -1px rgba(255,255,255,0.6),
     inset -1px -1px 1px 1px rgba(255,255,255,0.35),
     0 8px 24px rgba(0,0,0,0.25);
 }
+[data-theme="glass"] .drawer-panel,
+[data-theme="glass"] .cmd-palette {
+  background-color: rgba(20,24,52,0.58);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+}
+
+/* Sticky notes — frosted tinted glass cards */
+[data-theme="glass"] .note-yellow { background-color: rgba(252,211,77,0.16); border-color: rgba(255,230,140,0.34); backdrop-filter: blur(14px) saturate(1.5); }
+[data-theme="glass"] .note-teal   { background-color: rgba(94,234,212,0.16); border-color: rgba(153,246,228,0.34); backdrop-filter: blur(14px) saturate(1.5); }
+[data-theme="glass"] .note-pink   { background-color: rgba(249,168,212,0.16); border-color: rgba(251,207,232,0.34); backdrop-filter: blur(14px) saturate(1.5); }
+[data-theme="glass"] .note-blue   { background-color: rgba(125,211,252,0.16); border-color: rgba(186,230,253,0.34); backdrop-filter: blur(14px) saturate(1.5); }
 
 /* --- Borders → frosted white edges --- */
-[data-theme="glass"] .border-white\/\[0\.04\] { border-color: rgba(255,255,255,0.10); }
-[data-theme="glass"] .border-white\/\[0\.06\] { border-color: rgba(255,255,255,0.14); }
+[data-theme="glass"] .border-white\/\[0\.04\],
+[data-theme="glass"] .border-white\/\[0\.05\] { border-color: rgba(255,255,255,0.10); }
+[data-theme="glass"] .border-white\/\[0\.06\],
+[data-theme="glass"] .border-white\/\[0\.08\] { border-color: rgba(255,255,255,0.14); }
 [data-theme="glass"] .border-white\/\[0\.07\],
 [data-theme="glass"] .border-white\/10,
+[data-theme="glass"] .border-white\/15,
 [data-theme="glass"] .border-white\/20,
 [data-theme="glass"] .border-white\/30      { border-color: rgba(255,255,255,0.22); }
+[data-theme="glass"] .divide-white\/\[0\.04\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="glass"] .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="glass"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255,255,255,0.14); }
 
 /* --- Translucent fills lifted for contrast on glass --- */
 [data-theme="glass"] .bg-white\/10 { background-color: rgba(255,255,255,0.16); }
@@ -979,8 +1267,10 @@
 [data-theme="glass"] .bg-white\/5  { background-color: rgba(255,255,255,0.08); }
 
 /* --- Text: keep white; lift the dim grays for contrast over the gradient --- */
+[data-theme="glass"] .text-gray-400 { color: #d8deea; }
 [data-theme="glass"] .text-gray-500 { color: #c2c8d4; }
 [data-theme="glass"] .text-gray-600 { color: #a6adbd; }
+[data-theme="glass"] .text-gray-700 { color: #9099ad; }
 
 /* --- Accent: primary button/logo as a blue-tinted glass key --- */
 [data-theme="glass"] .bg-blue-600 {
@@ -1000,10 +1290,11 @@
 
 /* Node selector → frosted input */
 [data-theme="glass"] select.bg-\[\#0c0c14\] {
-  background-color: rgba(255,255,255,0.10);
+  background-color: rgba(255,255,255,0.12);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
+[data-theme="glass"] select option { background-color: #161830; color: #ffffff; }
 
 /* Terminal stays a dark glassy inset (readability over flash) */
 [data-theme="glass"] .font-mono.bg-\[\#0c0c14\] {
@@ -1028,13 +1319,13 @@
 [data-theme="nocturne"] { color-scheme: dark; }
 
 /* Canvas: neutral near-black with a faint indigo (top-right) + teal (bottom-
-   left) glow echoing the logo gradient. Fixed so it doesn't scroll. Scoped to
-   the root so terminals/selects on the same bg class stay flat dark. */
-[data-theme="nocturne"] .h-screen.bg-\[\#0c0c14\] {
+   left) glow echoing the logo gradient. Fixed so it doesn't scroll. */
+[data-theme="nocturne"] .h-screen.bg-\[\#0c0c14\],
+[data-theme="nocturne"] .min-h-screen.bg-\[\#0c0c14\] {
   background-color: #09090e;
   background-image:
-    radial-gradient(55% 45% at 88% 4%, rgba(155,153,254,0.10), transparent 60%),
-    radial-gradient(50% 45% at 4% 98%, rgba(43,200,183,0.08), transparent 60%);
+    radial-gradient(55% 45% at 88% 4%, rgba(155,153,254,0.11), transparent 60%),
+    radial-gradient(50% 45% at 4% 98%, rgba(43,200,183,0.09), transparent 60%);
   background-attachment: fixed;
 }
 
@@ -1043,11 +1334,20 @@
 [data-theme="nocturne"] .bg-\[\#101018\] { background-color: #0c0c12; }   /* sidebar */
 [data-theme="nocturne"] .bg-\[\#13131e\] { background-color: #141420; }   /* cards + inputs */
 
+/* Subtle specular top-rim on Nocturne cards, drawers & palette */
+[data-theme="nocturne"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="nocturne"] .cmd-palette {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.045), 0 4px 20px rgba(0,0,0,0.22);
+}
+[data-theme="nocturne"] .drawer-panel {
+  box-shadow: -16px 0 40px rgba(0,0,0,0.55);
+}
+
 /* Frosted top bar — the snippet's scrolled nav (translucent + blur) */
 [data-theme="nocturne"] .bg-\[\#0c0c14\]\/90 {
-  background-color: rgba(9,9,14,0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(9,9,14,0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 /* Pillowy radii */
@@ -1055,10 +1355,13 @@
 [data-theme="nocturne"] .rounded-xl  { border-radius: 0.9rem; }
 
 /* Hairline borders, a hair brighter than base for the crisp shadcn edge */
-[data-theme="nocturne"] .border-white\/\[0\.04\] { border-color: rgba(255,255,255,0.05); }
-[data-theme="nocturne"] .border-white\/\[0\.06\] { border-color: rgba(255,255,255,0.07); }
+[data-theme="nocturne"] .border-white\/\[0\.04\],
+[data-theme="nocturne"] .border-white\/\[0\.05\] { border-color: rgba(255,255,255,0.05); }
+[data-theme="nocturne"] .border-white\/\[0\.06\],
+[data-theme="nocturne"] .border-white\/\[0\.08\] { border-color: rgba(255,255,255,0.075); }
 [data-theme="nocturne"] .border-white\/\[0\.07\],
 [data-theme="nocturne"] .border-white\/10,
+[data-theme="nocturne"] .border-white\/15,
 [data-theme="nocturne"] .border-white\/20,
 [data-theme="nocturne"] .border-white\/30      { border-color: rgba(255,255,255,0.10); }
 
@@ -1078,9 +1381,17 @@
 
 /* Small accents lean teal so both brand hues read across the UI */
 [data-theme="nocturne"] .bg-blue-500     { background-color: #14b8a6; }
+[data-theme="nocturne"] .bg-blue-500\/10,
 [data-theme="nocturne"] .bg-blue-500\/15 { background-color: rgba(43,200,183,0.16); }
+[data-theme="nocturne"] .bg-blue-500\/20,
+[data-theme="nocturne"] .bg-blue-500\/25 { background-color: rgba(43,200,183,0.22); }
+[data-theme="nocturne"] .text-blue-200,
 [data-theme="nocturne"] .text-blue-300   { color: #7dd3c8; }
+[data-theme="nocturne"] .text-blue-400   { color: #5eead4; }
+[data-theme="nocturne"] .border-blue-500\/30,
+[data-theme="nocturne"] .border-blue-500\/40,
 [data-theme="nocturne"] .border-blue-500\/60,
+[data-theme="nocturne"] .focus\:border-blue-500\/50:focus,
 [data-theme="nocturne"] .focus\:border-blue-500\/60:focus { border-color: #2BC8B7; }
 
 /* Active sidebar item → brand-tinted highlight with a teal rail */
@@ -1098,7 +1409,8 @@
 [data-theme="default"] { color-scheme: light; }
 
 /* Canvas: cool off-white with faint indigo (top-right) + teal (bottom-left) glow */
-[data-theme="default"] .h-screen.bg-\[\#0c0c14\] {
+[data-theme="default"] .h-screen.bg-\[\#0c0c14\],
+[data-theme="default"] .min-h-screen.bg-\[\#0c0c14\] {
   background-color: #f5f6fb;
   background-image:
     radial-gradient(55% 45% at 88% 4%, rgba(124,122,246,0.14), transparent 60%),
@@ -1107,15 +1419,25 @@
 }
 
 /* Surfaces */
-[data-theme="default"] .bg-\[\#0c0c14\] { background-color: #eef0f7; }   /* selects/login */
-[data-theme="default"] .bg-\[\#101018\] { background-color: #ffffff; }   /* sidebar */
-[data-theme="default"] .bg-\[\#13131e\] { background-color: #ffffff; }   /* cards + inputs */
+[data-theme="default"] .bg-\[\#0c0c14\]     { background-color: #eef0f7; }   /* selects/wells */
+[data-theme="default"] .bg-\[\#0c0c14\]\/70 { background-color: rgba(238,240,247,0.85); }
+[data-theme="default"] .bg-\[\#101018\]     { background-color: #ffffff; }   /* sidebar */
+[data-theme="default"] .bg-\[\#13131e\]     { background-color: #ffffff; }   /* cards + inputs */
+
+/* Subtle crisp elevation on Midnight light cards, drawers & palette */
+[data-theme="default"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="default"] .cmd-palette {
+  box-shadow: 0 1px 3px rgba(20,22,45,0.06), 0 6px 20px rgba(20,22,45,0.04);
+}
+[data-theme="default"] .drawer-panel {
+  box-shadow: -12px 0 36px rgba(20,22,45,0.14);
+}
 
 /* Frosted top bar */
 [data-theme="default"] .bg-\[\#0c0c14\]\/90 {
-  background-color: rgba(245,246,251,0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(245,246,251,0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 /* Pillowy radii — same family as Nocturne */
@@ -1123,37 +1445,63 @@
 [data-theme="default"] .rounded-xl  { border-radius: 0.9rem; }
 
 /* Borders → faint ink on light */
-[data-theme="default"] .border-white\/\[0\.04\] { border-color: rgba(20,22,45,0.06); }
-[data-theme="default"] .border-white\/\[0\.06\] { border-color: rgba(20,22,45,0.09); }
+[data-theme="default"] .border-white\/\[0\.04\],
+[data-theme="default"] .border-white\/\[0\.05\] { border-color: rgba(20,22,45,0.06); }
+[data-theme="default"] .border-white\/\[0\.06\],
+[data-theme="default"] .border-white\/\[0\.08\] { border-color: rgba(20,22,45,0.09); }
 [data-theme="default"] .border-white\/\[0\.07\],
 [data-theme="default"] .border-white\/10,
+[data-theme="default"] .border-white\/15,
 [data-theme="default"] .border-white\/20,
 [data-theme="default"] .border-white\/30      { border-color: rgba(20,22,45,0.12); }
+[data-theme="default"] .divide-white\/\[0\.04\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="default"] .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="default"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) { border-color: rgba(20,22,45,0.08); }
 
 /* Translucent white fills → faint ink */
-[data-theme="default"] .bg-white\/10 { background-color: rgba(20,22,45,0.06); }
-[data-theme="default"] .bg-white\/8  { background-color: rgba(20,22,45,0.05); }
-[data-theme="default"] .bg-white\/5  { background-color: rgba(20,22,45,0.04); }
+[data-theme="default"] .bg-white\/10,
+[data-theme="default"] .hover\:bg-white\/10:hover { background-color: rgba(20,22,45,0.07); }
+[data-theme="default"] .bg-white\/8  { background-color: rgba(20,22,45,0.055); }
+[data-theme="default"] .bg-white\/5,
+[data-theme="default"] .hover\:bg-white\/5:hover { background-color: rgba(20,22,45,0.04); }
+[data-theme="default"] .bg-white\/\[0\.015\],
+[data-theme="default"] .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(20,22,45,0.025); }
+[data-theme="default"] .bg-black\/20,
+[data-theme="default"] .bg-black\/25,
+[data-theme="default"] .bg-black\/30 { background-color: rgba(20,22,45,0.07); }
+[data-theme="default"] .skeleton { background-color: rgba(20,22,45,0.08); }
 
 /* Text → dark, indigo-tinted, stepping lighter */
-[data-theme="default"] .text-white    { color: #16162a; }
+[data-theme="default"] .text-white,
+[data-theme="default"] .hover\:text-white:hover { color: #16162a; }
 [data-theme="default"] .text-gray-100 { color: #20203a; }
 [data-theme="default"] .text-gray-200 { color: #2c2c46; }
-[data-theme="default"] .text-gray-300 { color: #34344c; }
+[data-theme="default"] .text-gray-300,
+[data-theme="default"] .hover\:text-gray-300:hover { color: #34344c; }
 [data-theme="default"] .text-gray-400 { color: #4a4a62; }
 [data-theme="default"] .text-gray-500 { color: #64647c; }
 [data-theme="default"] .text-gray-600 { color: #7e7e96; }
+[data-theme="default"] .text-gray-700 { color: #8c8ca6; }
 
 /* Status colours darkened for contrast on a light canvas */
-[data-theme="default"] .text-emerald-400 { color: #047857; }
-[data-theme="default"] .text-red-400     { color: #c81e1e; }
+[data-theme="default"] .text-emerald-400,
+[data-theme="default"] .text-emerald-300 { color: #047857; }
+[data-theme="default"] .text-red-400,
+[data-theme="default"] .text-red-300     { color: #c81e1e; }
 [data-theme="default"] .text-amber-400   { color: #b45309; }
-[data-theme="default"] .text-amber-300   { color: #92400e; }
+[data-theme="default"] .text-amber-300,
+[data-theme="default"] .text-amber-200   { color: #92400e; }
+[data-theme="default"] .text-yellow-400  { color: #a16207; }
+[data-theme="default"] .text-purple-400,
+[data-theme="default"] .text-purple-300  { color: #6d28d9; }
+[data-theme="default"] .text-orange-300  { color: #c2410c; }
+[data-theme="default"] .text-sky-300     { color: #0369a1; }
 
 /* Accent: same indigo→teal brand gradient as Nocturne (white label stays legible) */
 [data-theme="default"] .bg-blue-600 {
   background-color: #2f7a99;
   background-image: linear-gradient(135deg, #4f46e5 0%, #0d9488 100%);
+  color: #ffffff;
   border: 1px solid rgba(255,255,255,0.18);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 6px 16px rgba(79,70,229,0.18);
 }
@@ -1162,12 +1510,21 @@
 }
 [data-theme="default"] button.bg-blue-600:active { box-shadow: inset 0 2px 6px rgba(0,0,0,0.20); }
 [data-theme="default"] .bg-blue-600\/60 { background-color: rgba(79,70,229,0.55); }
+[data-theme="default"] .bg-red-600.text-white { color: #ffffff; }
 
 /* Small accents → darker teal so they read on white */
 [data-theme="default"] .bg-blue-500     { background-color: #0d9488; }
-[data-theme="default"] .bg-blue-500\/15 { background-color: rgba(13,148,136,0.14); }
-[data-theme="default"] .text-blue-300   { color: #0f766e; }
+[data-theme="default"] .bg-blue-500\/10,
+[data-theme="default"] .bg-blue-500\/15 { background-color: rgba(13,148,136,0.13); }
+[data-theme="default"] .bg-blue-500\/20,
+[data-theme="default"] .bg-blue-500\/25 { background-color: rgba(13,148,136,0.18); }
+[data-theme="default"] .text-blue-200,
+[data-theme="default"] .text-blue-300,
+[data-theme="default"] .text-blue-400   { color: #0f766e; }
+[data-theme="default"] .border-blue-500\/30,
+[data-theme="default"] .border-blue-500\/40,
 [data-theme="default"] .border-blue-500\/60,
+[data-theme="default"] .focus\:border-blue-500\/50:focus,
 [data-theme="default"] .focus\:border-blue-500\/60:focus { border-color: #14b8a6; }
 
 /* Active sidebar item → brand-tinted highlight with a teal rail */
@@ -1176,16 +1533,23 @@
   box-shadow: inset 2px 0 0 #14b8a6;
 }
 
+/* Sticky notes — soft pastel paper cards on light canvas */
+[data-theme="default"] .note-yellow { background-color: #fef9c3; border-color: #fde047; }
+[data-theme="default"] .note-teal   { background-color: #ccfbf1; border-color: #5eead4; }
+[data-theme="default"] .note-pink   { background-color: #fce7f3; border-color: #f9a8d4; }
+[data-theme="default"] .note-blue   { background-color: #e0f2fe; border-color: #7dd3fc; }
+
 /* Gauge track visible on white cards */
 [data-theme="default"] .gauge-track { stroke: rgba(20,22,45,0.10); }
 [data-theme="default"] .radial-gauge[data-level="na"] .gauge-track,
 [data-theme="default"] .radial-gauge[data-level="idle"] .gauge-track { stroke: rgba(20,22,45,0.05); }
 
 /* Terminal/console stays dark; re-lighten its mono text */
-[data-theme="default"] .font-mono.bg-\[\#0c0c14\] { background-color: #0c0c14; border-color: rgba(255,255,255,0.10); }
+[data-theme="default"] .font-mono.bg-\[\#0c0c14\] { background-color: #0c0c14; border-color: rgba(255,255,255,0.10); color: #e2e4f0; }
 [data-theme="default"] .font-mono .text-gray-400 { color: #c8cad6; }
 [data-theme="default"] .font-mono .text-gray-600 { color: #8a8c9a; }
 [data-theme="default"] .font-mono .text-gray-700 { color: #6a6c7a; }
+[data-theme="default"] pre.bg-\[\#0c0c14\] { background-color: #0c0c14; color: #5eead4; }
 
 /* ===========================================================================
    TERMINAL THEME — motion, HUD chrome & retints added on top of the base skin
@@ -1230,11 +1594,11 @@
 }
 
 /* (7) Sidebar nav as HUD tabs. Inactive items are already dimmer (text-gray-500).
-   The active item (bg-white/10, restyled to solid phosphor above) gets its own
-   corner brackets; hover gives a one-shot brightness pulse on its own timing. */
+   The active item ([aria-current="page"], backed by .nav-glide-pill) gets its
+   own corner brackets; hover gives a one-shot brightness pulse on its own timing. */
 [data-theme="terminal"] nav button { transition: filter var(--crt-fast); }
-[data-theme="terminal"] nav button.bg-white\/10 { position: relative; }
-[data-theme="terminal"] nav button.bg-white\/10::after {
+[data-theme="terminal"] nav button[aria-current="page"] { position: relative; }
+[data-theme="terminal"] nav button[aria-current="page"]::after {
   content: "";
   position: absolute;
   inset: 3px;
@@ -1576,7 +1940,9 @@
   box-shadow: 0 0 10px var(--pip-glow);
 }
 [data-theme="win98"] aside button[aria-current="page"] { color: #ffffff; }
-[data-theme="terminal"] aside button[aria-current="page"] { color: #020a02; }
+[data-theme="win98"] aside button[aria-current="page"] .text-blue-300 { color: #ffffff; background-color: rgba(255,255,255,0.22); }
+[data-theme="terminal"] aside button[aria-current="page"] { color: #020a02; text-shadow: none; }
+[data-theme="terminal"] aside button[aria-current="page"] .text-blue-300 { color: #020a02; background-color: rgba(2,10,2,0.22); }
 
 /* Subtle GSAP pointer spotlight on cards (driven by --mx, --my, --spot-o) */
 .card-spot {
@@ -1609,3 +1975,72 @@
   aside nav button:hover svg { transform: translateX(2px) scale(1.06); }
   [data-theme="win98"] aside nav button:hover svg { transform: none; }
 }
+
+/* ===========================================================================
+   REACT BITS PRIMITIVES — ShinyText & StarBorder styled cleanly per theme.
+   =========================================================================== */
+@keyframes rb-shine {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.rb-shiny { display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="nocturne"] .rb-shiny,
+  [data-theme="glass"] .rb-shiny {
+    background: linear-gradient(110deg, #ffffff 30%, #9b99fe 48%, #2bc8b7 54%, #ffffff 70%);
+    background-size: 240% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rb-shine 7s linear infinite;
+  }
+  [data-theme="default"] .rb-shiny {
+    background: linear-gradient(110deg, #16162a 30%, #4f46e5 48%, #0d9488 54%, #16162a 70%);
+    background-size: 240% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rb-shine 7s linear infinite;
+  }
+}
+
+/* StarBorder — subtle travelling rim highlight around featured triggers */
+@keyframes rb-star-slide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.rb-star-border {
+  position: relative;
+  display: inline-flex;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  padding: 1px;
+}
+.rb-star-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, var(--rb-star, rgba(43,200,183,0.65)), transparent);
+  width: 60%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="nocturne"] .rb-star-border::before,
+  [data-theme="default"]  .rb-star-border::before,
+  [data-theme="glass"]    .rb-star-border::before,
+  [data-theme="terminal"] .rb-star-border::before {
+    opacity: 0.85;
+    animation: rb-star-slide 4.5s ease-in-out infinite;
+  }
+}
+[data-theme="nocturne"] .rb-star-border { --rb-star: rgba(43,200,183,0.65); }
+[data-theme="default"]  .rb-star-border { --rb-star: rgba(79,70,229,0.55); }
+[data-theme="glass"]    .rb-star-border { --rb-star: rgba(255,255,255,0.85); }
+[data-theme="terminal"] .rb-star-border { --rb-star: rgba(26,255,64,0.85); }
+[data-theme="retro"]    .rb-star-border,
+[data-theme="mario"]    .rb-star-border,
+[data-theme="win98"]    .rb-star-border { padding: 0; overflow: visible; }
+[data-theme="retro"]    .rb-star-border::before,
+[data-theme="mario"]    .rb-star-border::before,
+[data-theme="win98"]    .rb-star-border::before { display: none; }

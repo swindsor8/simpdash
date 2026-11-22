@@ -5,13 +5,12 @@ import { copy, loadingText } from '../lib/copy'
 import { useScrollReveal } from './motion'
 
 const COLORS = ['yellow', 'teal', 'pink', 'blue']
-// Muted, desaturated sticky tones that read against the #0a0b0f background —
-// not raw highlighter yellow.
+// Semantic sticky-note surfaces overridden cleanly by every one of the 7 themes in index.css.
 const CARD = {
-  yellow: 'bg-amber-300/[0.08] border-amber-300/25',
-  teal: 'bg-teal-300/[0.08] border-teal-300/25',
-  pink: 'bg-pink-300/[0.08] border-pink-300/25',
-  blue: 'bg-sky-300/[0.08] border-sky-300/25',
+  yellow: 'note-yellow',
+  teal: 'note-teal',
+  pink: 'note-pink',
+  blue: 'note-blue',
 }
 const SWATCH = { yellow: 'bg-amber-300', teal: 'bg-teal-300', pink: 'bg-pink-300', blue: 'bg-sky-300' }
 
@@ -95,7 +94,7 @@ function InlineTokens({ tokens }) {
     switch (tok.type) {
       case 'code':
         return (
-          <code key={i} className="px-1 py-0.5 rounded bg-black/30 font-mono text-[12px] text-amber-200/90">
+          <code key={i} className="px-1 py-0.5 rounded bg-black/25 font-mono text-[12px] text-amber-300">
             {tok.value}
           </code>
         )
@@ -388,7 +387,7 @@ export default function Notebook({ entities = [], filter, onCountsChanged = () =
   }, [notes, entityFilter, deferredQuery])
 
   return (
-    <div ref={containerRef} className="p-8 max-w-6xl">
+    <div ref={containerRef} className="p-4 sm:p-8 max-w-6xl">
       <div data-reveal="">
         <QuickAdd entities={entities} onCreated={load} onCountsChanged={onCountsChanged} />
       </div>
