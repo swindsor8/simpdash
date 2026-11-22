@@ -157,23 +157,31 @@ export function GradientText({ children, className = '' }) {
   return <span className={`rb-gradient-text ${className}`}>{children}</span>
 }
 
-const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+/<>'
+const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+/<>[]'
 
-// DecryptedText (React Bits) — matrix/phosphor scramble reveal that locks
-// characters in left-to-right. Shines in Terminal CRT mode.
-export function DecryptedText({ text, className = '', speed = 26, theme }) {
+// DecryptedText (React Bits) — RobCo/Pip-Boy phosphor scramble reveal that
+// locks characters in left-to-right with a blazing leading block cursor, GSAP
+// phosphor bloom on lock, and interactive hover re-decrypt telemetry scan.
+export function DecryptedText({ text, className = '', speed = 24, theme }) {
   const active = getActiveTheme(theme)
   const animate = shouldAnimate(active)
   const [display, setDisplay] = useState(text)
+  const [scanning, setScanning] = useState(false)
+  const [scanTick, setScanTick] = useState(0)
+  const spanRef = useRef(null)
+  const busyRef = useRef(false)
 
   useEffect(() => {
     if (!animate || !text) {
       setDisplay(text)
+      setScanning(false)
       return
     }
     const target = String(text)
     let revealed = 0
     let frame = 0
+    busyRef.current = true
+    setScanning(true)
     const id = setInterval(() => {
       frame++
       if (frame % 2 === 0) revealed++
@@ -181,6 +189,8 @@ export function DecryptedText({ text, className = '', speed = 26, theme }) {
       for (let i = 0; i < target.length; i++) {
         if (target[i] === ' ' || i < revealed) {
           out += target[i]
+        } else if (i === revealed) {
+          out += '█'
         } else {
           out += SCRAMBLE_CHARS[(i * 7 + frame * 13) % SCRAMBLE_CHARS.length]
         }
@@ -189,12 +199,38 @@ export function DecryptedText({ text, className = '', speed = 26, theme }) {
       if (revealed >= target.length) {
         clearInterval(id)
         setDisplay(target)
+        setScanning(false)
+        busyRef.current = false
+        if (spanRef.current) {
+          gsap.fromTo(
+            spanRef.current,
+            { filter: 'brightness(2.2)' },
+            { filter: 'brightness(1)', duration: 0.32, ease: 'power2.out', clearProps: 'filter' },
+          )
+        }
       }
     }, speed)
-    return () => clearInterval(id)
-  }, [text, animate, speed])
+    return () => {
+      clearInterval(id)
+      busyRef.current = false
+      setScanning(false)
+    }
+  }, [text, animate, speed, scanTick])
 
-  return <span className={className}>{display}</span>
+  const handleRescan = () => {
+    if (!animate || busyRef.current) return
+    setScanTick((n) => n + 1)
+  }
+
+  return (
+    <span
+      ref={spanRef}
+      onPointerEnter={handleRescan}
+      className={`rb-crt-heading ${scanning ? 'is-scanning' : ''} ${className}`}
+    >
+      {display}
+    </span>
+  )
 }
 
 // ThemedHeading — picks the signature React Bits text animation for the active
@@ -224,7 +260,8 @@ export function Magnet({ children, strength = 0.2, padding = 0, className = 'inl
     if (!el || typeof window === 'undefined') return
     if (window.matchMedia?.('(pointer: coarse)').matches) return
     const active = getActiveTheme(theme)
-    if (!shouldAnimate(active) || active === 'win98') return
+    // Win98 & Terminal CRT controls sit rigidly on their plane (no magnetic float)
+    if (!shouldAnimate(active) || active === 'win98' || active === 'terminal') return
 
     const isKinetic = active === 'kinetic'
     const pull = isKinetic ? strength * 1.55 : strength
@@ -279,7 +316,7 @@ export function TiltedCard({ children, maxTilt = 5, className = '', theme, ...re
     if (!el || typeof window === 'undefined') return
     if (window.matchMedia?.('(pointer: coarse)').matches) return
     const active = getActiveTheme(theme)
-    if (!shouldAnimate(active) || FLAT_THEMES.has(active)) return
+    if (!shouldAnimate(active) || FLAT_THEMES.has(active) || active === 'terminal') return
 
     const isKinetic = active === 'kinetic'
     const tilt = isKinetic ? maxTilt * 1.65 : maxTilt

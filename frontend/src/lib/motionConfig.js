@@ -98,18 +98,19 @@ export const THEME_MOTION = {
     instant: false,
   },
   terminal: {
-    lenis: { lerp: 0.16, wheelMultiplier: 1.0 },
-    // Phosphor panels don't float vertically — they warm up from high brightness.
-    reveal: { y: 0, filter: 'brightness(2.2)', duration: 0.32, ease: 'power2.out', stagger: 0.045 },
-    view: { y: 0, duration: 0.16, ease: 'power2.out' },
-    modal: { y: 0, scale: 0.98, duration: 0.16, ease: 'power2.out' },
-    gauge: { duration: 0.55, ease: 'power2.out' },
-    expand: { duration: 0.2, ease: 'power2.out' },
-    navGlide: { duration: 0.18, ease: 'power2.out' },
-    sparkDraw: { duration: 0.55, ease: 'none' },
+    lenis: { lerp: 0.14, wheelMultiplier: 1.0 },
+    // Phosphor panels never float vertically — they raster-expand and flash down from P1 tube warmup.
+    reveal: { y: 0, scaleY: 0.94, filter: 'brightness(2.8)', duration: 0.44, ease: 'power3.out', stagger: 0.055 },
+    view: { y: 0, filter: 'brightness(2.1)', duration: 0.28, ease: 'power2.out' },
+    modal: { y: 0, scaleY: 0.08, scale: 0.98, filter: 'brightness(2.6)', duration: 0.3, ease: 'expo.out' },
+    gauge: { duration: 0.82, ease: 'back.out(1.45)' },
+    expand: { duration: 0.26, ease: 'power3.out' },
+    navGlide: { duration: 0.28, ease: 'expo.out' },
+    sparkDraw: { duration: 0.85, ease: 'none' },
     numberEase: 'power2.out',
     spotlight: true,
     scrollBar: true,
+    terminal: true,
     instant: false,
   },
   win98: {

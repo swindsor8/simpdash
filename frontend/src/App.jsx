@@ -9,6 +9,7 @@ import { useTheme } from './hooks/useTheme'
 import { loadingText } from './lib/copy'
 
 const KineticStage = lazy(() => import('./components/KineticStage'))
+const TerminalStage = lazy(() => import('./components/TerminalStage'))
 
 export default function App() {
   const { theme, setTheme } = useTheme()
@@ -19,6 +20,9 @@ export default function App() {
     if (next === 'kinetic' && theme !== 'kinetic') {
       sessionStorage.removeItem('sd-kinetic-ignited')
       sessionStorage.setItem('sd-kinetic-switched', '1')
+    }
+    if (next === 'terminal' && theme !== 'terminal') {
+      sessionStorage.setItem('sd-terminal-switched', '1')
     }
     setTheme(next)
   }
@@ -54,6 +58,11 @@ export default function App() {
       {theme === 'kinetic' && (
         <Suspense fallback={null}>
           <KineticStage theme={theme} />
+        </Suspense>
+      )}
+      {theme === 'terminal' && (
+        <Suspense fallback={null}>
+          <TerminalStage theme={theme} />
         </Suspense>
       )}
       {screenEl}

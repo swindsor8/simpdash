@@ -1,4 +1,4 @@
-import{a as e,i as t,n,r,t as i}from"./index-CT8X3Bzo.js";var a=e(t(),1),o=i(),s=`#version 300 es
+import{a as e,i as t,n,r,t as i}from"./index-B1iGQLeh.js";var a=e(t(),1),o=i(),s=`#version 300 es
 in vec2 aPos;
 void main() {
   gl_Position = vec4(aPos, 0.0, 1.0);

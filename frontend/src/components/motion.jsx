@@ -92,7 +92,24 @@ export function useViewTransition(containerRef, triggerKey, theme) {
       }
       if (v.scale) fromVars.scale = v.scale
       if (v.filter) fromVars.filter = v.filter
-      gsap.from(el, fromVars)
+      // Authentic Fallout 4 Pip-Boy tab-switch horizontal CRT sync jitter
+      if (profile.terminal) {
+        gsap.timeline()
+          .fromTo(
+            el,
+            { opacity: 0.25, filter: v.filter || 'brightness(2.1)', skewX: 1.4 },
+            {
+              opacity: 1,
+              filter: 'brightness(1)',
+              skewX: 0,
+              duration: v.duration,
+              ease: v.ease,
+              clearProps: 'transform,opacity,filter',
+            },
+          )
+      } else {
+        gsap.from(el, fromVars)
+      }
     }, containerRef)
 
     return () => ctx.revert()
@@ -206,8 +223,10 @@ export function useModalEntrance(backdropRef, dialogRef, theme) {
           scale: m.scale || 1,
           duration: m.duration,
           ease: m.ease,
-          clearProps: 'transform,opacity,transformPerspective',
+          clearProps: 'transform,opacity,filter,transformPerspective',
         }
+        if (m.scaleY) dVars.scaleY = m.scaleY
+        if (m.filter) dVars.filter = m.filter
         if (m.rotateX) {
           dVars.rotateX = m.rotateX
           dVars.transformPerspective = 900
@@ -348,7 +367,7 @@ export function ScrollProgressBar({ scrollerRef, theme, resetKey }) {
     const update = () => {
       const now = performance.now()
       const top = scroller.scrollTop
-      if (profile.kinetic) {
+      if (profile.kinetic || profile.terminal) {
         const dt = Math.max(8, now - prevTs)
         const vel = Math.abs(top - prevTop) / dt
         if (vel > 0.04) {
@@ -452,6 +471,25 @@ export function useSlidingIndicator(navRef, indicatorRef, activeKey, theme) {
           duration: 0.42,
           ease: 'elastic.out(1, 0.5)',
         }, 0.13)
+      return
+    }
+
+    if (profile.terminal) {
+      // Pip-Boy HUD bar snaps cleanly to target row with a phosphor lock flare
+      gsap.timeline({ overwrite: 'auto' })
+        .to(pill, {
+          y,
+          height,
+          opacity: 1,
+          duration: profile.navGlide.duration,
+          ease: profile.navGlide.ease,
+        }, 0)
+        .fromTo(
+          pill,
+          { scaleX: 0.92, filter: 'brightness(1.9)' },
+          { scaleX: 1, filter: 'brightness(1)', duration: 0.24, ease: 'power2.out', clearProps: 'filter' },
+          0,
+        )
       return
     }
 
@@ -565,16 +603,24 @@ export function usePopPulse(ref, trigger) {
     if (!el || !trigger || !shouldAnimate()) return
     const profile = getThemeProfile()
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        el,
-        { scale: profile.kinetic ? 0.72 : 0.86 },
-        {
-          scale: 1,
-          duration: profile.kinetic ? 0.56 : 0.28,
-          ease: profile.kinetic ? 'elastic.out(1.1, 0.44)' : 'back.out(2)',
-          clearProps: 'transform',
-        },
-      )
+      if (profile.terminal) {
+        gsap.fromTo(
+          el,
+          { filter: 'brightness(2.4)', scale: 0.94 },
+          { filter: 'brightness(1)', scale: 1, duration: 0.26, ease: 'power2.out', clearProps: 'transform,filter' },
+        )
+      } else {
+        gsap.fromTo(
+          el,
+          { scale: profile.kinetic ? 0.72 : 0.86 },
+          {
+            scale: 1,
+            duration: profile.kinetic ? 0.56 : 0.28,
+            ease: profile.kinetic ? 'elastic.out(1.1, 0.44)' : 'back.out(2)',
+            clearProps: 'transform',
+          },
+        )
+      }
     })
     return () => ctx.revert()
   }, [ref, trigger])

@@ -1008,6 +1008,15 @@ code, pre, kbd, .font-mono {
 
 /* The whole app (sidebar = menu, main = readout) and auth screens become the
    CRT screen: thick dark bezel floating in the plastic chassis, rounded glass. */
+[data-theme="terminal"] #root > .h-screen,
+[data-theme="terminal"] #root > .min-h-screen {
+  position: relative;
+  z-index: 1;
+}
+.crt-stage-canvas {
+  inset: calc(1.25rem + 10px);
+  border-radius: calc(1.5rem - 10px);
+}
 [data-theme="terminal"] .h-screen.bg-\[\#0c0c14\],
 [data-theme="terminal"] .min-h-screen.bg-\[\#0c0c14\] {
   position: relative;
@@ -1015,6 +1024,7 @@ code, pre, kbd, .font-mono {
   margin: 1.25rem;
   border: 10px solid #0a0a0a;
   border-radius: 1.5rem;
+  background-color: transparent;
   box-shadow:
     inset 0 0 70px rgba(0,0,0,1),
     inset 0 0 140px rgba(26,255,64,0.05),
@@ -1064,12 +1074,12 @@ code, pre, kbd, .font-mono {
   letter-spacing: 1px;
 }
 
-/* --- Surfaces --- */
-[data-theme="terminal"] .bg-\[\#0c0c14\]     { background-color: #020a02; }   /* canvas */
+/* --- Surfaces (semi-translucent inside the CRT bezel so WebGL2 radar/V-Sync shines softly through) --- */
+[data-theme="terminal"] .bg-\[\#0c0c14\]:not(.h-screen):not(.min-h-screen) { background-color: rgba(2,10,2,0.86); }
 [data-theme="terminal"] .bg-\[\#0c0c14\]\/70 { background-color: rgba(2,10,2,0.82); }
-[data-theme="terminal"] .bg-\[\#0c0c14\]\/90 { background-color: rgba(2,10,2,0.92); }
-[data-theme="terminal"] .bg-\[\#101018\]     { background-color: #04140a; }   /* sidebar */
-[data-theme="terminal"] .bg-\[\#13131e\]     { background-color: #04130a; }   /* cards + inputs */
+[data-theme="terminal"] .bg-\[\#0c0c14\]\/90 { background-color: rgba(2,11,3,0.84); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+[data-theme="terminal"] .bg-\[\#101018\]     { background-color: rgba(3,18,9,0.78); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }   /* sidebar */
+[data-theme="terminal"] .bg-\[\#13131e\]     { background-color: rgba(3,17,8,0.76); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }   /* cards + inputs */
 
 /* --- Borders → phosphor green --- */
 [data-theme="terminal"] .border-white\/\[0\.04\],
@@ -1571,17 +1581,25 @@ code, pre, kbd, .font-mono {
   80% { opacity: 0.94; }
 }
 
-/* (5) Card chrome — L-shaped corner brackets at each card corner, drawn as eight
-   thin gradient segments on one decorative pseudo-element (no markup, a common
-   HUD technique). Section dividers already recolour green via the border rules. */
-[data-theme="terminal"] .bg-\[\#13131e\].rounded-2xl { position: relative; }
+/* (5) Card chrome — tactical Pip-Boy L-shaped corner brackets driven by
+   TerminalStage proximity (--tb-prox) & click discharge (--tb-pulse).
+   Brackets brighten and expand cleanly when targeting a panel. */
+[data-theme="terminal"] .bg-\[\#13131e\].rounded-2xl {
+  position: relative;
+  border-color: rgba(26, 255, 64, calc(0.36 + var(--tb-prox, 0) * 0.44 + var(--tb-pulse, 0) * 0.2));
+  box-shadow:
+    inset 0 0 20px rgba(26, 255, 64, calc(0.05 + var(--tb-prox, 0) * 0.08 + var(--tb-pulse, 0) * 0.14)),
+    0 0 calc(10px + var(--tb-prox, 0) * 14px) rgba(26, 255, 64, calc(0.09 + var(--tb-prox, 0) * 0.18 + var(--tb-pulse, 0) * 0.22));
+  transition: border-color 140ms ease-out, box-shadow 140ms ease-out;
+}
 [data-theme="terminal"] .bg-\[\#13131e\].rounded-2xl::after {
   content: "";
   position: absolute;
   inset: 5px;
   pointer-events: none;
-  --b: rgba(26, 255, 64, 0.55);
-  --len: 11px;
+  z-index: 2;
+  --b: rgba(26, 255, 64, calc(0.45 + var(--tb-prox, 0) * 0.55));
+  --len: calc(11px + var(--tb-prox, 0) * 5px);
   --thick: 1.5px;
   background:
     linear-gradient(var(--b), var(--b)) left top / var(--thick) var(--len) no-repeat,
@@ -1592,6 +1610,14 @@ code, pre, kbd, .font-mono {
     linear-gradient(var(--b), var(--b)) left bottom / var(--len) var(--thick) no-repeat,
     linear-gradient(var(--b), var(--b)) right bottom / var(--thick) var(--len) no-repeat,
     linear-gradient(var(--b), var(--b)) right bottom / var(--len) var(--thick) no-repeat;
+  filter: drop-shadow(0 0 calc(2px + var(--tb-prox, 0) * 5px) rgba(26, 255, 64, 0.7));
+  transition: filter 140ms ease-out;
+}
+[data-theme="terminal"] .drawer-panel,
+[data-theme="terminal"] .cmd-palette {
+  background-color: rgba(2, 13, 5, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 /* (7) Sidebar nav as HUD tabs. Inactive items are already dimmer (text-gray-500).
@@ -1869,6 +1895,9 @@ code, pre, kbd, .font-mono {
     radial-gradient(circle at 50% 50%, rgba(26,255,64,0.03), rgba(0,0,0,0.55) 95%);
   background-size: 100% 3px, 100% 100%;
 }
+.crt-boot-screen {
+  transform-origin: center center;
+}
 .crt-boot.fading { animation: crt-bootfade 350ms ease-out forwards; }
 @keyframes crt-bootfade { to { opacity: 0; visibility: hidden; } }
 .crt-boot .cursor { background: #2bff52; color: #2bff52; }
@@ -1902,9 +1931,25 @@ code, pre, kbd, .font-mono {
   background: #fbd000;
   box-shadow: 0 1px 0 #000;
 }
+[data-theme="terminal"] .scroll-progress-track {
+  height: 3px;
+  margin-bottom: -3px;
+  overflow: visible;
+}
 [data-theme="terminal"] .scroll-progress-fill {
-  background: var(--pip);
-  box-shadow: 0 0 8px var(--pip-glow);
+  background: repeating-linear-gradient(90deg, var(--pip) 0 8px, rgba(2,10,2,0.85) 8px 10px);
+  box-shadow: 0 0 10px var(--pip-glow);
+}
+[data-theme="terminal"] .scroll-progress-tip {
+  display: block;
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translateY(-50%);
+  background: #c8ffd2;
+  box-shadow: 0 0 8px var(--pip), 0 0 16px var(--pip-glow);
 }
 [data-theme="win98"] .scroll-progress-fill {
   display: none;
@@ -1965,7 +2010,11 @@ code, pre, kbd, .font-mono {
 }
 [data-theme="default"]  .card-spot { --spot-color: rgba(79, 70, 229, 0.07); }
 [data-theme="glass"]    .card-spot { --spot-color: rgba(255, 255, 255, 0.16); }
-[data-theme="terminal"] .card-spot { --spot-color: rgba(26, 255, 64, 0.10); }
+[data-theme="terminal"] .card-spot { --spot-color: rgba(26, 255, 64, 0.14); }
+[data-theme="terminal"] .card-spot::before {
+  background:
+    radial-gradient(240px circle at var(--mx, -200px) var(--my, -200px), rgba(26, 255, 64, 0.14), rgba(26, 255, 64, 0.04) 55%, transparent 76%);
+}
 [data-theme="retro"]    .card-spot::before,
 [data-theme="mario"]    .card-spot::before,
 [data-theme="win98"]    .card-spot::before { display: none; }
@@ -2343,7 +2392,7 @@ code, pre, kbd, .font-mono {
 }
 
 /* Luminous neon sparkline trace on Kinetic */
-[data-theme="kinetic"] svg polyline {
+[data-theme="kinetic"] svg[aria-label$="trend"] polyline {
   filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.48));
 }
 
@@ -2742,5 +2791,131 @@ code, pre, kbd, .font-mono {
   }
   [data-theme="kinetic"] .sd-brand-interactive:hover {
     transform: translateY(-2px) scale(1.12) rotate(4deg);
+  }
+}
+
+/* ===========================================================================
+   TERMINAL (FALLOUT 4 / PIP-BOY CRT) — REACT BITS + GSAP ENHANCEMENTS
+   Self-contained live TerminalPreview card + CRT phosphor animations that stay
+   100% faithful to monochrome P1 green CRT hardware (no floating/3D tilt).
+   =========================================================================== */
+@keyframes tp-scan-roll {
+  0%   { transform: translateY(-120%); }
+  100% { transform: translateY(420%); }
+}
+@keyframes tp-bar-hum {
+  0%, 100% { width: 77%; opacity: 0.92; }
+  50%      { width: 84%; opacity: 1; }
+}
+@keyframes crt-heading-glitch {
+  0%, 94%, 100% { transform: translateX(0); text-shadow: 0 0 5px var(--pip-glow); }
+  95%           { transform: translateX(-1.5px); text-shadow: 2px 0 6px rgba(180,255,195,0.85); }
+  97%           { transform: translateX(1.5px); text-shadow: -2px 0 5px rgba(26,255,64,0.8); }
+}
+@keyframes crt-drawer-in {
+  0%   { opacity: 0; transform: translateX(28px); filter: brightness(2.4); }
+  65%  { opacity: 1; filter: brightness(1.3); }
+  100% { opacity: 1; transform: translateX(0); filter: brightness(1); }
+}
+@keyframes crt-geiger-pulse {
+  0%, 100% { filter: drop-shadow(0 0 5px var(--pip-glow)); }
+  25%      { filter: drop-shadow(0 0 11px rgba(180,255,195,0.95)); }
+  55%      { filter: drop-shadow(0 0 7px var(--pip-glow)); }
+  75%      { filter: drop-shadow(0 0 12px rgba(26,255,64,1)); }
+}
+@keyframes crt-brand-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(26,255,64,0.55)); }
+  50%      { filter: drop-shadow(0 0 12px rgba(26,255,64,0.88)); }
+}
+
+.terminal-preview-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(26,255,64,0.22) 65%, rgba(200,255,210,0.45) 85%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .terminal-preview-beam   { animation: tp-scan-roll 4.2s linear infinite; }
+  .terminal-preview-cursor { animation: crt-blink 0.95s steps(1) infinite; }
+  .terminal-preview-bar    { animation: tp-bar-hum 3.4s steps(6) infinite; }
+}
+
+/* Monochrome P1 green oscilloscope traces for NodeTrends RRD charts */
+[data-theme="terminal"] svg[aria-label$="trend"] polyline {
+  stroke: var(--pip) !important;
+  filter: drop-shadow(0 0 4px rgba(26, 255, 64, 0.72));
+}
+[data-theme="terminal"] svg[aria-label$="trend"] polygon {
+  fill: var(--pip) !important;
+  fill-opacity: 0.14;
+}
+
+/* Pip-Boy ShinyText phosphor radar sheen & DecryptedText heading glow */
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="terminal"] .rb-shiny {
+    background: linear-gradient(110deg, #1ad93d 26%, #2bff52 44%, #d4ffdc 52%, #2bff52 60%, #1ad93d 78%);
+    background-size: 240% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 5px rgba(26, 255, 64, 0.55));
+    animation: rb-shine 5.2s linear infinite;
+  }
+
+  [data-theme="terminal"] .rb-crt-heading {
+    display: inline-block;
+    animation: crt-heading-glitch 9.5s steps(2) infinite;
+  }
+  [data-theme="terminal"] .rb-crt-heading.is-scanning {
+    color: #c8ffd2;
+    text-shadow: 0 0 10px rgba(26, 255, 64, 0.95);
+  }
+
+  /* Rotating green Pip-Boy radar sweep around featured StarBorder trigger */
+  [data-theme="terminal"] .rb-star-border {
+    padding: 1.5px;
+    box-shadow: 0 0 12px rgba(26, 255, 64, 0.25);
+  }
+  [data-theme="terminal"] .rb-star-border::before {
+    width: auto;
+    inset: -2px;
+    opacity: 0.95;
+    background: conic-gradient(
+      from var(--kinetic-angle),
+      transparent 0deg,
+      transparent 225deg,
+      rgba(26, 255, 64, 0.4) 305deg,
+      #1aff40 350deg,
+      #d4ffdc 360deg
+    );
+    animation: kinetic-spin 3.2s linear infinite;
+  }
+
+  /* High-load Geiger-counter phosphor pulse on overloaded analog dials */
+  [data-theme="terminal"] .radial-gauge[data-level="high"] .gauge-needle {
+    animation: crt-geiger-pulse 1.15s steps(4) infinite;
+  }
+
+  /* Crisp CRT phosphor drawer slide-in */
+  [data-theme="terminal"] .animate-drawer-in {
+    animation: crt-drawer-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Terminal nav icons lock with phosphor glow instead of bouncy shift */
+  [data-theme="terminal"] aside nav button:hover svg {
+    transform: translateX(1px);
+    filter: drop-shadow(0 0 5px var(--pip-glow));
+  }
+
+  /* Subtle live phosphor pulse on Shape Magic brand mark */
+  [data-theme="terminal"] .sd-brand-mark {
+    animation: crt-brand-pulse 3.6s ease-in-out infinite;
+  }
+  [data-theme="terminal"] .sd-brand-interactive:hover {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 14px rgba(26, 255, 64, 0.9));
   }
 }

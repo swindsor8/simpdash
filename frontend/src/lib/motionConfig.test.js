@@ -45,9 +45,12 @@ assert.equal(THEME_MOTION.mario.spotlight, false)
 assert.ok(THEME_MOTION.glass.lenis.lerp < THEME_MOTION.nocturne.lenis.lerp)
 assert.ok(THEME_MOTION.retro.lenis.lerp > THEME_MOTION.nocturne.lenis.lerp)
 
-// Terminal phosphor panels never float vertically
+// Terminal phosphor panels never float vertically, use CRT raster/needle physics
 assert.equal(THEME_MOTION.terminal.reveal.y, 0)
 assert.equal(THEME_MOTION.terminal.view.y, 0)
+assert.equal(THEME_MOTION.terminal.terminal, true)
+assert.ok(THEME_MOTION.terminal.modal.scaleY < 0.2)
+assert.ok(THEME_MOTION.terminal.gauge.ease.startsWith('back'))
 
 // Kinetic theme enables 3D reveals, elastic gauges, spotlight, and kinetic flag
 assert.equal(THEME_MOTION.kinetic.kinetic, true)

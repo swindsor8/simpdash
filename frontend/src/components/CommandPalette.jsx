@@ -78,8 +78,10 @@ export default function CommandPalette({
           scale: m.scale || 1,
           duration: m.duration,
           ease: m.ease,
-          clearProps: 'transform,opacity,transformPerspective',
+          clearProps: 'transform,opacity,filter,transformPerspective',
         }
+        if (m.scaleY) dVars.scaleY = m.scaleY
+        if (m.filter) dVars.filter = m.filter
         if (m.rotateX) {
           dVars.rotateX = m.rotateX
           dVars.transformPerspective = 900

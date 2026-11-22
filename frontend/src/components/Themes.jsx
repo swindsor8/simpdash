@@ -70,24 +70,29 @@ function Win98Preview() {
   )
 }
 
-// A tiny CRT screen (phosphor green on black + scanlines) for the Terminal
-// theme preview. Inline-styled so it always reads terminal regardless of theme.
+// A live animated mini Fallout-4 CRT screen (phosphor green on black + rolling
+// scan beam + blinking cursor + HUD brackets) for the Terminal theme preview.
 function TerminalPreview() {
   const pip = '#1aff40'
   return (
-    <div className="h-24 relative overflow-hidden p-2"
-      style={{ background: '#020a02', color: pip, fontFamily: "'Courier New', monospace",
-        textShadow: '0 0 4px rgba(26,255,64,0.6)', fontSize: 10, letterSpacing: 1 }}>
-      <div className="flex justify-between font-bold">
-        <span>NODE</span><span>CPU 34%</span>
+    <div className="terminal-preview h-24 relative overflow-hidden p-2.5 select-none"
+      style={{ background: '#020a02', color: pip, fontFamily: "'Share Tech Mono', 'Courier New', monospace",
+        textShadow: '0 0 5px rgba(26,255,64,0.65)', fontSize: 10, letterSpacing: 1 }}>
+      {/* Rolling phosphor V-Sync refresh beam */}
+      <div className="terminal-preview-beam" />
+      <div className="relative z-10 flex justify-between font-bold">
+        <span>ROBCO // NODE</span><span>CPU 34%</span>
       </div>
-      <div className="mt-1.5 h-2 w-full" style={{ border: `1px solid ${pip}` }}>
-        <div className="h-full" style={{ width: '77%', background: pip }} />
+      <div className="relative z-10 mt-1.5 h-2 w-full p-[1px]" style={{ border: `1px solid ${pip}` }}>
+        <div className="terminal-preview-bar h-full" style={{ width: '77%', background: pip, boxShadow: '0 0 6px rgba(26,255,64,0.75)' }} />
       </div>
-      <div className="mt-2 text-[16px] font-bold tracking-widest">TERMINAL OS</div>
+      <div className="relative z-10 mt-2 text-[15px] font-bold tracking-widest flex items-center gap-1">
+        <span>TERMINAL OS</span>
+        <span className="terminal-preview-cursor inline-block w-2 h-3.5" style={{ background: pip }} />
+      </div>
       {/* scanlines */}
       <div className="absolute inset-0 pointer-events-none"
-        style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.3) 50%)', backgroundSize: '100% 3px' }} />
+        style={{ backgroundImage: 'linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.32) 50%)', backgroundSize: '100% 3px' }} />
     </div>
   )
 }
