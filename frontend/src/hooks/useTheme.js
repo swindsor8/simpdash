@@ -36,6 +36,11 @@ export const THEMES = [
     name: 'Liquid Glass',
     description: 'Frosted translucent panels over a drifting aurora.',
   },
+  {
+    id: 'kinetic',
+    name: 'Kinetic',
+    description: 'Heavily animated GSAP + React Bits plasma canvas, 3D cards & sparks.',
+  },
 ]
 
 export const THEME_META_COLORS = {
@@ -46,6 +51,7 @@ export const THEME_META_COLORS = {
   win98: '#008080',
   terminal: '#020a02',
   glass: '#0b0e1e',
+  kinetic: '#05040d',
 }
 
 export function useTheme() {

@@ -35,6 +35,7 @@ code, pre, kbd, .font-mono {
 }
 [data-theme="terminal"] * { scrollbar-color: rgba(26,255,64,0.35) transparent; }
 [data-theme="win98"] *    { scrollbar-width: auto; scrollbar-color: auto; }
+[data-theme="kinetic"] *  { scrollbar-color: rgba(139,92,246,0.48) transparent; }
 
 /* Semantic sticky-note surfaces (overridden cleanly by every theme template) */
 .note-yellow { background-color: rgba(252,211,77,0.09); border-color: rgba(252,211,77,0.26); }
@@ -190,8 +191,8 @@ code, pre, kbd, .font-mono {
 .radial-gauge[data-level="na"] .rg-center,
 .radial-gauge[data-level="idle"] .rg-center { opacity: 0.5; }
 
-/* Analog-dial bits exist in the markup always; the default theme hides them. */
-.gauge-ticks, .gauge-needle, .gauge-hub { display: none; }
+/* Analog-dial & kinetic-reactor bits exist in the markup always; base themes hide them. */
+.gauge-ticks, .gauge-needle, .gauge-hub, .gauge-orbit, .gauge-tip { display: none; }
 
 .rg-center {
   position: absolute; inset: 0; display: flex; flex-direction: column;
@@ -2102,4 +2103,644 @@ code, pre, kbd, .font-mono {
 }
 [data-theme="terminal"] .sd-brand-glow {
   filter: drop-shadow(0 0 14px rgba(26, 255, 64, 0.72));
+}
+
+/* Scroll progress comet tip — visible on Kinetic only */
+.scroll-progress-tip { display: none; }
+
+/* ===========================================================================
+   KINETIC PREVIEW WIDGET — self-contained live animated mini preview shown on
+   the Settings -> Appearance theme card regardless of the active theme.
+   =========================================================================== */
+@keyframes kp-beam-a {
+  0%, 100% { transform: translate(-18%, -10%) rotate(-24deg) scaleX(1); opacity: 0.75; }
+  50%      { transform: translate(22%, 8%) rotate(-18deg) scaleX(1.22); opacity: 1; }
+}
+@keyframes kp-beam-b {
+  0%, 100% { transform: translate(16%, 10%) rotate(26deg) scaleX(1.05); opacity: 0.65; }
+  50%      { transform: translate(-20%, -8%) rotate(18deg) scaleX(1.25); opacity: 0.95; }
+}
+@keyframes kp-orbit-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes kp-arc-breathe {
+  0%, 100% { stroke-dashoffset: 18; transform: rotate(-90deg); }
+  50%      { stroke-dashoffset: 52; transform: rotate(180deg); }
+}
+.kinetic-preview-beam {
+  position: absolute;
+  pointer-events: none;
+  filter: blur(18px);
+  border-radius: 9999px;
+}
+.kinetic-preview-beam.a {
+  width: 120%;
+  height: 36px;
+  top: 12%;
+  left: -10%;
+  background: linear-gradient(90deg, transparent, rgba(124,58,237,0.85), rgba(255,46,151,0.85), transparent);
+}
+.kinetic-preview-beam.b {
+  width: 110%;
+  height: 32px;
+  bottom: 8%;
+  left: -5%;
+  background: linear-gradient(90deg, transparent, rgba(0,240,255,0.82), rgba(124,58,237,0.75), transparent);
+}
+.kinetic-preview-beam.c {
+  width: 70px;
+  height: 70px;
+  top: 14px;
+  right: 12px;
+  background: radial-gradient(circle, rgba(251,191,36,0.45), rgba(255,46,151,0.28) 55%, transparent 75%);
+}
+.kinetic-preview-title {
+  background: linear-gradient(110deg, #ffffff 15%, #c4b5fd 35%, #ff5db1 55%, #00f0ff 78%, #ffffff 95%);
+  background-size: 240% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.kinetic-preview-orbit {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.kinetic-preview-arc {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.65));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .kinetic-preview-beam.a { animation: kp-beam-a 6.5s ease-in-out infinite; }
+  .kinetic-preview-beam.b { animation: kp-beam-b 7.8s ease-in-out infinite; }
+  .kinetic-preview-title  { animation: rb-shine 4.2s linear infinite; }
+  .kinetic-preview-orbit  { animation: kp-orbit-spin 11s linear infinite; }
+  .kinetic-preview-arc    { animation: kp-arc-breathe 4.6s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+}
+
+/* ===========================================================================
+   KINETIC THEME — heavily animated obsidian-chroma showpiece powered by GSAP
+   physics + React Bits primitives (WebGL2 Plasma Beams + Aurora, ClickSpark,
+   MagicBento proximity border glow, 3D SplitText, elastic gauges & pills).
+   Every decorative animation respects prefers-reduced-motion.
+   =========================================================================== */
+@property --kinetic-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes kinetic-spin {
+  to { --kinetic-angle: 360deg; }
+}
+@keyframes kinetic-grad-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes kinetic-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes kinetic-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2.5px); }
+}
+@keyframes kinetic-high-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(255,46,151,0.75)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(255,46,151,1)) drop-shadow(0 0 24px rgba(251,191,36,0.45)); }
+}
+@keyframes kinetic-drawer-in {
+  0%   { opacity: 0; transform: translateX(42px) scale(0.97); }
+  72%  { opacity: 1; transform: translateX(-4px) scale(1.005); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes kinetic-card-enter {
+  from { opacity: 0; transform: translateY(26px) scale(0.94); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes glow-success-kinetic {
+  0% {
+    box-shadow:
+      0 0 0 1.5px rgba(34,245,158,0.95),
+      0 0 32px rgba(0,240,255,0.6),
+      0 0 64px rgba(124,58,237,0.45);
+  }
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.09),
+      0 12px 34px rgba(0,0,0,0.45);
+  }
+}
+@keyframes glow-neutral-kinetic {
+  0% {
+    box-shadow:
+      0 0 0 1.5px rgba(167,139,250,0.8),
+      0 0 24px rgba(124,58,237,0.4);
+  }
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.09),
+      0 12px 34px rgba(0,0,0,0.45);
+  }
+}
+@keyframes reconnect-pulse-kinetic {
+  0%   { box-shadow: 0 0 0 2px rgba(0,240,255,0.8), 0 0 42px rgba(255,46,151,0.45); }
+  100% { box-shadow: 0 0 0 0 rgba(0,240,255,0); }
+}
+
+[data-theme="kinetic"] {
+  color-scheme: dark;
+  background-color: #05040d;
+  --kinetic-violet: #8b5cf6;
+  --kinetic-magenta: #ff2e97;
+  --kinetic-cyan: #00f0ff;
+  --kinetic-gold: #fbbf24;
+}
+[data-theme="kinetic"] body {
+  background-color: #05040d;
+}
+
+/* Layer the UI cleanly above KineticStage's fixed z-0 WebGL2 plasma canvas */
+[data-theme="kinetic"] #root > .h-screen,
+[data-theme="kinetic"] #root > .min-h-screen {
+  position: relative;
+  z-index: 1;
+}
+[data-theme="kinetic"] .h-screen.bg-\[\#0c0c14\],
+[data-theme="kinetic"] .min-h-screen.bg-\[\#0c0c14\] {
+  background-color: transparent;
+}
+
+/* Kinetic display typography for showpiece headers & KPI readouts */
+[data-theme="kinetic"] h1,
+[data-theme="kinetic"] h2,
+[data-theme="kinetic"] aside .tracking-tight,
+[data-theme="kinetic"] .text-2xl {
+  font-family: 'Space Grotesk', var(--font-sans);
+}
+
+/* Pillowy architectural radii */
+[data-theme="kinetic"] .rounded-2xl { border-radius: 1.35rem; }
+[data-theme="kinetic"] .rounded-xl  { border-radius: 0.95rem; }
+
+/* --- Obsidian frosted-glass surfaces --- */
+[data-theme="kinetic"] .bg-\[\#101018\] {
+  background-color: rgba(9, 7, 22, 0.72);
+  backdrop-filter: blur(22px) saturate(1.7);
+  -webkit-backdrop-filter: blur(22px) saturate(1.7);
+}
+[data-theme="kinetic"] .bg-\[\#13131e\],
+[data-theme="kinetic"] .bg-\[\#c6edda\], [data-theme="kinetic"] .bg-\[\#e8e8f4\],
+[data-theme="kinetic"] .bg-\[\#fef9c3\], [data-theme="kinetic"] .bg-\[\#e4dcf8\] {
+  background-color: rgba(13, 11, 28, 0.68);
+  backdrop-filter: blur(18px) saturate(1.65);
+  -webkit-backdrop-filter: blur(18px) saturate(1.65);
+}
+[data-theme="kinetic"] .bg-\[\#0c0c14\]:not(.h-screen):not(.min-h-screen):not(.font-mono),
+[data-theme="kinetic"] .bg-\[\#0c0c14\]\/70 {
+  background-color: rgba(7, 6, 18, 0.66);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+[data-theme="kinetic"] .bg-\[\#0c0c14\]\/90 {
+  background-color: rgba(8, 6, 20, 0.68);
+  backdrop-filter: blur(20px) saturate(1.85);
+  -webkit-backdrop-filter: blur(20px) saturate(1.85);
+}
+
+/* Sticky & mobile headers get a live scanning chromatic laser hairline */
+[data-theme="kinetic"] header:not(.sticky) { position: relative; }
+[data-theme="kinetic"] header {
+  border-bottom-color: rgba(167, 139, 250, 0.22);
+}
+[data-theme="kinetic"] header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(124,58,237,0.2) 0%, rgba(124,58,237,0.9) 25%, rgba(255,46,151,0.95) 50%, rgba(0,240,255,0.95) 75%, rgba(124,58,237,0.2) 100%);
+  background-size: 240% 100%;
+  opacity: 0.85;
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="kinetic"] header::after {
+    animation: kinetic-grad-flow 5s ease infinite;
+  }
+  [data-theme="kinetic"] .card-lift .w-9.h-9.rounded-xl,
+  [data-theme="kinetic"] .card-lift .w-10.h-10.rounded-xl {
+    transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 220ms ease, box-shadow 220ms ease;
+  }
+  [data-theme="kinetic"] .card-lift:hover .w-9.h-9.rounded-xl,
+  [data-theme="kinetic"] .card-lift:hover .w-10.h-10.rounded-xl {
+    transform: scale(1.09) rotate(-4deg);
+    border-color: rgba(0, 240, 255, 0.45);
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.28), inset 0 0 10px rgba(255, 46, 151, 0.16);
+  }
+}
+
+/* Luminous neon sparkline trace on Kinetic */
+[data-theme="kinetic"] svg polyline {
+  filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.48));
+}
+
+/* --- MagicBento Cards, Drawers & Palette: obsidian glass + proximity chromatic borders --- */
+[data-theme="kinetic"] .bg-\[\#13131e\].rounded-2xl,
+[data-theme="kinetic"] .drawer-panel,
+[data-theme="kinetic"] .cmd-palette,
+[data-theme="kinetic"] .bg-\[\#c6edda\], [data-theme="kinetic"] .bg-\[\#e8e8f4\],
+[data-theme="kinetic"] .bg-\[\#fef9c3\], [data-theme="kinetic"] .bg-\[\#e4dcf8\] {
+  position: relative;
+  border: 1px solid rgba(167, 139, 250, 0.19);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    0 12px 34px rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(124, 58, 237, 0.08);
+}
+
+[data-theme="kinetic"] .drawer-panel,
+[data-theme="kinetic"] .cmd-palette {
+  background-color: rgba(11, 9, 25, 0.88);
+  backdrop-filter: blur(26px) saturate(1.9);
+  -webkit-backdrop-filter: blur(26px) saturate(1.9);
+  border-color: rgba(167, 139, 250, 0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 24px 64px rgba(0, 0, 0, 0.65),
+    0 0 38px rgba(124, 58, 237, 0.20);
+}
+
+/* MagicBento proximity-lit perimeter ring (no overflow:hidden needed — popovers stay unclipped!) */
+[data-theme="kinetic"] .bg-\[\#13131e\].rounded-2xl::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  opacity: clamp(0.16, calc(0.16 + var(--kb-prox, 0) * 0.84 + var(--kb-pulse, 0) * 0.7), 1);
+  background:
+    radial-gradient(
+      260px circle at var(--kb-x, 50%) var(--kb-y, 50%),
+      rgba(0, 240, 255, 0.98) 0%,
+      rgba(255, 46, 151, 0.85) 38%,
+      rgba(124, 58, 237, 0.48) 70%,
+      transparent 100%
+    );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  transition: opacity 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Hover upgrades the card perimeter into a spinning electric conic halo */
+  [data-theme="kinetic"] .bg-\[\#13131e\].rounded-2xl:hover::after {
+    opacity: 1;
+    background:
+      conic-gradient(
+        from var(--kinetic-angle),
+        rgba(124, 58, 237, 0.95),
+        rgba(255, 46, 151, 0.95),
+        rgba(0, 240, 255, 0.98),
+        rgba(251, 191, 36, 0.85),
+        rgba(124, 58, 237, 0.95)
+      );
+    animation: kinetic-spin 3.4s linear infinite;
+  }
+
+  /* GSAP KineticStage owns 3D tilt/lift on .card-lift; CSS owns shadow bloom */
+  [data-theme="kinetic"] .card-lift {
+    transition: box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1), border-color 260ms ease-out;
+    will-change: transform;
+  }
+  [data-theme="kinetic"] .card-lift:hover {
+    transform: none;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      0 22px 48px rgba(0, 0, 0, 0.56),
+      0 0 32px rgba(124, 58, 237, 0.28),
+      0 0 18px rgba(0, 240, 255, 0.18);
+  }
+  [data-theme="kinetic"] .animate-drawer-in {
+    animation: kinetic-drawer-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  [data-theme="kinetic"] .stagger > * {
+    animation-name: kinetic-card-enter;
+    animation-duration: 540ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-theme="kinetic"] .glow-success { animation-name: glow-success-kinetic; animation-duration: 720ms; }
+  [data-theme="kinetic"] .glow-neutral { animation-name: glow-neutral-kinetic; animation-duration: 620ms; }
+  [data-theme="kinetic"] .reconnect-pulse { animation-name: reconnect-pulse-kinetic; animation-duration: 720ms; }
+}
+
+/* --- Borders & dividers → crisp luminous violet hairlines --- */
+[data-theme="kinetic"] .border-white\/\[0\.04\],
+[data-theme="kinetic"] .border-white\/\[0\.05\] { border-color: rgba(167, 139, 250, 0.10); }
+[data-theme="kinetic"] .border-white\/\[0\.06\],
+[data-theme="kinetic"] .border-white\/\[0\.08\] { border-color: rgba(167, 139, 250, 0.16); }
+[data-theme="kinetic"] .border-white\/\[0\.07\],
+[data-theme="kinetic"] .border-white\/10,
+[data-theme="kinetic"] .border-white\/15,
+[data-theme="kinetic"] .border-white\/20,
+[data-theme="kinetic"] .border-white\/30      { border-color: rgba(167, 139, 250, 0.24); }
+[data-theme="kinetic"] .divide-white\/\[0\.04\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="kinetic"] .divide-white\/\[0\.05\] > :not([hidden]) ~ :not([hidden]),
+[data-theme="kinetic"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) { border-color: rgba(167, 139, 250, 0.13); }
+
+/* --- Translucent fills --- */
+[data-theme="kinetic"] .bg-white\/10,
+[data-theme="kinetic"] .hover\:bg-white\/10:hover { background-color: rgba(167, 139, 250, 0.16); }
+[data-theme="kinetic"] .bg-white\/8  { background-color: rgba(167, 139, 250, 0.12); }
+[data-theme="kinetic"] .bg-white\/5,
+[data-theme="kinetic"] .hover\:bg-white\/5:hover { background-color: rgba(167, 139, 250, 0.08); }
+
+/* --- Text scale: crisp luminous cool-white contrast over dark obsidian --- */
+[data-theme="kinetic"] .text-white    { color: #f8f7ff; }
+[data-theme="kinetic"] .text-gray-100 { color: #f0edff; }
+[data-theme="kinetic"] .text-gray-200 { color: #e2dcff; }
+[data-theme="kinetic"] .text-gray-300 { color: #cfc7f2; }
+[data-theme="kinetic"] .text-gray-400 { color: #b5abd9; }
+[data-theme="kinetic"] .text-gray-500 { color: #968cb8; }
+[data-theme="kinetic"] .text-gray-600 { color: #7e74a3; }
+[data-theme="kinetic"] .text-gray-700 { color: #695f8f; }
+
+/* Semantic neon accents */
+[data-theme="kinetic"] .text-emerald-400,
+[data-theme="kinetic"] .text-emerald-300 { color: #22f59e; }
+[data-theme="kinetic"] .text-amber-400,
+[data-theme="kinetic"] .text-amber-300   { color: #ffc233; }
+[data-theme="kinetic"] .text-red-400,
+[data-theme="kinetic"] .text-red-300     { color: #ff4d79; }
+
+/* --- Primary CTA buttons: animated chromatic plasma gradient + sheen --- */
+[data-theme="kinetic"] .bg-blue-600 {
+  background-color: #7c3aed;
+  background-image: linear-gradient(125deg, #7c3aed 0%, #ff2e97 50%, #00c8ff 100%);
+  background-size: 220% 220%;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 6px 22px rgba(255, 46, 151, 0.32),
+    0 0 16px rgba(0, 240, 255, 0.22);
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="kinetic"] .bg-blue-600 {
+    animation: kinetic-grad-flow 5.5s ease infinite;
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease, filter 220ms ease;
+  }
+  [data-theme="kinetic"] .bg-blue-600:hover {
+    filter: brightness(1.12);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 10px 28px rgba(255, 46, 151, 0.44),
+      0 0 24px rgba(0, 240, 255, 0.35);
+  }
+  [data-theme="kinetic"] button.bg-blue-600:active {
+    transform: scale(0.95);
+  }
+}
+[data-theme="kinetic"] .hover\:bg-blue-700:hover {
+  background-image: linear-gradient(125deg, #6d28d9 0%, #e11d7e 50%, #00a8e8 100%);
+}
+[data-theme="kinetic"] .bg-blue-600\/60 { background-color: rgba(124, 58, 237, 0.65); }
+
+/* Energy meters, badges & focus rings */
+[data-theme="kinetic"] .bg-blue-500 {
+  background-image: linear-gradient(90deg, #7c3aed, #ff2e97, #00f0ff);
+  background-size: 200% 100%;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="kinetic"] .bg-blue-500 { animation: kinetic-grad-flow 4s ease infinite; }
+}
+[data-theme="kinetic"] .bg-blue-500\/10,
+[data-theme="kinetic"] .bg-blue-500\/15 { background-color: rgba(124, 58, 237, 0.22); }
+[data-theme="kinetic"] .bg-blue-500\/20,
+[data-theme="kinetic"] .bg-blue-500\/25 { background-color: rgba(0, 240, 255, 0.18); }
+[data-theme="kinetic"] .text-blue-200,
+[data-theme="kinetic"] .text-blue-300   { color: #7af8ff; }
+[data-theme="kinetic"] .text-blue-400   { color: #38f2ff; }
+[data-theme="kinetic"] .border-blue-500\/30,
+[data-theme="kinetic"] .border-blue-500\/40,
+[data-theme="kinetic"] .border-blue-500\/60,
+[data-theme="kinetic"] .focus\:border-blue-500\/50:focus,
+[data-theme="kinetic"] .focus\:border-blue-500\/60:focus {
+  border-color: rgba(0, 240, 255, 0.65);
+  box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.22), 0 0 16px rgba(124, 58, 237, 0.24);
+}
+
+/* Sticky notes — luminous obsidian neon cards */
+[data-theme="kinetic"] .note-yellow { background-color: rgba(251,191,36,0.13); border-color: rgba(251,191,36,0.42); backdrop-filter: blur(16px); box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 18px rgba(251,191,36,0.12); }
+[data-theme="kinetic"] .note-teal   { background-color: rgba(0,240,255,0.12);  border-color: rgba(0,240,255,0.42);  backdrop-filter: blur(16px); box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 18px rgba(0,240,255,0.14); }
+[data-theme="kinetic"] .note-pink   { background-color: rgba(255,46,151,0.13); border-color: rgba(255,46,151,0.44); backdrop-filter: blur(16px); box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 18px rgba(255,46,151,0.14); }
+[data-theme="kinetic"] .note-blue   { background-color: rgba(124,58,237,0.16); border-color: rgba(167,139,250,0.46); backdrop-filter: blur(16px); box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 18px rgba(124,58,237,0.16); }
+
+/* Select options & terminal console stay dark and legible */
+[data-theme="kinetic"] select option { background-color: #0e0b22; color: #f8f7ff; }
+[data-theme="kinetic"] .font-mono.bg-\[\#0c0c14\] {
+  background-color: rgba(5, 4, 14, 0.90);
+  border-color: rgba(0, 240, 255, 0.26);
+  box-shadow: inset 0 0 28px rgba(124, 58, 237, 0.14);
+}
+[data-theme="kinetic"] pre.bg-\[\#0c0c14\] {
+  background-color: rgba(5, 4, 14, 0.90);
+  color: #7af8ff;
+}
+
+/* Chromatic skeleton loading wave */
+[data-theme="kinetic"] .skeleton {
+  background-color: rgba(139, 92, 246, 0.12);
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="kinetic"] .skeleton {
+    background-image: linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.28) 35%, rgba(0,240,255,0.26) 55%, rgba(255,46,151,0.24) 75%, transparent 100%);
+  }
+}
+
+/* Stat update flash overlay */
+[data-theme="kinetic"] .stat-flash-overlay {
+  background: linear-gradient(135deg, rgba(0,240,255,0.24), rgba(255,46,151,0.20), rgba(124,58,237,0.18));
+}
+
+/* --- Kinetic Card Spotlight: vibrant iridescent multi-stop cursor glow --- */
+[data-theme="kinetic"] .card-spot::before {
+  background: radial-gradient(
+    280px circle at var(--mx, -200px) var(--my, -200px),
+    rgba(0, 240, 255, 0.14) 0%,
+    rgba(255, 46, 151, 0.09) 42%,
+    rgba(124, 58, 237, 0.06) 68%,
+    transparent 82%
+  );
+}
+
+/* --- Kinetic Scroll Progress Bar: glowing plasma comet + spark head --- */
+[data-theme="kinetic"] .scroll-progress-track {
+  height: 3px;
+  margin-bottom: -3px;
+  overflow: visible;
+}
+[data-theme="kinetic"] .scroll-progress-fill {
+  background: linear-gradient(90deg, #7c3aed 0%, #ff2e97 52%, #00f0ff 100%);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.72), 0 0 24px rgba(255, 46, 151, 0.45);
+}
+[data-theme="kinetic"] .scroll-progress-tip {
+  display: block;
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translateY(-50%);
+  border-radius: 9999px;
+  background: radial-gradient(circle, #ffffff 0%, #00f0ff 48%, transparent 78%);
+  box-shadow: 0 0 12px #00f0ff, 0 0 22px #ff2e97;
+}
+
+/* --- Kinetic Sidebar Nav Glide Pill & Icon Physics --- */
+[data-theme="kinetic"] .nav-glide-pill {
+  background: linear-gradient(110deg, rgba(124, 58, 237, 0.30) 0%, rgba(255, 46, 151, 0.22) 55%, rgba(0, 240, 255, 0.18) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  box-shadow:
+    inset 3px 0 0 #00f0ff,
+    0 0 20px rgba(124, 58, 237, 0.28),
+    0 0 12px rgba(0, 240, 255, 0.18);
+}
+[data-theme="kinetic"] aside .bg-white\/10 {
+  background: linear-gradient(110deg, rgba(124, 58, 237, 0.28), rgba(0, 240, 255, 0.16));
+  box-shadow: inset 2px 0 0 #00f0ff;
+}
+[data-theme="kinetic"] aside button[aria-current="page"] svg {
+  color: #00f0ff;
+  filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.7));
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="kinetic"] aside nav button svg {
+    transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 220ms ease, color 220ms ease;
+  }
+  [data-theme="kinetic"] aside nav button:hover svg {
+    transform: translateX(3px) scale(1.16) rotate(-5deg);
+    color: #ff5db1;
+    filter: drop-shadow(0 0 7px rgba(255, 46, 151, 0.72));
+  }
+}
+
+/* --- Kinetic Radial Gauges: plasma reactor arcs + orbital ring + glowing comet tip --- */
+[data-theme="kinetic"] .radial-gauge[data-level="low"]  { --gauge-color: #00f0ff; }
+[data-theme="kinetic"] .radial-gauge[data-level="mid"]  { --gauge-color: #ffb800; }
+[data-theme="kinetic"] .radial-gauge[data-level="high"] { --gauge-color: #ff2e97; }
+[data-theme="kinetic"] .gauge-track { stroke: rgba(167, 139, 250, 0.14); }
+[data-theme="kinetic"] .gauge-fill {
+  filter: drop-shadow(0 0 6px var(--gauge-color));
+}
+[data-theme="kinetic"] .gauge-orbit {
+  display: block;
+  fill: none;
+  stroke: rgba(167, 139, 250, 0.22);
+  stroke-width: 0.9;
+  stroke-dasharray: 2.5 5.5;
+  transform-box: view-box;
+  transform-origin: 50px 50px;
+}
+[data-theme="kinetic"] .rg-sm .gauge-orbit { display: none; }
+[data-theme="kinetic"] .gauge-tip { display: block; }
+[data-theme="kinetic"] .gauge-tip-dot {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 4px var(--gauge-color));
+}
+[data-theme="kinetic"] .gauge-tip-halo {
+  fill: var(--gauge-color);
+  opacity: 0.36;
+}
+[data-theme="kinetic"] .rg-sm .gauge-tip-dot { r: 3.4px; }
+[data-theme="kinetic"] .rg-sm .gauge-tip-halo { r: 6.2px; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="kinetic"] .gauge-orbit {
+    animation: kinetic-orbit 22s linear infinite;
+  }
+  [data-theme="kinetic"] .radial-gauge[data-level="high"] .gauge-fill {
+    animation: kinetic-high-pulse 1.8s ease-in-out infinite;
+  }
+}
+
+/* --- Kinetic React Bits Text & Border Primitives --- */
+.rb-gradient-text {
+  display: inline-block;
+  background: linear-gradient(110deg, #ffffff 12%, #c4b5fd 34%, #ff5db1 54%, #00f0ff 76%, #ffffff 94%);
+  background-size: 240% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rb-gradient-text { animation: rb-shine 5s linear infinite; }
+
+  [data-theme="kinetic"] .rb-shiny {
+    background: linear-gradient(110deg, #ffffff 16%, #c4b5fd 36%, #ff2e97 52%, #00f0ff 68%, #fbbf24 80%, #ffffff 96%);
+    background-size: 260% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rb-shine 4.2s linear infinite;
+  }
+
+  [data-theme="kinetic"] .rb-kinetic-heading {
+    filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.38));
+  }
+  [data-theme="kinetic"] .rb-kinetic-heading .rb-split-char {
+    background: linear-gradient(110deg, #ffffff 15%, #d8b4fe 38%, #ff5db1 58%, #00f0ff 80%, #ffffff 96%);
+    background-size: 260% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: rb-shine 5.5s linear infinite;
+  }
+
+  /* StarBorder upgrades to a full 360° rotating chromatic plasma halo */
+  [data-theme="kinetic"] .rb-star-border {
+    padding: 1.5px;
+    box-shadow: 0 0 18px rgba(124, 58, 237, 0.35), 0 0 12px rgba(0, 240, 255, 0.20);
+  }
+  [data-theme="kinetic"] .rb-star-border::before {
+    width: auto;
+    inset: -2px;
+    opacity: 1;
+    background: conic-gradient(
+      from var(--kinetic-angle),
+      #7c3aed,
+      #ff2e97,
+      #00f0ff,
+      #fbbf24,
+      #7c3aed
+    );
+    animation: kinetic-spin 2.8s linear infinite;
+  }
+}
+
+/* Kinetic Shape Magic brand emblem: vivid iridescent halo + soft levitation */
+[data-theme="kinetic"] .sd-brand-mark {
+  filter:
+    drop-shadow(0 0 10px rgba(255, 46, 151, 0.50))
+    drop-shadow(0 0 18px rgba(0, 240, 255, 0.35));
+}
+[data-theme="kinetic"] .sd-brand-glow {
+  filter:
+    drop-shadow(0 0 22px rgba(255, 46, 151, 0.65))
+    drop-shadow(0 0 36px rgba(0, 240, 255, 0.45));
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme="kinetic"] .sd-brand-mark {
+    animation: kinetic-float 3.8s ease-in-out infinite;
+  }
+  [data-theme="kinetic"] .sd-brand-interactive:hover {
+    transform: translateY(-2px) scale(1.12) rotate(4deg);
+  }
 }

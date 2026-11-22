@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import SetupPassword from './components/SetupPassword'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
@@ -8,10 +8,20 @@ import { getSetupStatus, getMe } from './lib/api'
 import { useTheme } from './hooks/useTheme'
 import { loadingText } from './lib/copy'
 
+const KineticStage = lazy(() => import('./components/KineticStage'))
+
 export default function App() {
   const { theme, setTheme } = useTheme()
   const [screen, setScreen] = useState('loading')
   const [pveLocal, setPveLocal] = useState(true)
+
+  const handleSetTheme = (next) => {
+    if (next === 'kinetic' && theme !== 'kinetic') {
+      sessionStorage.removeItem('sd-kinetic-ignited')
+      sessionStorage.setItem('sd-kinetic-switched', '1')
+    }
+    setTheme(next)
+  }
 
   useEffect(() => {
     getSetupStatus()
@@ -36,11 +46,16 @@ export default function App() {
   } else if (screen === 'login') {
     screenEl = <Login theme={theme} onDone={() => setScreen('dashboard')} />
   } else {
-    screenEl = <Dashboard onLogout={() => setScreen('login')} theme={theme} setTheme={setTheme} />
+    screenEl = <Dashboard onLogout={() => setScreen('login')} theme={theme} setTheme={handleSetTheme} />
   }
 
   return (
     <>
+      {theme === 'kinetic' && (
+        <Suspense fallback={null}>
+          <KineticStage theme={theme} />
+        </Suspense>
+      )}
       {screenEl}
       <BootSequence theme={theme} />
     </>

@@ -5,6 +5,7 @@
 // Each theme's parameters mirror the CSS motion personality in index.css:
 //   - nocturne / default : calm, technical, trustworthy (ease-out, zero bounce)
 //   - glass              : silky liquid float (lower Lenis lerp, softer lift)
+//   - kinetic            : high-energy GSAP + React Bits showpiece (3D elastic choreography)
 //   - retro              : neobrutalist stamp (snappy stepped timing)
 //   - mario              : 8-bit playful pop (crisp bounce)
 //   - terminal           : CRT phosphor warmup (brightness flash, no vertical float)
@@ -51,6 +52,21 @@ export const THEME_MOTION = {
     numberEase: 'power3.out',
     spotlight: true,
     scrollBar: true,
+    instant: false,
+  },
+  kinetic: {
+    lenis: { lerp: 0.085, wheelMultiplier: 1.0 },
+    reveal: { y: 32, scale: 0.92, rotateX: 10, filter: 'blur(7px)', duration: 0.68, ease: 'back.out(1.45)', stagger: 0.065 },
+    view: { y: 20, scale: 0.985, filter: 'blur(5px)', duration: 0.45, ease: 'expo.out' },
+    modal: { y: 26, scale: 0.88, rotateX: 8, duration: 0.44, ease: 'back.out(1.6)' },
+    gauge: { duration: 1.15, ease: 'elastic.out(1, 0.58)' },
+    expand: { duration: 0.42, ease: 'back.out(1.25)' },
+    navGlide: { duration: 0.54, ease: 'elastic.out(1, 0.6)' },
+    sparkDraw: { duration: 1.05, ease: 'expo.out' },
+    numberEase: 'expo.out',
+    spotlight: true,
+    scrollBar: true,
+    kinetic: true,
     instant: false,
   },
   retro: {

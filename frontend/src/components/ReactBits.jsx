@@ -1,8 +1,9 @@
-// Theme-aware React Bits primitives (BlurText, DecryptedText, ShinyText,
-// Magnet, TiltedCard, StarBorder, InteractiveGridBg) implemented cleanly on top
-// of React + GSAP + HTML5 Canvas with zero extra npm dependencies.
-// Every effect automatically respects prefers-reduced-motion and adapts to all
-// 7 SuperDash themes (nocturne, default, retro, mario, win98, terminal, glass).
+// Theme-aware React Bits primitives (BlurText, SplitText, GradientText,
+// DecryptedText, ShinyText, Magnet, TiltedCard, StarBorder, InteractiveGridBg)
+// implemented cleanly on top of React + GSAP + HTML5 Canvas with zero extra npm
+// dependencies. Every effect automatically respects prefers-reduced-motion and
+// adapts across all 8 SuperDash themes (nocturne, default, retro, mario, win98,
+// terminal, glass, kinetic).
 
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
@@ -54,6 +55,108 @@ export function BlurText({ text, className = '', delay = 0, step = 0.045, theme 
   )
 }
 
+// SplitText (React Bits) — character-by-character 3D perspective flip + elastic
+// spring entrance via GSAP, plus an interactive hover character wave. Signature
+// heading animation for the Kinetic theme.
+export function SplitText({ text, className = '', delay = 0, step = 0.022, theme }) {
+  const ref = useRef(null)
+  const hoverBusyRef = useRef(false)
+  const active = getActiveTheme(theme)
+  const animate = shouldAnimate(active) && !FLAT_THEMES.has(active)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || !animate) return
+    const chars = el.querySelectorAll('[data-sc]')
+    if (!chars.length) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        chars,
+        {
+          opacity: 0,
+          y: 16,
+          rotateX: -72,
+          scale: 0.78,
+          filter: 'blur(5px)',
+          transformPerspective: 700,
+        },
+        {
+          opacity: 1,
+          y: 0,
+          rotateX: 0,
+          scale: 1,
+          filter: 'blur(0px)',
+          duration: 0.56,
+          delay,
+          stagger: step,
+          ease: 'back.out(1.85)',
+          clearProps: 'transform,opacity,filter,transformPerspective',
+        },
+      )
+    }, ref)
+    return () => ctx.revert()
+  }, [text, animate, delay, step])
+
+  const handleWave = () => {
+    const el = ref.current
+    if (!el || !animate || hoverBusyRef.current) return
+    const chars = el.querySelectorAll('[data-sc]')
+    if (!chars.length) return
+    hoverBusyRef.current = true
+    gsap.timeline({
+      onComplete: () => {
+        hoverBusyRef.current = false
+      },
+    })
+      .to(chars, {
+        y: -4,
+        scale: 1.12,
+        duration: 0.16,
+        stagger: 0.016,
+        ease: 'power2.out',
+      })
+      .to(
+        chars,
+        {
+          y: 0,
+          scale: 1,
+          duration: 0.42,
+          stagger: 0.016,
+          ease: 'elastic.out(1, 0.48)',
+          clearProps: 'transform',
+        },
+        0.1,
+      )
+  }
+
+  if (!animate) return <span className={className}>{text}</span>
+
+  const words = String(text).split(' ')
+  return (
+    <span ref={ref} onPointerEnter={handleWave} className={`inline-block ${className}`}>
+      {words.map((word, wi) => (
+        <span key={`${word}-${wi}`} className="inline-block whitespace-nowrap">
+          {Array.from(word).map((ch, ci) => (
+            <span
+              key={`${wi}-${ci}`}
+              data-sc=""
+              className="rb-split-char inline-block will-change-transform"
+            >
+              {ch}
+            </span>
+          ))}
+          {wi < words.length - 1 ? '\u00A0' : ''}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+// GradientText (React Bits) — animated flowing multi-stop chromatic gradient text.
+export function GradientText({ children, className = '' }) {
+  return <span className={`rb-gradient-text ${className}`}>{children}</span>
+}
+
 const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&*+/<>'
 
 // DecryptedText (React Bits) — matrix/phosphor scramble reveal that locks
@@ -95,11 +198,12 @@ export function DecryptedText({ text, className = '', speed = 26, theme }) {
 }
 
 // ThemedHeading — picks the signature React Bits text animation for the active
-// theme: DecryptedText on Terminal, BlurText on Nocturne/Midnight/Glass, and
-// crisp instant text on Retro/Super/Win98.
+// theme: DecryptedText on Terminal, SplitText 3D wave on Kinetic, BlurText on
+// Nocturne/Midnight/Glass, and crisp instant text on Retro/Super/Win98.
 export function ThemedHeading({ text, theme, className = '' }) {
   const active = getActiveTheme(theme)
   if (active === 'terminal') return <DecryptedText text={text} theme={active} className={className} />
+  if (active === 'kinetic') return <SplitText text={text} theme={active} className={`rb-kinetic-heading ${className}`} />
   if (FLAT_THEMES.has(active)) return <span className={className}>{text}</span>
   return <BlurText text={text} theme={active} className={className} />
 }
@@ -110,7 +214,8 @@ export function ShinyText({ children, className = '' }) {
   return <span className={`rb-shiny ${className}`}>{children}</span>
 }
 
-// Magnet (React Bits) — gentle cursor pull with smooth GSAP spring-back.
+// Magnet (React Bits) — cursor pull with smooth GSAP spring-back (upgrades to
+// elastic physics on Kinetic).
 export function Magnet({ children, strength = 0.2, padding = 0, className = 'inline-flex', theme }) {
   const ref = useRef(null)
 
@@ -121,8 +226,10 @@ export function Magnet({ children, strength = 0.2, padding = 0, className = 'inl
     const active = getActiveTheme(theme)
     if (!shouldAnimate(active) || active === 'win98') return
 
-    const qx = gsap.quickTo(el, 'x', { duration: 0.35, ease: 'power3.out' })
-    const qy = gsap.quickTo(el, 'y', { duration: 0.35, ease: 'power3.out' })
+    const isKinetic = active === 'kinetic'
+    const pull = isKinetic ? strength * 1.55 : strength
+    const qx = gsap.quickTo(el, 'x', { duration: isKinetic ? 0.28 : 0.35, ease: 'power3.out' })
+    const qy = gsap.quickTo(el, 'y', { duration: isKinetic ? 0.28 : 0.35, ease: 'power3.out' })
 
     const onMove = (e) => {
       const r = el.getBoundingClientRect()
@@ -131,17 +238,25 @@ export function Magnet({ children, strength = 0.2, padding = 0, className = 'inl
       const dx = e.clientX - cx
       const dy = e.clientY - cy
       if (Math.abs(dx) <= r.width / 2 + padding && Math.abs(dy) <= r.height / 2 + padding) {
-        qx(dx * strength)
-        qy(dy * strength)
+        qx(dx * pull)
+        qy(dy * pull)
       }
     }
-    const onLeave = () => { qx(0); qy(0) }
+    const onLeave = () => {
+      if (isKinetic) {
+        gsap.to(el, { x: 0, y: 0, duration: 0.68, ease: 'elastic.out(1, 0.42)', overwrite: 'auto' })
+      } else {
+        qx(0)
+        qy(0)
+      }
+    }
 
     el.addEventListener('pointermove', onMove, { passive: true })
     el.addEventListener('pointerleave', onLeave, { passive: true })
     return () => {
       el.removeEventListener('pointermove', onMove)
       el.removeEventListener('pointerleave', onLeave)
+      gsap.killTweensOf(el)
       gsap.set(el, { clearProps: 'x,y' })
     }
   }, [strength, padding, theme])
@@ -154,7 +269,8 @@ export function Magnet({ children, strength = 0.2, padding = 0, className = 'inl
 }
 
 // TiltedCard (React Bits) — smooth 3D perspective tilt on hover for showcase
-// cards (e.g. Theme previews). Disabled on flat/bevel themes & touch devices.
+// cards (e.g. Theme previews). Disabled on flat/bevel themes & touch devices;
+// amps up with elastic spring-back and scale pop on Kinetic.
 export function TiltedCard({ children, maxTilt = 5, className = '', theme, ...rest }) {
   const ref = useRef(null)
 
@@ -165,6 +281,8 @@ export function TiltedCard({ children, maxTilt = 5, className = '', theme, ...re
     const active = getActiveTheme(theme)
     if (!shouldAnimate(active) || FLAT_THEMES.has(active)) return
 
+    const isKinetic = active === 'kinetic'
+    const tilt = isKinetic ? maxTilt * 1.65 : maxTilt
     const qrx = gsap.quickTo(el, 'rotateX', { duration: 0.28, ease: 'power2.out' })
     const qry = gsap.quickTo(el, 'rotateY', { duration: 0.28, ease: 'power2.out' })
 
@@ -172,10 +290,27 @@ export function TiltedCard({ children, maxTilt = 5, className = '', theme, ...re
       const r = el.getBoundingClientRect()
       const px = (e.clientX - r.left) / r.width - 0.5
       const py = (e.clientY - r.top) / r.height - 0.5
-      qrx(-py * maxTilt * 2)
-      qry(px * maxTilt * 2)
+      qrx(-py * tilt * 2)
+      qry(px * tilt * 2)
+      if (isKinetic) {
+        gsap.to(el, { scale: 1.022, duration: 0.28, ease: 'power2.out', overwrite: 'auto' })
+      }
     }
-    const onLeave = () => { qrx(0); qry(0) }
+    const onLeave = () => {
+      if (isKinetic) {
+        gsap.to(el, {
+          rotateX: 0,
+          rotateY: 0,
+          scale: 1,
+          duration: 0.65,
+          ease: 'elastic.out(1, 0.5)',
+          overwrite: 'auto',
+        })
+      } else {
+        qrx(0)
+        qry(0)
+      }
+    }
 
     gsap.set(el, { transformPerspective: 800 })
     el.addEventListener('pointermove', onMove, { passive: true })
@@ -183,19 +318,20 @@ export function TiltedCard({ children, maxTilt = 5, className = '', theme, ...re
     return () => {
       el.removeEventListener('pointermove', onMove)
       el.removeEventListener('pointerleave', onLeave)
+      gsap.killTweensOf(el)
       gsap.set(el, { clearProps: 'transform,transformPerspective' })
     }
   }, [maxTilt, theme])
 
   return (
-    <div ref={ref} className={className} {...rest}>
+    <div ref={ref} data-tilted-card="" className={className} {...rest}>
       {children}
     </div>
   )
 }
 
-// StarBorder (React Bits) — subtle animated luminous border sweep around a
-// highlight trigger or CTA (adapts per theme in index.css).
+// StarBorder (React Bits) — animated luminous border sweep around a highlight
+// trigger or CTA (upgrades to 360° rotating chromatic plasma comet on Kinetic).
 export function StarBorder({ children, className = '' }) {
   return (
     <span className={`rb-star-border ${className}`}>
@@ -204,9 +340,9 @@ export function StarBorder({ children, className = '' }) {
   )
 }
 
-// InteractiveGridBg (React Bits Squares + LetterGlitch inspired) — lightweight
-// canvas ambient background for auth screens (Login / SetupPassword) that
-// adapts its visual language to all 7 themes.
+// InteractiveGridBg (React Bits Squares + LetterGlitch + DotGrid inspired) —
+// lightweight canvas ambient background for auth screens (Login / SetupPassword)
+// that adapts its visual language to all 8 themes.
 export function InteractiveGridBg({ theme }) {
   const canvasRef = useRef(null)
   const active = getActiveTheme(theme)
@@ -234,6 +370,7 @@ export function InteractiveGridBg({ theme }) {
       mario:    { line: 'rgba(255,255,255,0.22)', fill: 'rgba(251,208,0,0.32)' },
       terminal: { line: 'rgba(26,255,64,0.12)',   fill: 'rgba(26,255,64,0.22)' },
       glass:    { line: 'rgba(255,255,255,0.10)', fill: 'rgba(255,255,255,0.16)' },
+      kinetic:  { line: 'rgba(0,240,255,0.16)',   fill: 'rgba(255,46,151,0.24)' },
     }[active] || { line: 'rgba(255,255,255,0.07)', fill: 'rgba(59,130,246,0.14)' }
 
     // Pre-seed LetterGlitch glyphs for terminal theme
@@ -294,6 +431,60 @@ export function InteractiveGridBg({ theme }) {
           const boost = dist < 110 ? (1 - dist / 110) * 0.45 : 0
           ctx.fillStyle = `rgba(26, 255, 64, ${(g.a + boost).toFixed(3)})`
           ctx.fillText(g.ch, g.x, g.y)
+        }
+      } else if (active === 'kinetic') {
+        // React Bits DotGrid + magnetic wave constellation layered over KineticStage
+        const gap = 38
+        const t = reduced ? 0 : tick * 0.032
+        const nearPts = []
+
+        for (let x = gap * 0.5; x < w; x += gap) {
+          for (let y = gap * 0.5; y < h; y += gap) {
+            const wave = Math.sin(x * 0.015 + y * 0.012 - t) * 0.5 + 0.5
+            const dx = x - mouse.x
+            const dy = y - mouse.y
+            const dist = Math.hypot(dx, dy)
+            let px = x
+            let py = y
+            let r = 1.2 + wave * 1.1
+            let alpha = 0.14 + wave * 0.2
+
+            if (dist < 165 && dist > 0.1) {
+              const pull = (1 - dist / 165)
+              px += (dx / dist) * pull * 14
+              py += (dy / dist) * pull * 14
+              r += pull * 2.2
+              alpha += pull * 0.6
+              nearPts.push({ x: px, y: py, pull })
+            }
+
+            ctx.beginPath()
+            ctx.arc(px, py, r, 0, Math.PI * 2)
+            ctx.fillStyle = dist < 165
+              ? `rgba(0, 240, 255, ${Math.min(0.95, alpha).toFixed(3)})`
+              : `rgba(167, 139, 250, ${alpha.toFixed(3)})`
+            ctx.fill()
+          }
+        }
+
+        // Luminous constellation links near the cursor
+        if (nearPts.length > 1) {
+          ctx.lineWidth = 0.85
+          for (let i = 0; i < nearPts.length; i++) {
+            const a = nearPts[i]
+            for (let j = i + 1; j < nearPts.length; j++) {
+              const b = nearPts[j]
+              const d = Math.hypot(a.x - b.x, a.y - b.y)
+              if (d < gap * 1.65) {
+                const op = (1 - d / (gap * 1.65)) * Math.min(a.pull, b.pull) * 0.55
+                ctx.strokeStyle = `rgba(255, 46, 151, ${op.toFixed(3)})`
+                ctx.beginPath()
+                ctx.moveTo(a.x, a.y)
+                ctx.lineTo(b.x, b.y)
+                ctx.stroke()
+              }
+            }
+          }
         }
       } else {
         if (!reduced) offset = (offset + 0.25) % squareSize

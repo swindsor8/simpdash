@@ -112,6 +112,63 @@ function GlassPreview() {
   )
 }
 
+// Live animated mini plasma-beams + elastic orbital gauge preview for Kinetic.
+// Self-contained styling so it always reads "Kinetic" regardless of active theme.
+function KineticPreview() {
+  return (
+    <div className="kinetic-preview h-24 relative overflow-hidden flex items-center justify-between px-4 select-none"
+      style={{ background: '#05040d' }}>
+      {/* Animated diagonal plasma beams */}
+      <div className="kinetic-preview-beam a" />
+      <div className="kinetic-preview-beam b" />
+      <div className="kinetic-preview-beam c" />
+
+      {/* Micro dot grid */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(167,139,250,0.22) 1px, transparent 1px)',
+          backgroundSize: '14px 14px',
+        }} />
+
+      {/* Left: iridescent typography + pill */}
+      <div className="relative z-10 flex flex-col gap-1">
+        <span className="kinetic-preview-title text-sm font-bold tracking-wider uppercase"
+          style={{ fontFamily: "'Space Grotesk', 'Plus Jakarta Sans', sans-serif" }}>
+          KINETIC
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-[9px] font-mono px-2 py-0.5 rounded-full w-fit"
+          style={{
+            background: 'rgba(13,11,28,0.75)',
+            border: '1px solid rgba(0,240,255,0.45)',
+            color: '#7af8ff',
+            boxShadow: '0 0 12px rgba(0,240,255,0.22)',
+          }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#ff2e97', boxShadow: '0 0 6px #ff2e97' }} />
+          GSAP · BITS
+        </span>
+      </div>
+
+      {/* Right: animated orbiting plasma gauge ring */}
+      <div className="relative z-10 w-12 h-12 flex items-center justify-center shrink-0">
+        <svg viewBox="0 0 56 56" className="w-full h-full overflow-visible" aria-hidden="true">
+          <defs>
+            <linearGradient id="kp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#7c3aed" />
+              <stop offset="50%" stopColor="#ff2e97" />
+              <stop offset="100%" stopColor="#00f0ff" />
+            </linearGradient>
+          </defs>
+          <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(167,139,250,0.24)" strokeWidth="1" strokeDasharray="3 4" className="kinetic-preview-orbit" />
+          <circle cx="28" cy="28" r="19" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="4" />
+          <circle cx="28" cy="28" r="19" fill="none" stroke="url(#kp-grad)" strokeWidth="4" strokeLinecap="round"
+            strokeDasharray="86 120" className="kinetic-preview-arc" />
+        </svg>
+        <span className="absolute text-[9px] font-mono font-bold" style={{ color: '#e9e5ff' }}>FX</span>
+      </div>
+    </div>
+  )
+}
+
 // Brand preview shared by Nocturne (dark) and Midnight (light): the indigo→teal
 // corner glows, a gradient logo pip and a gradient accent bar. Inline-styled
 // with a per-theme palette so each reads accurately.
@@ -168,6 +225,7 @@ function ThemeCard({ t, active, activeTheme, onSelect }) {
   const isWin98 = t.id === 'win98'
   const isTerminal = t.id === 'terminal'
   const isGlass = t.id === 'glass'
+  const isKinetic = t.id === 'kinetic'
   return (
     <TiltedCard theme={activeTheme} maxTilt={4} className="h-full">
     <div
@@ -184,6 +242,10 @@ function ThemeCard({ t, active, activeTheme, onSelect }) {
       {isBrand ? (
         <div className="rounded-xl overflow-hidden border border-white/10">
           <BrandPreview id={t.id} />
+        </div>
+      ) : isKinetic ? (
+        <div className="rounded-xl overflow-hidden border border-white/10">
+          <KineticPreview />
         </div>
       ) : isGlass ? (
         <div className="rounded-xl overflow-hidden border border-white/10">

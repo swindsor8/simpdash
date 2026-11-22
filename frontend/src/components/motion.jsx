@@ -83,13 +83,16 @@ export function useViewTransition(containerRef, triggerKey, theme) {
     if (!v) return
 
     const ctx = gsap.context(() => {
-      gsap.from(el, {
+      const fromVars = {
         opacity: 0,
         y: v.y || 0,
         duration: v.duration,
         ease: v.ease,
-        clearProps: 'transform,opacity',
-      })
+        clearProps: 'transform,opacity,filter',
+      }
+      if (v.scale) fromVars.scale = v.scale
+      if (v.filter) fromVars.filter = v.filter
+      gsap.from(el, fromVars)
     }, containerRef)
 
     return () => ctx.revert()
@@ -133,14 +136,22 @@ export function useScrollReveal(containerRef, { selector = '[data-reveal]', deps
       ease: r.ease,
       stagger: r.stagger,
       overwrite: 'auto',
-      clearProps: 'transform,opacity,filter',
+      clearProps: 'transform,opacity,filter,transformPerspective',
     }
 
     if (r.x) { fromVars.x = r.x; toVars.x = 0 }
     if (r.y) { fromVars.y = r.y; toVars.y = 0 }
     if (r.scale) { fromVars.scale = r.scale; toVars.scale = 1 }
     if (r.scaleY) { fromVars.scaleY = r.scaleY; toVars.scaleY = 1 }
-    if (r.filter) { fromVars.filter = r.filter; toVars.filter = 'brightness(1)' }
+    if (r.rotateX) {
+      fromVars.rotateX = r.rotateX
+      fromVars.transformPerspective = 900
+      toVars.rotateX = 0
+    }
+    if (r.filter) {
+      fromVars.filter = r.filter
+      toVars.filter = r.filter.includes('blur') ? 'blur(0px)' : 'brightness(1)'
+    }
 
     const ctx = gsap.context(() => {
       gsap.set(targets, fromVars)
@@ -189,14 +200,19 @@ export function useModalEntrance(backdropRef, dialogRef, theme) {
         })
       }
       if (dialog) {
-        gsap.from(dialog, {
+        const dVars = {
           opacity: 0,
           y: m.y || 0,
           scale: m.scale || 1,
           duration: m.duration,
           ease: m.ease,
-          clearProps: 'transform,opacity',
-        })
+          clearProps: 'transform,opacity,transformPerspective',
+        }
+        if (m.rotateX) {
+          dVars.rotateX = m.rotateX
+          dVars.transformPerspective = 900
+        }
+        gsap.from(dialog, dVars)
       }
     })
 
@@ -218,10 +234,14 @@ export function useStaggerMount(containerRef, selector, { theme, deps = [] } = {
     const r = profile.reveal
     if (!r) return
 
-    const fromVars = { opacity: 0, duration: r.duration, ease: r.ease, stagger: r.stagger, clearProps: 'transform,opacity,filter' }
+    const fromVars = { opacity: 0, duration: r.duration, ease: r.ease, stagger: r.stagger, clearProps: 'transform,opacity,filter,transformPerspective' }
     if (r.x) fromVars.x = r.x
-    if (r.y) fromVars.y = Math.min(r.y, 12)
+    if (r.y) fromVars.y = Math.min(r.y, 16)
     if (r.scale) fromVars.scale = r.scale
+    if (r.rotateX) {
+      fromVars.rotateX = Math.min(r.rotateX, 8)
+      fromVars.transformPerspective = 900
+    }
     if (r.filter) fromVars.filter = r.filter
 
     const ctx = gsap.context(() => {
@@ -322,15 +342,29 @@ export function ScrollProgressBar({ scrollerRef, theme, resetKey }) {
 
     const setScale = gsap.quickTo(bar, 'scaleX', { duration: 0.14, ease: 'power2.out' })
     const setOpacity = gsap.quickTo(bar, 'opacity', { duration: 0.2, ease: 'power2.out' })
+    let prevTop = scroller.scrollTop
+    let prevTs = performance.now()
 
     const update = () => {
+      const now = performance.now()
+      const top = scroller.scrollTop
+      if (profile.kinetic) {
+        const dt = Math.max(8, now - prevTs)
+        const vel = Math.abs(top - prevTop) / dt
+        if (vel > 0.04) {
+          window.dispatchEvent(new CustomEvent('sd-scroll-velocity', { detail: Math.min(1.8, vel * 0.9) }))
+        }
+      }
+      prevTop = top
+      prevTs = now
+
       const max = scroller.scrollHeight - scroller.clientHeight
       if (max <= 24) {
         setScale(0)
         setOpacity(0)
         return
       }
-      const p = Math.max(0, Math.min(1, scroller.scrollTop / max))
+      const p = Math.max(0, Math.min(1, top / max))
       setScale(p)
       setOpacity(p > 0.005 ? 1 : 0)
     }
@@ -357,19 +391,22 @@ export function ScrollProgressBar({ scrollerRef, theme, resetKey }) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none sticky top-0 left-0 right-0 z-30 h-[2px] -mb-[2px] overflow-hidden"
+      className="scroll-progress-track pointer-events-none sticky top-0 left-0 right-0 z-30 h-[2px] -mb-[2px] overflow-hidden"
     >
       <div
         ref={barRef}
-        className="scroll-progress-fill h-full w-full origin-left"
+        className="scroll-progress-fill relative h-full w-full origin-left"
         style={{ transform: 'scaleX(0)', opacity: 0 }}
-      />
+      >
+        <span className="scroll-progress-tip" />
+      </div>
     </div>
   )
 }
 
 // useSlidingIndicator — glides a floating highlight pill vertically behind the
-// active item in a sidebar <nav> using GSAP.
+// active item in a sidebar <nav> using GSAP (upgrades to a liquid elastic
+// squish-and-stretch glide on Kinetic).
 export function useSlidingIndicator(navRef, indicatorRef, activeKey, theme) {
   const placedRef = useRef(false)
 
@@ -390,7 +427,31 @@ export function useSlidingIndicator(navRef, indicatorRef, activeKey, theme) {
 
     if (!placedRef.current || !shouldAnimate(theme) || !profile.navGlide) {
       placedRef.current = true
-      gsap.set(pill, { y, height, opacity: 1 })
+      gsap.set(pill, { y, height, opacity: 1, scaleX: 1, scaleY: 1 })
+      return
+    }
+
+    if (profile.kinetic) {
+      gsap.timeline({ overwrite: 'auto' })
+        .to(pill, {
+          y,
+          height,
+          opacity: 1,
+          duration: profile.navGlide.duration,
+          ease: profile.navGlide.ease,
+        }, 0)
+        .to(pill, {
+          scaleY: 1.24,
+          scaleX: 0.95,
+          duration: 0.14,
+          ease: 'power2.out',
+        }, 0)
+        .to(pill, {
+          scaleY: 1,
+          scaleX: 1,
+          duration: 0.42,
+          ease: 'elastic.out(1, 0.5)',
+        }, 0.13)
       return
     }
 
@@ -502,11 +563,17 @@ export function usePopPulse(ref, trigger) {
   useLayoutEffect(() => {
     const el = ref.current
     if (!el || !trigger || !shouldAnimate()) return
+    const profile = getThemeProfile()
     const ctx = gsap.context(() => {
       gsap.fromTo(
         el,
-        { scale: 0.86 },
-        { scale: 1, duration: 0.28, ease: 'back.out(2)', clearProps: 'transform' },
+        { scale: profile.kinetic ? 0.72 : 0.86 },
+        {
+          scale: 1,
+          duration: profile.kinetic ? 0.56 : 0.28,
+          ease: profile.kinetic ? 'elastic.out(1.1, 0.44)' : 'back.out(2)',
+          clearProps: 'transform',
+        },
       )
     })
     return () => ctx.revert()

@@ -46,60 +46,68 @@ export default function RadialGauge({ value, max, label, size = 'lg', idle = fal
 
   const fillRef = useRef(null)
   const needleRef = useRef(null)
+  const tipRef = useRef(null)
   const mountedRef = useRef(false)
+  const stateRef = useRef({ pct: 0 })
 
   useLayoutEffect(() => {
     if (!live) {
       mountedRef.current = false
+      stateRef.current.pct = 0
       return
     }
     const fill = fillRef.current
     const needle = needleRef.current
-    const targetOffset = 100 - pct
-    const targetAngle = 270 * frac - 135
+    const tip = tipRef.current
     const profile = getThemeProfile()
     const animate = shouldAnimate() && Boolean(profile.gauge)
 
+    const applyPct = (raw) => {
+      const clamped = Math.max(0, Math.min(100, raw))
+      const angle = 270 * (clamped / 100) - 135
+      if (fill) gsap.set(fill, { strokeDashoffset: 100 - clamped })
+      if (needle) gsap.set(needle, { rotation: angle, svgOrigin: '50 50' })
+      if (tip) gsap.set(tip, { rotation: angle, svgOrigin: '50 50' })
+    }
+
     if (!animate) {
-      if (fill) gsap.set(fill, { strokeDashoffset: targetOffset })
-      if (needle) gsap.set(needle, { rotation: targetAngle, svgOrigin: '50 50' })
+      stateRef.current.pct = pct
+      applyPct(pct)
       mountedRef.current = true
       return
     }
 
     const isFirst = !mountedRef.current
     mountedRef.current = true
-    const dur = isFirst ? profile.gauge.duration : Math.min(0.42, profile.gauge.duration * 0.65)
-    const ease = profile.gauge.ease
+    const dur = isFirst ? profile.gauge.duration : Math.min(0.55, profile.gauge.duration * 0.65)
+    // Elastic overshoot looks awesome in the mid-range, while 0/100 endpoints stay crisp.
+    const isElastic = typeof profile.gauge.ease === 'string' && profile.gauge.ease.startsWith('elastic')
+    const ease = isElastic && (pct <= 2 || pct >= 97) ? 'power3.out' : profile.gauge.ease
 
-    if (fill) {
-      if (isFirst) {
-        gsap.fromTo(fill, { strokeDashoffset: 100 }, { strokeDashoffset: targetOffset, duration: dur, ease, overwrite: 'auto' })
-      } else {
-        gsap.to(fill, { strokeDashoffset: targetOffset, duration: dur, ease, overwrite: 'auto' })
-      }
-    }
-    if (needle) {
-      if (isFirst) {
-        gsap.fromTo(
-          needle,
-          { rotation: -135, svgOrigin: '50 50' },
-          { rotation: targetAngle, svgOrigin: '50 50', duration: dur, ease, overwrite: 'auto' },
-        )
-      } else {
-        gsap.to(needle, { rotation: targetAngle, svgOrigin: '50 50', duration: dur, ease, overwrite: 'auto' })
-      }
-    }
+    if (isFirst) stateRef.current.pct = 0
+    applyPct(stateRef.current.pct)
+
+    const tween = gsap.to(stateRef.current, {
+      pct,
+      duration: dur,
+      ease,
+      overwrite: 'auto',
+      onUpdate: () => applyPct(stateRef.current.pct),
+      onComplete: () => {
+        stateRef.current.pct = pct
+        applyPct(pct)
+      },
+    })
 
     return () => {
-      if (fill) gsap.killTweensOf(fill)
-      if (needle) gsap.killTweensOf(needle)
+      tween.kill()
     }
   }, [live, pct, frac])
 
   return (
     <div className={`radial-gauge ${size === 'sm' ? 'rg-sm' : 'rg-lg'}`} data-level={level}>
       <svg viewBox="0 0 100 100" className="rg-svg" aria-hidden="true">
+        <circle className="gauge-orbit" cx="50" cy="50" r="46.5" />
         <path className="gauge-track" d={ARC_D} pathLength="100" />
         {live && (
           <path ref={fillRef} className="gauge-fill" d={ARC_D} pathLength="100" />
@@ -111,6 +119,10 @@ export default function RadialGauge({ value, max, label, size = 'lg', idle = fal
           <>
             <line ref={needleRef} className="gauge-needle" x1="50" y1="50" x2="50" y2="13" />
             <circle className="gauge-hub" cx="50" cy="50" r="3.5" />
+            <g ref={tipRef} className="gauge-tip">
+              <circle className="gauge-tip-halo" cx="50" cy="8" r="6.8" />
+              <circle className="gauge-tip-dot" cx="50" cy="8" r="3.1" />
+            </g>
           </>
         )}
       </svg>

@@ -1,5 +1,7 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import gsap from 'gsap'
 import { THEMES } from '../hooks/useTheme'
+import { getThemeProfile, shouldAnimate } from '../lib/motionConfig'
 import { consoleUrl } from './GuestCard'
 import { StatusPill, statusVariant } from './Card'
 import {
@@ -17,6 +19,7 @@ export const THEME_SWATCHES = {
   win98:    'linear-gradient(135deg, #008080, #000080)',
   terminal: 'linear-gradient(135deg, #020a02, #1aff40)',
   glass:    'linear-gradient(135deg, #5e1f6e, #0c5d57)',
+  kinetic:  'linear-gradient(135deg, #7c3aed, #ff2e97, #00f0ff)',
 }
 
 const NAV_COMMANDS = [
@@ -33,7 +36,7 @@ const NAV_COMMANDS = [
 ]
 
 // CommandPalette — Cmd+K / Ctrl+K quick launcher for jumping to any guest,
-// opening web services, switching views, or previewing all 7 themes live.
+// opening web services, switching views, or previewing all 8 themes live.
 export default function CommandPalette({
   open,
   onClose,
@@ -53,8 +56,39 @@ export default function CommandPalette({
   const [query, setQuery] = useState('')
   const [selectedIdx, setSelectedIdx] = useState(0)
   const trap = useFocusTrap()
+  const backdropRef = useRef(null)
   const inputRef = useRef(null)
   const listRef = useRef(null)
+
+  useLayoutEffect(() => {
+    if (!open || !shouldAnimate(theme)) return
+    const profile = getThemeProfile(theme)
+    const m = profile.modal
+    if (!m) return
+    const backdrop = backdropRef.current
+    const dialog = trap.current
+    const ctx = gsap.context(() => {
+      if (backdrop) {
+        gsap.from(backdrop, { opacity: 0, duration: Math.min(0.2, m.duration), ease: 'power2.out', clearProps: 'opacity' })
+      }
+      if (dialog) {
+        const dVars = {
+          opacity: 0,
+          y: m.y || 0,
+          scale: m.scale || 1,
+          duration: m.duration,
+          ease: m.ease,
+          clearProps: 'transform,opacity,transformPerspective',
+        }
+        if (m.rotateX) {
+          dVars.rotateX = m.rotateX
+          dVars.transformPerspective = 900
+        }
+        gsap.from(dialog, dVars)
+      }
+    })
+    return () => ctx.revert()
+  }, [open, theme, trap])
 
   useEffect(() => {
     if (open) {
@@ -139,7 +173,7 @@ export default function CommandPalette({
       }
     }
 
-    // 3. Themes (all 7 templates!)
+    // 3. Themes (all 8 templates!)
     for (const t of THEMES) {
       if (!q || `theme template ${t.name} ${t.id} ${t.description}`.toLowerCase().includes(q)) {
         out.push({
@@ -223,6 +257,7 @@ export default function CommandPalette({
 
   return (
     <div
+      ref={backdropRef}
       data-lenis-prevent
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/65 backdrop-blur-sm p-4 pt-[10vh]"
       onClick={onClose}

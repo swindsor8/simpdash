@@ -2,8 +2,8 @@
 //
 // IMPORTANT: every surface here emits the literal classes the theme system keys
 // on — `bg-[#13131e]` + `rounded-2xl` for the card, and `text-emerald/amber/red-400`
-// + `bg-white/8` for pills. All 7 themes (nocturne/default/retro/mario/win98/
-// terminal/glass) override those class names by name in index.css, so reusing
+// + `bg-white/8` for pills. All 8 themes (nocturne/default/retro/mario/win98/
+// terminal/glass/kinetic) override those class names by name in index.css, so reusing
 // them keeps every template cohesive with zero per-component theme branching.
 
 import { useRef } from 'react'

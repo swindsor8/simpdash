@@ -8,7 +8,7 @@ import {
   shouldAnimate,
 } from './motionConfig.js'
 
-const ALL_THEMES = ['nocturne', 'default', 'retro', 'mario', 'win98', 'terminal', 'glass']
+const ALL_THEMES = ['nocturne', 'default', 'retro', 'mario', 'win98', 'terminal', 'glass', 'kinetic']
 
 for (const id of ALL_THEMES) {
   const p = getThemeProfile(id)
@@ -48,5 +48,14 @@ assert.ok(THEME_MOTION.retro.lenis.lerp > THEME_MOTION.nocturne.lenis.lerp)
 // Terminal phosphor panels never float vertically
 assert.equal(THEME_MOTION.terminal.reveal.y, 0)
 assert.equal(THEME_MOTION.terminal.view.y, 0)
+
+// Kinetic theme enables 3D reveals, elastic gauges, spotlight, and kinetic flag
+assert.equal(THEME_MOTION.kinetic.kinetic, true)
+assert.ok(THEME_MOTION.kinetic.reveal.rotateX > 0)
+assert.ok(THEME_MOTION.kinetic.gauge.ease.startsWith('elastic'))
+assert.equal(THEME_MOTION.kinetic.spotlight, true)
+assert.equal(THEME_MOTION.kinetic.scrollBar, true)
+assert.equal(shouldUseLenis('kinetic', false), true)
+assert.equal(shouldAnimate('kinetic', false), true)
 
 console.log('motionConfig profiles OK')
