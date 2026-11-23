@@ -61,7 +61,15 @@ export default function App() {
         </Suspense>
       )}
       {theme === 'terminal' && (
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            <div
+              aria-hidden="true"
+              className="crt-stage-frame fixed pointer-events-none z-0"
+              style={{ backgroundColor: '#020a02' }}
+            />
+          }
+        >
           <TerminalStage theme={theme} />
         </Suspense>
       )}

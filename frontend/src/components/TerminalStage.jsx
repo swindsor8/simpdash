@@ -49,49 +49,52 @@ void main() {
 
   // Base P1 CRT dark glass tint
   vec3 phosphor = vec3(0.102, 1.0, 0.251); // #1aff40
-  vec3 mint     = vec3(0.55, 1.0, 0.68);
-  vec3 col      = vec3(0.008, 0.036, 0.010);
+  vec3 mint     = vec3(0.62, 1.0, 0.72);
+  vec3 col      = vec3(0.008, 0.042, 0.012);
 
-  // Subtle curved CRT center phosphor dome glow
+  // Curved CRT center phosphor dome glow
   float r2 = dot(p * vec2(0.76, 1.0), p * vec2(0.76, 1.0));
-  col += phosphor * exp(-r2 * 2.1) * 0.055;
+  col += phosphor * exp(-r2 * 1.9) * 0.085;
 
   // Rolling vertical V-Sync refresh beam (accelerates subtly with scroll)
   float scanY = fract(1.0 - t * 0.14);
   float dy = uv.y - scanY;
   float wrappedDy = dy - floor(dy + 0.5);
-  float beam = exp(-(wrappedDy * wrappedDy) * 145.0) * (0.085 + surge * 0.065);
-  float beamTail = smoothstep(-0.18, 0.0, wrappedDy) * smoothstep(0.015, 0.0, wrappedDy) * 0.04;
+  float beam = exp(-(wrappedDy * wrappedDy) * 140.0) * (0.14 + surge * 0.09);
+  float beamTail = smoothstep(-0.20, 0.0, wrappedDy) * smoothstep(0.018, 0.0, wrappedDy) * 0.065;
   col += phosphor * (beam + beamTail);
 
-  // Faint Pip-Boy / RobCo tactical radar rings + rotating sweep sector
+  // Pip-Boy / RobCo tactical radar rings + rotating sweep sector
   float dist = length(p);
-  float rf = fract(dist * 2.8 - t * 0.06) - 0.5;
-  float ringA = exp(-(rf * rf) * 650.0);
+  float rf = fract(dist * 2.8 - t * 0.055) - 0.5;
+  float ringA = exp(-(rf * rf) * 520.0);
   float angle = atan(p.y, p.x);
   float sweep = fract((angle + t * 0.42) / 6.2831853);
-  float radarSector = smoothstep(0.76, 1.0, sweep) * smoothstep(0.85, 0.05, dist) * 0.048;
-  float radarEdge   = smoothstep(0.985, 1.0, sweep) * smoothstep(0.85, 0.04, dist) * 0.095;
-  col += phosphor * (ringA * 0.032 + radarSector + radarEdge);
+  float radarSector = smoothstep(0.72, 1.0, sweep) * smoothstep(0.95, 0.04, dist) * 0.085;
+  float radarEdge   = smoothstep(0.985, 1.0, sweep) * smoothstep(0.95, 0.03, dist) * 0.18;
+  col += phosphor * (ringA * 0.06 + radarSector) + mint * radarEdge;
 
-  // Fine oscilloscope telemetry grid lines etched softly into the tube
-  vec2 grid = abs(fract(gl_FragCoord.xy / 48.0 - 0.5) - 0.5) / (1.0 / 48.0);
+  // Fine oscilloscope telemetry grid lines + major crosshairs etched into the tube
+  vec2 grid = abs(fract(gl_FragCoord.xy / 48.0 - 0.5) - 0.5) * 48.0;
   float lineMask = 1.0 - min(min(grid.x, grid.y), 1.0);
-  col += phosphor * lineMask * 0.028;
+  col += phosphor * lineMask * 0.052;
+  float axisX = exp(-abs(p.x) * 320.0) * 0.06;
+  float axisY = exp(-abs(p.y) * 320.0) * 0.06;
+  col += phosphor * (axisX + axisY);
 
   // Interactive electron-gun cursor phosphor excitation + horizontal scan highlight
   float md = length(p - m);
-  float hotspot = exp(-md * md * 7.5) * 0.11;
-  float hLine = exp(-((uv.y - uMouse.y) * (uv.y - uMouse.y)) * 18000.0) * exp(-md * 2.2) * 0.055;
+  float hotspot = exp(-md * md * 6.5) * 0.16;
+  float hLine = exp(-((uv.y - uMouse.y) * (uv.y - uMouse.y)) * 14000.0) * exp(-md * 1.9) * 0.09;
   col += mix(phosphor, mint, 0.35) * (hotspot + hLine);
 
   // Subtle high-frequency analog tube static grain
-  float grain = (hash(gl_FragCoord.xy + floor(t * 24.0) * 13.7) - 0.5) * (0.022 + surge * 0.018);
+  float grain = (hash(gl_FragCoord.xy + floor(t * 24.0) * 13.7) - 0.5) * (0.03 + surge * 0.022);
   col += phosphor * max(grain, 0.0);
 
   // Authentic CRT glass edge falloff
-  float vig = 1.0 - smoothstep(0.45, 1.28, length(p * vec2(0.82, 1.0)));
-  col *= mix(0.55, 1.08, vig);
+  float vig = 1.0 - smoothstep(0.48, 1.32, length(p * vec2(0.82, 1.0)));
+  col *= mix(0.58, 1.12, vig);
 
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }`
@@ -205,6 +208,7 @@ export default function TerminalStage({ theme }) {
           canvas.addEventListener('webglcontextlost', onLost)
 
           renderFn = (now) => {
+            resizeGl()
             const m = mouseRef.current
             m.x += (m.tx - m.x) * 0.09
             m.y += (m.ty - m.y) * 0.09
@@ -246,6 +250,10 @@ export default function TerminalStage({ theme }) {
         cleanup = () => window.removeEventListener('resize', resize2d)
 
         renderFn = (now) => {
+          const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
+          const bw = Math.max(1, Math.floor(canvas.clientWidth * dpr))
+          const bh = Math.max(1, Math.floor(canvas.clientHeight * dpr))
+          if (canvas.width !== bw || canvas.height !== bh) resize2d()
           const w = canvas.clientWidth
           const h = canvas.clientHeight
           const t = reduced ? 1.5 : (now - started) / 1000
@@ -346,6 +354,7 @@ export default function TerminalStage({ theme }) {
       raf = 0
       if (!alive) return
       if (!document.hidden) {
+        if (canvas.clientWidth !== w || canvas.clientHeight !== h) resize()
         tick++
         ctx.clearRect(0, 0, w, h)
         const mx = mouseRef.current.px
@@ -550,8 +559,8 @@ export default function TerminalStage({ theme }) {
       )
       tl.fromTo(
         beam,
-        { yPercent: -10, opacity: 0.95 },
-        { yPercent: 110, opacity: 0, duration: 0.62, ease: 'power2.inOut' },
+        { top: '-10%', opacity: 0.95 },
+        { top: '108%', opacity: 0, duration: 0.68, ease: 'power2.inOut' },
         0,
       )
 
@@ -585,21 +594,25 @@ export default function TerminalStage({ theme }) {
 
   return (
     <>
-      {/* Contained cleanly inside the CRT glass bezel so the outer plastic chassis stays intact */}
-      <canvas
-        ref={bgCanvasRef}
+      {/* Non-replaced fixed wrapper fills the exact inner CRT glass bezel;
+          canvases inside use explicit w-full h-full so they never collapse to 300x150. */}
+      <div
         aria-hidden="true"
-        className="crt-stage-canvas fixed pointer-events-none z-0"
-      />
-      <canvas
-        ref={fxCanvasRef}
+        className="crt-stage-frame fixed pointer-events-none overflow-hidden z-0"
+        style={{ backgroundColor: '#020a02' }}
+      >
+        <canvas ref={bgCanvasRef} className="block w-full h-full" />
+      </div>
+      <div
         aria-hidden="true"
-        className="crt-stage-canvas fixed pointer-events-none z-[9990]"
-      />
+        className="crt-stage-frame fixed pointer-events-none overflow-hidden z-[9990]"
+      >
+        <canvas ref={fxCanvasRef} className="block w-full h-full" />
+      </div>
       {/* Non-blocking GSAP CRT degauss + electron beam raster sweep */}
       <div
         aria-hidden="true"
-        className="crt-stage-canvas fixed pointer-events-none z-[9995] overflow-hidden"
+        className="crt-stage-frame fixed pointer-events-none overflow-hidden z-[9995]"
       >
         <div
           ref={degaussFlashRef}

@@ -1013,7 +1013,7 @@ code, pre, kbd, .font-mono {
   position: relative;
   z-index: 1;
 }
-.crt-stage-canvas {
+.crt-stage-frame {
   inset: calc(1.25rem + 10px);
   border-radius: calc(1.5rem - 10px);
 }
